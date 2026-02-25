@@ -1,0 +1,61 @@
+# ===========================
+# Unity .gitignore
+# ===========================
+
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Asset import artifacts
+*.pidb
+*.suo
+*.user
+*.unityproj
+
+# Crashlytics
+crashlytics-build.properties
+sysinfo.txt
+
+# IDE folders and generated project files
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.slnx
+
+# Build outputs
+*.apk
+*.aab
+*.unitypackage
+*.zip
+*.tar.gz
+
+# OS files
+.DS_Store
+.ds_store
+Thumbs.db
+Desktop.ini
+
+# Gradle / Android build intermediaries
+.gradle/
+*.keystore
+
+# Blender backup files
+*.blend1
+*.blend2
+
+# ===========================
+# Do NOT ignore:
+# - Assets/ and all contents
+# - ProjectSettings/
+# - Packages/
+# - All .meta files
+# ===========================
