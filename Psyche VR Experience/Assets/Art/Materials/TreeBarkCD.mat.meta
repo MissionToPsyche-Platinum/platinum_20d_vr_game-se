@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 33e561d917c7cd94695961036c7c82ce
+timeCreated: 1480089212
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 117088
+  packageName: World Space Trees (FREE) - Shader
+  packageVersion: 1.23
+  assetPath: Assets/Trees_WorldSpace_FREE/Materials/SRP/TreeBarkCD.mat
+  uploadId: 393715
