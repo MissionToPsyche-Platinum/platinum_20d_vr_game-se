@@ -21,6 +21,13 @@ namespace PsycheVR.Gameplay
         /// <inheritdoc />
         protected override void Awake()
         {
+            if (grabSettings == null)
+            {
+                Debug.LogError("[PsycheGrabbable] GrabSettings is not assigned!", this);
+                enabled = false;
+                return;
+            }
+
             // Configure before base.Awake() so XRI initializes correctly.
             movementType = MovementType.VelocityTracking;
             throwOnDetach = false;
@@ -28,13 +35,6 @@ namespace PsycheVR.Gameplay
             attachEaseInTime = grabSettings.SnapEaseDuration;
 
             base.Awake();
-
-            if (grabSettings == null)
-            {
-                Debug.LogError("[PsycheGrabbable] GrabSettings is not assigned!", this);
-                enabled = false;
-                return;
-            }
 
             ConfigureRigidbody();
         }

@@ -12,31 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00b86c507336a6a41a659dbe0a69c4c6, type: 3}
   m_Name: GrabSettings
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.GrabSettings
-  holdDistance: 0.25
-  snapEaseDuration: 0.25
-  snapEaseCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  grabHapticIntensity: 0.35
+  snapEaseDuration: 10
+  grabHapticIntensity: 0.5
   hapticDuration: 0.08
