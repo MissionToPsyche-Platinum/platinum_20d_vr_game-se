@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - Anchor
+  - Gold_Box
+  - Gray_Box
   layers:
   - Default
   - TransparentFX

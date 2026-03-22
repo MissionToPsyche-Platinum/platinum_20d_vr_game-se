@@ -1,0 +1,997 @@
+using System.Collections;
+using System.Collections.Generic;
+using NUnit.Framework;
+using UnityEngine.TestTools;
+using UnityEngine.TestTools.Utils;
+using UnityEngine.XR.Interaction.Toolkit.Attachment;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactors.Casters;
+using UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
+
+namespace UnityEngine.XR.Interaction.Toolkit.Tests
+{
+    [TestFixture]
+    class NearFarInteractorTests
+    {
+        static readonly bool[] s_BooleanValues = { false, true };
+
+        static readonly int[] s_NumSegmentValues = { 1, 2, 5, 25 };
+
+        static readonly CurveInteractionCaster.HitDetectionType[] s_HitDetectionTypes =
+        {
+            CurveInteractionCaster.HitDetectionType.Raycast,
+            CurveInteractionCaster.HitDetectionType.ConeCast,
+            CurveInteractionCaster.HitDetectionType.SphereCast
+        };
+
+        static readonly (InteractorFarAttachMode interactorFarAttachMode, InteractableFarAttachMode interactableFarAttachMode)[] s_FarAttachModeArgs =
+        {
+            (InteractorFarAttachMode.Near, InteractableFarAttachMode.DeferToInteractor),
+            (InteractorFarAttachMode.Near, InteractableFarAttachMode.Near),
+            (InteractorFarAttachMode.Near, InteractableFarAttachMode.Far),
+            (InteractorFarAttachMode.Far, InteractableFarAttachMode.DeferToInteractor),
+            (InteractorFarAttachMode.Far, InteractableFarAttachMode.Near),
+            (InteractorFarAttachMode.Far, InteractableFarAttachMode.Far),
+        };
+
+        [TearDown]
+        public void TearDown()
+        {
+            TestUtilities.DestroyAllSceneObjects();
+        }
+
+        [UnityTest]
+        public IEnumerator TestEnableNearCasting([ValueSource(nameof(s_BooleanValues))] bool enableNearCasting)
+        {
+            TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.enableNearCasting = enableNearCasting;
+            interactor.enableFarCasting = false;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.enableNearCasting, Is.EqualTo(enableNearCasting));
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactable.isSelected, Is.EqualTo(enableNearCasting));
+            Assert.That(interactor.interactablesSelected, enableNearCasting ? Is.EqualTo(new[] { interactable }) : Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator TestEnableFarCasting([ValueSource(nameof(s_BooleanValues))] bool enableFarCasting)
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+
+            interactor.enableNearCasting = false;
+            interactor.enableFarCasting = enableFarCasting;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, enableFarCasting ? Is.EqualTo(new[] { interactable }) : Is.Empty);
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactable.isSelected, Is.EqualTo(enableFarCasting));
+            Assert.That(interactor.interactablesSelected, enableFarCasting ? Is.EqualTo(new[] { interactable }) : Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator TestObstructedFarCasting()
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+
+            interactor.enableNearCasting = false;
+            interactor.enableFarCasting = true;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            // Create cube to obstruct far interaction
+            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.transform.position = interactor.transform.position + interactor.transform.forward * 3.0f;
+            cube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            validTargets.Clear();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator TestFarCastingTargetFilterWithMultiColliderInteractable()
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+
+            interactor.enableNearCasting = false;
+            interactor.enableFarCasting = true;
+
+            // Setup target filter
+            var targetFilter = interactor.gameObject.AddComponent<XRTargetFilter>();
+            interactor.targetFilter = targetFilter;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            // Setup interactable with multiple colliders
+            GameObject interactableGO = new GameObject("Grab Interactable");
+            TestUtilities.CreateGOSphereCollider(interactableGO, false);
+            TestUtilities.CreateGOBoxCollider(interactableGO, false);
+            XRGrabInteractable interactable = interactableGO.AddComponent<XRGrabInteractable>();
+            var rigidBody = interactableGO.GetComponent<Rigidbody>();
+            rigidBody.useGravity = false;
+            rigidBody.isKinematic = true;
+
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            // Setup interactable with multiple colliders
+            GameObject secondaryGameObject = new GameObject("Secondary Grab Interactable");
+            TestUtilities.CreateGOSphereCollider(secondaryGameObject, false);
+            TestUtilities.CreateGOBoxCollider(secondaryGameObject, false);
+            XRGrabInteractable secondaryInteractable = secondaryGameObject.AddComponent<XRGrabInteractable>();
+            rigidBody = secondaryGameObject.GetComponent<Rigidbody>();
+            rigidBody.useGravity = false;
+            rigidBody.isKinematic = true;
+
+            secondaryInteractable.transform.position = interactor.transform.position + interactor.transform.forward * 6.0f;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactable.isSelected, Is.True);
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+        }
+
+
+        [UnityTest]
+        public IEnumerator TestEnableUIInteraction([ValueSource(nameof(s_BooleanValues))] bool enableUIInteraction)
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractorWithXROrigin(out var camera);
+
+            interactor.enableUIInteraction = enableUIInteraction;
+            interactor.enableNearCasting = false;
+            interactor.enableFarCasting = true;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            // Place UI closer than interactable
+            var uiCanvas = TestUtilities.CreateUICanvas(camera);
+            uiCanvas.transform.position = interactor.transform.position + interactor.transform.forward * 2.5f;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, enableUIInteraction ? Is.Empty : Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            yield return new WaitForSeconds(0.1f);
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var endPointType = interactor.TryGetCurveEndPoint(out var endPoint);
+
+            Assert.That(endPointType, Is.EqualTo(enableUIInteraction ? EndPointType.UI : EndPointType.ValidCastHit));
+        }
+
+        [UnityTest]
+        public IEnumerator TestBlockUIOnInteractableSelection([ValueSource(nameof(s_BooleanValues))] bool blockUIOnInteractableSelection)
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractorWithXROrigin(out var camera);
+
+            interactor.enableNearCasting = false;
+            interactor.enableFarCasting = true;
+            interactor.enableUIInteraction = true;
+            interactor.blockUIOnInteractableSelection = blockUIOnInteractableSelection;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            // Place interactable closer than UI
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 2.5f;
+
+            var uiCanvas = TestUtilities.CreateUICanvas(camera);
+            uiCanvas.transform.position = interactor.transform.position + interactor.transform.forward * 5f;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            // Move interactable further out than UI
+            interactor.interactionAttachController.MoveTo(interactor.transform.position + interactor.transform.forward * 10f);
+
+            yield return new WaitForSeconds(0.1f);
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactable.isSelected, Is.True);
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+
+            var endPointType = interactor.TryGetCurveEndPoint(out var endPoint);
+
+            Assert.That(endPointType, Is.EqualTo(blockUIOnInteractableSelection ? EndPointType.ValidCastHit : EndPointType.UI));
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearCasterSortingStrategy()
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.nearCasterSortingStrategy = NearFarInteractor.NearCasterSortingStrategy.SquareDistance;
+
+            interactor.enableNearCasting = true;
+            interactor.enableFarCasting = true;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = new Vector3(0f, 0.05f, 0.0f);
+
+            // Place second interactable above first, within range of near interaction
+            var interactable2 = TestUtilities.CreateGrabInteractable();
+            interactable2.transform.position = new Vector3(0f, 0.055f, 0.0f);
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactable.isSelected, Is.True);
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+        }
+
+        [UnityTest]
+        public IEnumerator TestFarInteractionAttachMode([ValueSource(nameof(s_FarAttachModeArgs))] (InteractorFarAttachMode interactorFarAttachMode, InteractableFarAttachMode interactableFarAttachMode) args)
+        {
+            var effectiveNear = args.interactableFarAttachMode == InteractableFarAttachMode.DeferToInteractor && args.interactorFarAttachMode == InteractorFarAttachMode.Near ||
+                args.interactableFarAttachMode == InteractableFarAttachMode.Near;
+
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+
+            interactor.enableNearCasting = true;
+            interactor.enableFarCasting = true;
+            interactor.farAttachMode = args.interactorFarAttachMode;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            TestUtilities.DisableDelayProperties(interactable);
+
+            interactable.farAttachMode = args.interactableFarAttachMode;
+            interactable.useDynamicAttach = !effectiveNear;
+            interactable.snapToColliderVolume = false;
+            interactable.reinitializeDynamicAttachEverySingleGrab = true;
+
+            var initialInteractablePosition = interactor.transform.position + interactor.transform.forward * 5.0f;
+            interactable.transform.position = initialInteractablePosition;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactable.isSelected, Is.True);
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+
+            if (effectiveNear)
+                Assert.That(interactable.transform.position, Is.EqualTo(interactor.transform.position).Using(Vector3ComparerWithEqualsOperator.Instance));
+            else
+                Assert.That(interactable.transform.position, Is.EqualTo(initialInteractablePosition).Using(Vector3ComparerWithEqualsOperator.Instance));
+        }
+
+        [UnityTest]
+        public IEnumerator TestDetermineSelectionRegion()
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+
+            interactor.enableNearCasting = false;
+            interactor.enableFarCasting = true;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            NearFarInteractor.Region? invokedSelectionRegion = null;
+            interactor.selectionRegion.Subscribe(OnNearFarSelectionRegionChanged);
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactable.isSelected, Is.True);
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+            Assert.That(interactor.selectionRegion.Value, Is.EqualTo(NearFarInteractor.Region.Far));
+            Assert.That(invokedSelectionRegion.HasValue, Is.True);
+            Assert.That(invokedSelectionRegion.Value, Is.EqualTo(NearFarInteractor.Region.Far));
+
+            invokedSelectionRegion = null;
+            interactor.interactionAttachController.MoveTo(interactor.transform.position);
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.selectionRegion.Value, Is.EqualTo(NearFarInteractor.Region.Near));
+            Assert.That(invokedSelectionRegion.HasValue, Is.True);
+            Assert.That(invokedSelectionRegion.Value, Is.EqualTo(NearFarInteractor.Region.Near));
+
+            invokedSelectionRegion = null;
+
+            manager.SelectExit((IXRSelectInteractor)interactor, interactable);
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+            Assert.That(interactor.selectionRegion.Value, Is.EqualTo(NearFarInteractor.Region.None));
+            Assert.That(invokedSelectionRegion.HasValue, Is.True);
+            Assert.That(invokedSelectionRegion.Value, Is.EqualTo(NearFarInteractor.Region.None));
+
+            void OnNearFarSelectionRegionChanged(NearFarInteractor.Region selectionRegion)
+            {
+                invokedSelectionRegion = selectionRegion;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator TestEvaluateNearInteractionPriority()
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+
+            interactor.enableNearCasting = true;
+            interactor.enableFarCasting = true;
+
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = Vector3.zero;
+
+            var interactable2 = TestUtilities.CreateGrabInteractable();
+            interactable2.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            // Wait for Physics update for hit
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            Assert.That(interactable.isSelected, Is.False);
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactable.isSelected, Is.True);
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearFarInteractorManualSelection()
+        {
+            TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.right * 5.0f;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+
+            interactor.StartManualInteraction((IXRSelectInteractable)interactable);
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+
+            interactor.EndManualInteraction();
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearFarInteractorCanSelectInteractorWithSnapVolume()
+        {
+            TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            var snapVolume = TestUtilities.CreateSnapVolume();
+            snapVolume.interactable = interactable;
+            snapVolume.snapToCollider = interactable.colliders[0];
+            snapVolume.transform.position = interactable.transform.position;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    true, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearFarInteractorCurveInteractionCaster([ValueSource(nameof(s_HitDetectionTypes))] CurveInteractionCaster.HitDetectionType hitDetectionType, [ValueSource(nameof(s_NumSegmentValues))] int numSegments)
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var curveInteractionCaster = interactor.farInteractionCaster as CurveInteractionCaster;
+
+            Assert.That(curveInteractionCaster, Is.Not.Null);
+
+            curveInteractionCaster.hitDetectionType = hitDetectionType;
+            curveInteractionCaster.targetNumCurveSegments = numSegments;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            yield return new WaitForSeconds(0.1f);
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            interactor.StartManualInteraction((IXRSelectInteractable)interactable);
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.interactablesSelected, Is.EqualTo(new[] { interactable }));
+
+            interactor.EndManualInteraction();
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.That(interactor.interactablesSelected, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearFarInteractorCurveInteractionCasterBlocked([ValueSource(nameof(s_HitDetectionTypes))] CurveInteractionCaster.HitDetectionType hitDetectionType, [ValueSource(nameof(s_NumSegmentValues))] int numSegments)
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var curveInteractionCaster = interactor.farInteractionCaster as CurveInteractionCaster;
+
+            Assert.That(curveInteractionCaster, Is.Not.Null);
+
+            curveInteractionCaster.hitDetectionType = hitDetectionType;
+            curveInteractionCaster.targetNumCurveSegments = numSegments;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5f;
+
+            yield return new WaitForSeconds(0.1f);
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            var blocker = TestUtilities.CreateCubeGameObject();
+            blocker.transform.position = interactor.transform.position + interactor.transform.forward * 2f;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearFarInteractorCurveInteractionCasterBlockedUI([ValueSource(nameof(s_HitDetectionTypes))] CurveInteractionCaster.HitDetectionType hitDetectionType, [ValueSource(nameof(s_NumSegmentValues))] int numSegments)
+        {
+            var manager = TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractorWithXROrigin(out var camera);
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+            interactor.blockUIOnInteractableSelection = false;
+
+            var curveInteractionCaster = interactor.farInteractionCaster as CurveInteractionCaster;
+
+            Assert.That(curveInteractionCaster, Is.Not.Null);
+
+            curveInteractionCaster.hitDetectionType = hitDetectionType;
+            curveInteractionCaster.targetNumCurveSegments = numSegments;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 2f;
+
+            var blocker = TestUtilities.CreateUICanvas(camera);
+            blocker.transform.position = interactor.transform.position + interactor.transform.forward * 5f;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var validTargets = new List<IXRInteractable>();
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 8f;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            manager.GetValidTargets(interactor, validTargets);
+            Assert.That(validTargets, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator NearFarInteractorCanUseTargetFilterNear()
+        {
+            TestUtilities.CreateInteractionManager();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            var interactable = TestUtilities.CreateGrabInteractable();
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            var filter = new MockTargetFilter();
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>()));
+
+            // Link the filter
+            interactor.targetFilter = filter;
+            Assert.That(interactor.targetFilter, Is.EqualTo(filter));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link
+            }));
+
+            yield return null;
+
+            // Process the filter
+            var validTargets = new List<IXRInteractable>();
+            interactor.GetValidTargets(validTargets);
+            Assert.That(interactor.targetFilter, Is.EqualTo(filter));
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process
+            }));
+
+            // Disable the filter and check if it will no longer be processed
+            filter.canProcess = false;
+
+            yield return null;
+
+            interactor.GetValidTargets(validTargets);
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process
+            }));
+
+            // Unlink the filter
+            interactor.targetFilter = null;
+
+            yield return null;
+
+            Assert.That(interactor.targetFilter, Is.EqualTo(null));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process,
+                TargetFilterCallback.Unlink
+            }));
+        }
+
+        [UnityTest]
+        public IEnumerator NearFarInteractorCanUseTargetFilterFar()
+        {
+            TestUtilities.CreateInteractionManager();
+            TestUtilities.CreateXROrigin();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+            var interactable = TestUtilities.CreateSimpleInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(interactable.isHovered, Is.True);
+
+            // Create the filter
+            var filter = new MockTargetFilter();
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>()));
+
+            // Link the filter
+            interactor.targetFilter = filter;
+            Assert.That(interactor.targetFilter, Is.EqualTo(filter));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link
+            }));
+
+            yield return null;
+
+            // Process the filter
+            var validTargets = new List<IXRInteractable>();
+            interactor.GetValidTargets(validTargets);
+            Assert.That(interactor.targetFilter, Is.EqualTo(filter));
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process
+            }));
+
+            // Disable the filter and check if it will no longer be processed
+            filter.canProcess = false;
+
+            yield return null;
+
+            interactor.GetValidTargets(validTargets);
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process
+            }));
+
+            // Unlink the filter
+            interactor.targetFilter = null;
+
+            yield return null;
+
+            Assert.That(interactor.targetFilter, Is.EqualTo(null));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process,
+                TargetFilterCallback.Unlink
+            }));
+        }
+
+        [UnityTest]
+        public IEnumerator NearFarInteractorCanFilterValidTargetsWithTargetFilterAndSnapVolume()
+        {
+            TestUtilities.CreateInteractionManager();
+            TestUtilities.CreateXROrigin();
+            var interactor = TestUtilities.CreateNearFarInteractor();
+            interactor.transform.position = Vector3.zero;
+            interactor.transform.forward = Vector3.forward;
+
+            var interactable = TestUtilities.CreateGrabInteractable();
+            interactable.transform.position = interactor.transform.position + interactor.transform.forward * 5.0f;
+
+            // Setup snap volume
+            var snapVolume = TestUtilities.CreateSnapVolume();
+            snapVolume.interactable = interactable;
+            snapVolume.snapToCollider = interactable.colliders[0];
+            snapVolume.transform.position = interactable.transform.position;
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            // Select snap volume with interactor
+            var controllerRecorder = TestUtilities.CreateControllerRecorder(interactor, (recording) =>
+            {
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.0f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(0.1f, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+                recording.AddRecordingFrameNonAlloc(new XRControllerState(float.MaxValue, Vector3.zero, Quaternion.identity, InputTrackingState.All, true,
+                    false, false, false));
+            });
+            controllerRecorder.isPlaying = true;
+            controllerRecorder.visitEachFrame = true;
+
+            yield return new WaitForSeconds(0.1f);
+
+            var validTargets = new List<IXRInteractable>();
+            interactor.GetValidTargets(validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+
+            // Create the filter
+            var filter = new MockBlockSelectionTargetFilter();
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>()));
+
+            // Link the filter
+            interactor.targetFilter = filter;
+            Assert.That(interactor.targetFilter, Is.EqualTo(filter));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link
+            }));
+
+            yield return null;
+
+            // Process the filter
+            validTargets = new List<IXRInteractable>();
+            interactor.GetValidTargets(validTargets);
+            Assert.That(interactor.targetFilter, Is.EqualTo(filter));
+            Assert.That(validTargets, Is.Empty);
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process
+            }));
+
+            // Check that the endpoint returned has also been filtered if snapping is enabled
+            var endPointType = interactor.TryGetCurveEndPoint(out var endPoint, true, true);
+            Assert.That(endPointType, Is.EqualTo(EndPointType.None));
+
+            // Disable the filter and check if the valid targets list is correct again
+            filter.canProcess = false;
+
+            yield return null;
+
+            interactor.GetValidTargets(validTargets);
+            validTargets = new List<IXRInteractable>();
+            interactor.GetValidTargets(validTargets);
+            Assert.That(validTargets, Is.EqualTo(new[] { interactable }));
+            Assert.That(filter.callbackExecution, Is.EqualTo(new List<TargetFilterCallback>
+            {
+                TargetFilterCallback.Link,
+                TargetFilterCallback.Process
+            }));
+        }
+
+        [UnityTest]
+        public IEnumerator TestNearFarInteractorCreateAndDestroyCleanup([ValueSource(nameof(s_BooleanValues))] bool enableStabilization)
+        {
+            TestUtilities.CreateInteractionManager();
+
+            // Create interactor and enable stabilization on the casters if configured this test case
+            var interactor = TestUtilities.CreateNearFarInteractorWithXROrigin(out _, enableStabilization);
+
+            yield return null;
+
+            var nearCastOrigin = interactor.nearInteractionCaster.castOrigin;
+            var farCastOrigin = interactor.farInteractionCaster.castOrigin;
+            var effectiveNearOrigin = interactor.nearInteractionCaster.effectiveCastOrigin;
+            var effectiveFarOrigin = interactor.farInteractionCaster.effectiveCastOrigin;
+            var attachTransform = interactor.attachTransform;
+
+            Assert.That(interactor == null, Is.False, "The NearFarInteractor should not be null.");
+            Assert.That(nearCastOrigin == null, Is.False, "The nearInteractionCaster.castOrigin should not be null.");
+            Assert.That(farCastOrigin == null, Is.False, "The farInteractionCaster.castOrigin should not be null.");
+            Assert.That(effectiveNearOrigin == null, Is.False, "The nearInteractionCaster.effectiveCastOrigin should not be null.");
+            Assert.That(effectiveFarOrigin == null, Is.False, "The farInteractionCaster.effectiveCastOrigin should not be null.");
+            Assert.That(attachTransform == null, Is.False, "The attachTransform should not be null.");
+
+            yield return null;
+
+            Object.Destroy(interactor.gameObject);
+
+            // Yield a frame to allow for the destroyed interactor to be fully disposed before asserting the interactor and casters are also destroyed
+            yield return null;
+
+            Assert.That(interactor == null, Is.True, "The NearFarInteractor should have been destroyed.");
+            Assert.That(nearCastOrigin == null, Is.True, "The nearInteractionCaster.castOrigin should have been destroyed.");
+            Assert.That(farCastOrigin == null, Is.True, "The farInteractionCaster.castOrigin should have been destroyed.");
+            Assert.That(effectiveNearOrigin == null, Is.True, "The nearInteractionCaster.effectiveCastOrigin should have been destroyed.");
+            Assert.That(effectiveFarOrigin == null, Is.True, "The farInteractionCaster.effectiveCastOrigin should have been destroyed.");
+            Assert.That(attachTransform == null, Is.True, "The attachTransform should have been destroyed.");
+        }
+    }
+}
