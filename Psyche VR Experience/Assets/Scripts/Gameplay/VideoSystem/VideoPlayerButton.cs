@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -40,8 +41,8 @@ namespace PsycheVR.Gameplay
         [SerializeField] private float pressScale = 0.85f;
 
         [Header("Debug")]
-        [Tooltip("Keyboard key to toggle play/pause for testing without VR.")]
-        [SerializeField] private KeyCode debugKey = KeyCode.P;
+        [Tooltip("Keyboard key to toggle play/pause for testing without VR (default: P).")]
+        [SerializeField] private Key debugKey = Key.P;
 
         private XRSimpleInteractable _interactable;
         private VideoPlayer _videoPlayer;
@@ -79,7 +80,7 @@ namespace PsycheVR.Gameplay
 
         private void Update()
         {
-            if (Input.GetKeyDown(debugKey))
+            if (Keyboard.current != null && Keyboard.current[debugKey].wasPressedThisFrame)
             {
                 ToggleVideo();
                 AnimatePress();
