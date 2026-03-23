@@ -1,22 +1,18 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Video;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace PsycheVR.Gameplay
 {
     /// <summary>
-    /// Plays or pauses a VideoPlayer when the user interacts with this object.
-    /// Works with XR interaction (grab/poke) and keyboard input for testing.
+    /// Plays or pauses a VideoPlayer when the 3D button is clicked.
+    /// Works with mouse click (OnMouseDown) and VR interaction.
     ///
     /// Setup:
-    ///   1. Attach to a 3D object (e.g. a cube acting as a button)
+    ///   1. Attach to a 3D object with a Collider (e.g. a cube)
     ///   2. Assign a VideoClip in the Inspector
-    ///   3. Assign the Target Renderer (the screen quad/plane that shows the video)
-    ///   4. Press P or interact in VR to toggle play/pause
+    ///   3. Assign the Target Renderer (the screen that shows the video)
+    ///   4. Click the red button to play, click again to pause
     /// </summary>
-    [RequireComponent(typeof(XRSimpleInteractable))]
     public class VideoPlayerButton : MonoBehaviour
     {
         [Header("Video Settings")]
@@ -27,7 +23,7 @@ namespace PsycheVR.Gameplay
         [SerializeField] private bool loop = true;
 
         [Header("Render Target")]
-        [Tooltip("The renderer whose material will display the video (e.g. a Quad).")]
+        [Tooltip("The renderer whose material will display the video.")]
         [SerializeField] private Renderer targetRenderer;
 
         [Header("Button Feedback")]
@@ -37,14 +33,6 @@ namespace PsycheVR.Gameplay
         [Tooltip("Color of the button when video is playing.")]
         [SerializeField] private Color playingColor = Color.green;
 
-        [Tooltip("How much the button scales down when pressed.")]
-        [SerializeField] private float pressScale = 0.85f;
-
-        [Header("Debug")]
-        [Tooltip("Keyboard key to toggle play/pause for testing without VR (default: P).")]
-        [SerializeField] private Key debugKey = Key.P;
-
-        private XRSimpleInteractable _interactable;
         private VideoPlayer _videoPlayer;
         private Renderer _buttonRenderer;
         private MaterialPropertyBlock _propBlock;
@@ -53,7 +41,6 @@ namespace PsycheVR.Gameplay
 
         private void Awake()
         {
-            _interactable = GetComponent<XRSimpleInteractable>();
             _buttonRenderer = GetComponent<Renderer>();
             _propBlock = new MaterialPropertyBlock();
             _originalScale = transform.localScale;
@@ -61,30 +48,10 @@ namespace PsycheVR.Gameplay
             _videoPlayer = gameObject.AddComponent<VideoPlayer>();
         }
 
-        private void OnEnable()
+        private void Start()
         {
-            _interactable.selectEntered.AddListener(OnButtonPressed);
-            _interactable.hoverEntered.AddListener(OnHoverEnter);
-            _interactable.hoverExited.AddListener(OnHoverExit);
-
             SetupVideoPlayer();
             UpdateButtonColor();
-        }
-
-        private void OnDisable()
-        {
-            _interactable.selectEntered.RemoveListener(OnButtonPressed);
-            _interactable.hoverEntered.RemoveListener(OnHoverEnter);
-            _interactable.hoverExited.RemoveListener(OnHoverExit);
-        }
-
-        private void Update()
-        {
-            if (Keyboard.current != null && Keyboard.current[debugKey].wasPressedThisFrame)
-            {
-                ToggleVideo();
-                AnimatePress();
-            }
         }
 
         private void SetupVideoPlayer()
@@ -102,23 +69,19 @@ namespace PsycheVR.Gameplay
             _videoPlayer.Prepare();
         }
 
-        private void OnButtonPressed(SelectEnterEventArgs args)
+        /// <summary>
+        /// Mouse click on the 3D button triggers video toggle.
+        /// </summary>
+        private void OnMouseDown()
         {
             ToggleVideo();
-            AnimatePress();
+            StartCoroutine(PressAnimation());
         }
 
-        private void OnHoverEnter(HoverEnterEventArgs args)
-        {
-            transform.localScale = _originalScale * 1.1f;
-        }
-
-        private void OnHoverExit(HoverExitEventArgs args)
-        {
-            transform.localScale = _originalScale;
-        }
-
-        private void ToggleVideo()
+        /// <summary>
+        /// Public method - can be called from UI Button OnClick or XR events.
+        /// </summary>
+        public void ToggleVideo()
         {
             if (_isPlaying)
             {
@@ -143,15 +106,9 @@ namespace PsycheVR.Gameplay
             _buttonRenderer.SetPropertyBlock(_propBlock);
         }
 
-        private void AnimatePress()
-        {
-            StopAllCoroutines();
-            StartCoroutine(PressAnimation());
-        }
-
         private System.Collections.IEnumerator PressAnimation()
         {
-            transform.localScale = _originalScale * pressScale;
+            transform.localScale = _originalScale * 0.85f;
             yield return new WaitForSeconds(0.15f);
             transform.localScale = _originalScale;
         }
