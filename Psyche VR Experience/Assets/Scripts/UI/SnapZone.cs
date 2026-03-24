@@ -11,6 +11,7 @@ public class SnapZone : MonoBehaviour
     public Material validMat;
     public Material invalidMat;
     public bool hasSnapped;
+    public InstructionTextManager textManager;
 
     private XRGrabInteractable currentObject;
 
@@ -29,7 +30,10 @@ public class SnapZone : MonoBehaviour
         if (grab == null) return;
 
         SnappableObject snapState = other.attachedRigidbody.GetComponent<SnappableObject>();
-        if (snapState != null && snapState.isSnapped) return;
+        if (snapState != null && snapState.isSnapped) {
+            return;
+        };
+        
 
         currentObject = grab;
 
@@ -98,6 +102,7 @@ public class SnapZone : MonoBehaviour
             zoneRenderer.enabled = false;
 
         grab.selectExited.RemoveListener(OnReleased);
+        textManager.SetText("Correct!");
         currentObject = null;
     }
 }
