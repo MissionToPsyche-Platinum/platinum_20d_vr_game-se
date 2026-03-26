@@ -1,60 +1,86 @@
 # Chalkboard Display System
 
 ## Overview
-A central chalkboard/display board in the scene updates with educational info when the player grabs a spacecraft component. When released, it resets to default text.
+A central chalkboard displays educational info about Psyche spacecraft components. Grab a piece to see its info, snap it into place for a permanent confirmation with progress tracking.
 
-## How It Works
-1. Player grabs a spacecraft piece
-2. The chalkboard updates to show the component name + educational fact
-3. Player releases the piece → chalkboard resets to default
+## Architecture
 
-## Spacecraft Components
-
-| Component | Description |
-|-----------|------------|
-| **Solar Panel** | Two 5-panel cross-shaped arrays power the spacecraft. They produce 21 kW near Earth and 2.3 kW at asteroid Psyche. |
-| **Magnetometer** | Detects evidence of an ancient magnetic field on asteroid Psyche, helping determine if it was once a planetary core. |
-| **Multispectral Imager** | Twin cameras photograph the asteroid surface in visible and near-infrared light to map its geology. |
-| **Gamma-Ray Spectrometer** | Determines the chemical elements on the surface by detecting gamma-ray and neutron emissions. |
-| **Hall-Effect Thruster** | Solar electric propulsion using xenon gas. Psyche is the first interplanetary spacecraft to use this technology. |
-| **Spacecraft Bus** | The main chassis that holds all instruments, thrusters, and solar panels together. Based on Maxar's SSL-1300 platform. |
+```
+ComponentData (ScriptableObject)     Chalkboard (scene singleton)
+  - componentName                      - nameText (TMP)
+  - description                        - infoText (TMP)
+  - icon                               - progressText (TMP)
+       |                                     ^
+       v                                     |
+ComponentInfo (on each piece)  ------>  updates board
+  - listens to grab/release events       via ShowComponentInfo()
+  - listens to SnappableObject.onSnapped via ShowSnappedInfo()
+  - visual feedback (color, scale)       via ShowDefault()
+```
 
 ## Scripts
 
+### ComponentData.cs (ScriptableObject)
+Create via **Assets > Create > Psyche VR > Component Data**.
+- `componentName` — display name
+- `description` — educational text
+- `icon` — optional sprite
+
+Pre-made assets in `Assets/ScriptableObjects/MissionContent/`:
+- SolarPanel, Magnetometer, MultispectralImager
+- GammaRaySpectrometer, HallEffectThruster, SpacecraftBus
+
 ### Chalkboard.cs
-The display board. One per scene.
-- `ShowComponentInfo(name, info)` — updates the board text
-- `ShowDefault()` — resets to default text
-- Tag the GameObject as **"Chalkboard"** so pieces can find it automatically
+One per scene. Tag as **"Chalkboard"**.
+- Fade transitions between text changes
+- Progress counter ("X/6 components placed")
+- Checkmark on snapped components
+- `onAllComponentsPlaced` UnityEvent when puzzle complete
 
 ### ComponentInfo.cs
 Attach to each spacecraft piece.
-- When grabbed (VR) or clicked (mouse), updates the Chalkboard
-- When released, resets the Chalkboard
-- Works with XRGrabInteractable for VR and OnMouseDown for desktop testing
+- Drag a ComponentData asset into the **Data** field
+- Updates chalkboard on VR grab or mouse click
+- Event-driven snap detection (no polling)
+- Highlight color when held, green when snapped
+- Hover scale-up effect in VR
+- Auto-finds Chalkboard by tag
+
+### SnappableObject.cs (modified)
+- Added `onSnapped` event — fires when `isSnapped` is set to true
+- Eliminates polling in ComponentInfo's Update loop
 
 ## Setup
 
-### 1. Create the Chalkboard
-1. Create a **Quad** in the scene (this is the board surface)
-2. Scale it to ~2x1.5, position on a wall
-3. Add a **World Space Canvas** as a child
-4. Add a **Panel** to the Canvas (dark background)
-5. Add two **TextMeshPro - Text** elements (header + body)
-6. Add the **Chalkboard** script to the Quad
-7. Assign the TMP text references
-8. **Tag** the Quad as `Chalkboard`
+### Chalkboard
+1. Create a **Quad** (board surface), scale ~2x1.5, place on wall
+2. Add child **Canvas** (World Space), size to match
+3. Add **Panel** + three **TextMeshPro - Text** elements (name, info, progress)
+4. Add **CanvasGroup** to Canvas
+5. Add **Chalkboard** script, assign text fields
+6. Tag as `Chalkboard`
 
-### 2. Set Up Each Piece
-1. Select a spacecraft piece (e.g. SolarPanel cube)
-2. Add the **ComponentInfo** script
-3. Set **Component Name** (e.g. "Solar Panel")
-4. Set **Component Info** (educational text from table above)
-5. Leave Chalkboard field empty — it auto-finds by tag
+### Each Piece
+1. Must have: **Collider**, **Rigidbody**, **PsycheGrabbable**, **SnappableObject**
+2. Add **ComponentInfo** script
+3. Drag the matching **ComponentData** asset from `ScriptableObjects/MissionContent/`
+4. Chalkboard auto-discovered by tag
 
-### 3. Desktop Testing
-Just click any piece with the mouse. The chalkboard updates instantly.
+### Desktop Testing
+Click and hold a piece with mouse — chalkboard updates. Release — resets.
+
+## Spacecraft Components
+
+| Component | Info |
+|-----------|------|
+| **Solar Panel** | Two 5-panel cross-shaped arrays. 21 kW near Earth, 2.3 kW at Psyche (3+ AU from Sun). |
+| **Magnetometer** | Detects ancient magnetic field evidence to determine if Psyche was a planetary core. |
+| **Multispectral Imager** | Twin cameras mapping surface geology in visible and near-infrared light. |
+| **Gamma-Ray Spectrometer** | Identifies surface chemical elements via gamma-ray and neutron emissions. |
+| **Hall-Effect Thruster** | First interplanetary use of Hall-effect thrusters. Solar electric propulsion with xenon gas. |
+| **Spacecraft Bus** | Maxar SSL-1300 platform chassis. Manages power, comms, and holds all components. |
 
 ## Sources
-- [Psyche Spacecraft Info](https://psyche.ssl.berkeley.edu/mission/the-spacecraft/)
+- [Psyche Spacecraft](https://psyche.ssl.berkeley.edu/mission/the-spacecraft/)
 - [JPL Quick Facts](https://www.jpl.nasa.gov/press-kits/psyche/quick-facts/)
+- [NASA Psyche Instruments](https://science.nasa.gov/blogs/psyche/2023/10/13/the-psyche-spacecraft-and-science-instruments/)

@@ -1,61 +1,133 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using TMPro;
 
-/// <summary>
-/// A central display board (chalkboard) that shows info about spacecraft
-/// components. Any ComponentInfo piece can update this board when grabbed.
-///
-/// Setup:
-///   1. Create a Quad or Plane in the scene (the chalkboard surface)
-///   2. Add a WorldSpace Canvas as a child with TextMeshPro elements
-///   3. Attach this script and assign the text references
-///   4. ComponentInfo pieces will find this board automatically via tag
-///
-/// Tag the chalkboard GameObject as "Chalkboard" so pieces can find it.
-/// </summary>
-public class Chalkboard : MonoBehaviour
+namespace PsycheVR.UI
 {
-    [Header("UI References")]
-    [Tooltip("TextMeshPro element for the component name (large header).")]
-    [SerializeField] private TextMeshProUGUI nameText;
-
-    [Tooltip("TextMeshPro element for the educational info (body text).")]
-    [SerializeField] private TextMeshProUGUI infoText;
-
-    [Header("Default Text")]
-    [Tooltip("Text shown when no piece is being held.")]
-    [SerializeField] private string defaultName = "Psyche Spacecraft";
-
-    [Tooltip("Default info when no piece is held.")]
-    [TextArea(2, 5)]
-    [SerializeField] private string defaultInfo = "Pick up a component to learn about it.";
-
-    private void Start()
-    {
-        ShowDefault();
-    }
-
     /// <summary>
-    /// Update the chalkboard with component info. Called by ComponentInfo when grabbed.
+    /// Central display board that shows educational info about spacecraft
+    /// components. Updated by ComponentInfo when a piece is grabbed or snapped.
+    ///
+    /// Tag this GameObject as "Chalkboard" so ComponentInfo can auto-find it.
     /// </summary>
-    public void ShowComponentInfo(string componentName, string componentInfo)
+    public class Chalkboard : MonoBehaviour
     {
-        if (nameText != null)
-            nameText.text = componentName;
+        [Header("UI References")]
+        [SerializeField] private TextMeshProUGUI nameText;
+        [SerializeField] private TextMeshProUGUI infoText;
+        [SerializeField] private TextMeshProUGUI progressText;
 
-        if (infoText != null)
-            infoText.text = componentInfo;
-    }
+        [Header("Default State")]
+        [SerializeField] private string defaultName = "Psyche Spacecraft";
+        [TextArea(2, 5)]
+        [SerializeField] private string defaultInfo = "Pick up a component to learn about it.";
 
-    /// <summary>
-    /// Reset the chalkboard to default text. Called by ComponentInfo when released.
-    /// </summary>
-    public void ShowDefault()
-    {
-        if (nameText != null)
-            nameText.text = defaultName;
+        [Header("Animation")]
+        [SerializeField] private float fadeSpeed = 0.25f;
 
-        if (infoText != null)
-            infoText.text = defaultInfo;
+        [Header("Events")]
+        public UnityEvent onAllComponentsPlaced;
+
+        private CanvasGroup _canvasGroup;
+        private int _totalComponents;
+        private int _snappedCount;
+        private Coroutine _fadeRoutine;
+
+        public int SnappedCount => _snappedCount;
+        public int TotalComponents => _totalComponents;
+
+        private void Awake()
+        {
+            _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            if (_canvasGroup == null)
+            {
+                var canvas = GetComponentInChildren<Canvas>();
+                if (canvas != null)
+                    _canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        private void Start()
+        {
+            _totalComponents = FindObjectsByType<ComponentInfo>(FindObjectsSortMode.None).Length;
+            ShowDefault();
+            UpdateProgress();
+        }
+
+        /// <summary>
+        /// Called by ComponentInfo when a piece is grabbed.
+        /// </summary>
+        public void ShowComponentInfo(ComponentData data)
+        {
+            if (data == null) return;
+            SetText(data.componentName, data.description);
+        }
+
+        /// <summary>
+        /// Called by ComponentInfo when a piece is snapped into place.
+        /// </summary>
+        public void ShowSnappedInfo(ComponentData data)
+        {
+            if (data == null) return;
+            _snappedCount++;
+            SetText(data.componentName + "  \u2714", data.description);
+            UpdateProgress();
+
+            if (_snappedCount >= _totalComponents)
+                onAllComponentsPlaced?.Invoke();
+        }
+
+        /// <summary>
+        /// Called by ComponentInfo when a piece is released without snapping.
+        /// </summary>
+        public void ShowDefault()
+        {
+            SetText(defaultName, defaultInfo);
+        }
+
+        private void SetText(string nameStr, string infoStr)
+        {
+            if (_fadeRoutine != null)
+                StopCoroutine(_fadeRoutine);
+
+            _fadeRoutine = StartCoroutine(FadeTransition(nameStr, infoStr));
+        }
+
+        private IEnumerator FadeTransition(string nameStr, string infoStr)
+        {
+            if (_canvasGroup != null)
+            {
+                float t = _canvasGroup.alpha;
+                while (t > 0f)
+                {
+                    t -= Time.deltaTime / fadeSpeed;
+                    _canvasGroup.alpha = Mathf.Max(0f, t);
+                    yield return null;
+                }
+            }
+
+            if (nameText != null) nameText.text = nameStr;
+            if (infoText != null) infoText.text = infoStr;
+
+            if (_canvasGroup != null)
+            {
+                float t = 0f;
+                while (t < 1f)
+                {
+                    t += Time.deltaTime / fadeSpeed;
+                    _canvasGroup.alpha = Mathf.Min(1f, t);
+                    yield return null;
+                }
+            }
+
+            _fadeRoutine = null;
+        }
+
+        private void UpdateProgress()
+        {
+            if (progressText != null && _totalComponents > 0)
+                progressText.text = $"{_snappedCount} / {_totalComponents} components placed";
+        }
     }
 }

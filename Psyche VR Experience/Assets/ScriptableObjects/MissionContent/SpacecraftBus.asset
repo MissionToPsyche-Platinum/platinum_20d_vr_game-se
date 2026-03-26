@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1a2b3c4d5e6f7890123456789abcdef, type: 3}
+  m_Name: SpacecraftBus
+  m_EditorClassIdentifier: PsycheVR.UI::ComponentData
+  componentName: Spacecraft Bus
+  description: The main chassis based on Maxar's SSL-1300 platform. It holds all instruments, thrusters, and solar panels together and manages power and communications.
+  icon: {fileID: 0}
