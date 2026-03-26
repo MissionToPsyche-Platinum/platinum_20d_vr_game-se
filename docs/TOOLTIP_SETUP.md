@@ -1,7 +1,12 @@
-# Snap Zone Tooltip System
+# Chalkboard Display System
 
 ## Overview
-When a spacecraft piece is snapped into place (or clicked in desktop testing), a tooltip appears showing the component name and an educational fact about it.
+A central chalkboard/display board in the scene updates with educational info when the player grabs a spacecraft component. When released, it resets to default text.
+
+## How It Works
+1. Player grabs a spacecraft piece
+2. The chalkboard updates to show the component name + educational fact
+3. Player releases the piece → chalkboard resets to default
 
 ## Spacecraft Components
 
@@ -16,41 +21,39 @@ When a spacecraft piece is snapped into place (or clicked in desktop testing), a
 
 ## Scripts
 
-### SnapZoneTooltip.cs
-For use with the real snap zone system. Attach alongside `SnapZone` on a snap zone object.
-- Monitors `SnapZone.hasSnapped`
-- When a piece snaps in, shows a tooltip with fade-in animation
-- Configurable delay, duration, and content
+### Chalkboard.cs
+The display board. One per scene.
+- `ShowComponentInfo(name, info)` — updates the board text
+- `ShowDefault()` — resets to default text
+- Tag the GameObject as **"Chalkboard"** so pieces can find it automatically
 
-### TooltipTestButton.cs
-For desktop POC testing without VR. Attach to any 3D object with a Collider.
-- Click a cube to simulate a snap
-- Cube turns green, tooltip appears
-- No XR dependencies
+### ComponentInfo.cs
+Attach to each spacecraft piece.
+- When grabbed (VR) or clicked (mouse), updates the Chalkboard
+- When released, resets the Chalkboard
+- Works with XRGrabInteractable for VR and OnMouseDown for desktop testing
 
-## Testing the POC (TooltipTest Scene)
+## Setup
 
-1. Open `Assets/Scenes/TooltipTest`
-2. The scene has 6 cubes representing spacecraft components
-3. For each cube, you need to wire up in the Inspector:
-   - Add **TooltipTestButton** component
-   - Set **Component Name** and **Component Info**
-   - Create a **Canvas** (right-click Hierarchy > UI > Canvas)
-   - Add a **Panel** as child of Canvas
-   - Add two **TextMeshPro - Text** elements inside the Panel (one for name, one for info)
-   - Drag the Panel into **Tooltip Panel** field
-   - Drag the TMP texts into **Name Text** and **Info Text** fields
-4. Hit Play and click any cube
+### 1. Create the Chalkboard
+1. Create a **Quad** in the scene (this is the board surface)
+2. Scale it to ~2x1.5, position on a wall
+3. Add a **World Space Canvas** as a child
+4. Add a **Panel** to the Canvas (dark background)
+5. Add two **TextMeshPro - Text** elements (header + body)
+6. Add the **Chalkboard** script to the Quad
+7. Assign the TMP text references
+8. **Tag** the Quad as `Chalkboard`
 
-## Integrating with Real Snap Zones
+### 2. Set Up Each Piece
+1. Select a spacecraft piece (e.g. SolarPanel cube)
+2. Add the **ComponentInfo** script
+3. Set **Component Name** (e.g. "Solar Panel")
+4. Set **Component Info** (educational text from table above)
+5. Leave Chalkboard field empty — it auto-finds by tag
 
-When spacecraft models are ready (TG-57), add `SnapZoneTooltip` to each snap zone:
-
-1. Select a SnapZone object (e.g. GoldSnapZone)
-2. Add Component > SnapZoneTooltip
-3. Set Component Name and Info
-4. Create/assign tooltip UI elements
-5. The tooltip auto-triggers when `SnapZone.hasSnapped` becomes true
+### 3. Desktop Testing
+Just click any piece with the mouse. The chalkboard updates instantly.
 
 ## Sources
 - [Psyche Spacecraft Info](https://psyche.ssl.berkeley.edu/mission/the-spacecraft/)
