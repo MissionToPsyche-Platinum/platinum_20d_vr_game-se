@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Magnetometer
   m_EditorClassIdentifier: PsycheVR.UI::ComponentData
   componentName: Magnetometer
+  category: Science Instrument
   description: Detects evidence of an ancient magnetic field on asteroid Psyche, helping scientists determine if it was once the core of a planetesimal.
   icon: {fileID: 0}

@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: GammaRaySpectrometer
   m_EditorClassIdentifier: PsycheVR.UI::ComponentData
   componentName: Gamma-Ray Spectrometer
+  category: Science Instrument
   description: Determines the chemical elements on the asteroid's surface by detecting gamma-ray and neutron emissions and matching them to known elements.
   icon: {fileID: 0}

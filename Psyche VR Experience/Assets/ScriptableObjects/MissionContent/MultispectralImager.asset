@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: MultispectralImager
   m_EditorClassIdentifier: PsycheVR.UI::ComponentData
   componentName: Multispectral Imager
+  category: Science Instrument
   description: Twin cameras photograph the asteroid surface in visible and near-infrared light to map its geology and determine its composition.
   icon: {fileID: 0}

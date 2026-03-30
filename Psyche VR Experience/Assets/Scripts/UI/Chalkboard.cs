@@ -23,19 +23,33 @@ namespace PsycheVR.UI
         [TextArea(2, 5)]
         [SerializeField] private string defaultInfo = "Pick up a component to learn about it.";
 
+        [Header("Completion")]
+        [SerializeField] private string completionName = "Assembly Complete!";
+        [TextArea(2, 5)]
+        [SerializeField] private string completionInfo =
+            "All components are in place. The Psyche spacecraft is ready for its mission to explore asteroid 16 Psyche — a metal-rich world that may be the exposed core of an early planet.";
+
         [Header("Animation")]
         [SerializeField] private float fadeSpeed = 0.25f;
+
+        [Header("Audio")]
+        [Tooltip("Sound played when a component is snapped.")]
+        [SerializeField] private AudioClip snapSound;
+        [Tooltip("Sound played when all components are placed.")]
+        [SerializeField] private AudioClip completionSound;
 
         [Header("Events")]
         public UnityEvent onAllComponentsPlaced;
 
         private CanvasGroup _canvasGroup;
+        private AudioSource _audioSource;
         private int _totalComponents;
         private int _snappedCount;
         private Coroutine _fadeRoutine;
 
         public int SnappedCount => _snappedCount;
         public int TotalComponents => _totalComponents;
+        public bool IsComplete => _totalComponents > 0 && _snappedCount >= _totalComponents;
 
         private void Awake()
         {
@@ -46,6 +60,13 @@ namespace PsycheVR.UI
                 if (canvas != null)
                     _canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
             }
+
+            _audioSource = GetComponent<AudioSource>();
+            if (_audioSource == null)
+                _audioSource = gameObject.AddComponent<AudioSource>();
+
+            _audioSource.playOnAwake = false;
+            _audioSource.spatialBlend = 1f;
         }
 
         private void Start()
@@ -61,7 +82,7 @@ namespace PsycheVR.UI
         public void ShowComponentInfo(ComponentData data)
         {
             if (data == null) return;
-            SetText(data.componentName, data.description);
+            SetText(data.DisplayTitle, data.description);
         }
 
         /// <summary>
@@ -71,11 +92,25 @@ namespace PsycheVR.UI
         {
             if (data == null) return;
             _snappedCount++;
-            SetText(data.componentName + "  \u2714", data.description);
+
+            if (snapSound != null)
+                _audioSource.PlayOneShot(snapSound);
+
             UpdateProgress();
 
             if (_snappedCount >= _totalComponents)
+            {
+                SetText(completionName, completionInfo);
+
+                if (completionSound != null)
+                    _audioSource.PlayOneShot(completionSound);
+
                 onAllComponentsPlaced?.Invoke();
+            }
+            else
+            {
+                SetText(data.DisplayTitle + "  \u2714", data.description);
+            }
         }
 
         /// <summary>
@@ -83,6 +118,7 @@ namespace PsycheVR.UI
         /// </summary>
         public void ShowDefault()
         {
+            if (IsComplete) return;
             SetText(defaultName, defaultInfo);
         }
 

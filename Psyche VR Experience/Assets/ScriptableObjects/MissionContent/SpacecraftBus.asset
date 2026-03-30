@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: SpacecraftBus
   m_EditorClassIdentifier: PsycheVR.UI::ComponentData
   componentName: Spacecraft Bus
+  category: Structure
   description: The main chassis based on Maxar's SSL-1300 platform. It holds all instruments, thrusters, and solar panels together and manages power and communications.
   icon: {fileID: 0}

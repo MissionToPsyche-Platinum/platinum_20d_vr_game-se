@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: SolarPanel
   m_EditorClassIdentifier: PsycheVR.UI::ComponentData
   componentName: Solar Panel
+  category: Power System
   description: Two 5-panel cross-shaped arrays power the spacecraft. They produce 21 kW near Earth and 2.3 kW at asteroid Psyche, over 3 AU from the Sun.
   icon: {fileID: 0}

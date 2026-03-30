@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: HallEffectThruster
   m_EditorClassIdentifier: PsycheVR.UI::ComponentData
   componentName: Hall-Effect Thruster
+  category: Propulsion
   description: Solar electric propulsion using ionized xenon gas. Psyche is the first interplanetary spacecraft to use Hall-effect thrusters beyond lunar orbit.
   icon: {fileID: 0}
