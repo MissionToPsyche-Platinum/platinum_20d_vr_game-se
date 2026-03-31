@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
+using UnityEngine.UI;
 
 namespace PsycheVR.UI
 {
@@ -17,6 +18,8 @@ namespace PsycheVR.UI
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI infoText;
         [SerializeField] private TextMeshProUGUI progressText;
+        [Tooltip("Optional image element for component icons.")]
+        [SerializeField] private Image iconImage;
 
         [Header("Default State")]
         [SerializeField] private string defaultName = "Psyche Spacecraft";
@@ -27,10 +30,12 @@ namespace PsycheVR.UI
         [SerializeField] private string completionName = "Assembly Complete!";
         [TextArea(2, 5)]
         [SerializeField] private string completionInfo =
-            "All components are in place. The Psyche spacecraft is ready for its mission to explore asteroid 16 Psyche — a metal-rich world that may be the exposed core of an early planet.";
+            "All components are in place. The Psyche spacecraft is ready for its mission to explore asteroid 16 Psyche \u2014 a metal-rich world that may be the exposed core of an early planet.";
 
         [Header("Animation")]
         [SerializeField] private float fadeSpeed = 0.25f;
+        [Tooltip("Scale punch on the name text when a piece is snapped.")]
+        [SerializeField] private float snapPunchScale = 1.15f;
 
         [Header("Audio")]
         [Tooltip("Sound played when a component is snapped.")]
@@ -46,6 +51,9 @@ namespace PsycheVR.UI
         private int _totalComponents;
         private int _snappedCount;
         private Coroutine _fadeRoutine;
+        private Coroutine _punchRoutine;
+        private Vector3 _nameOriginalScale;
+        private ComponentData _lastShownData;
 
         public int SnappedCount => _snappedCount;
         public int TotalComponents => _totalComponents;
@@ -67,11 +75,15 @@ namespace PsycheVR.UI
 
             _audioSource.playOnAwake = false;
             _audioSource.spatialBlend = 1f;
+
+            if (nameText != null)
+                _nameOriginalScale = nameText.transform.localScale;
         }
 
         private void Start()
         {
             _totalComponents = FindObjectsByType<ComponentInfo>(FindObjectsSortMode.None).Length;
+            UpdateIcon(null);
             ShowDefault();
             UpdateProgress();
         }
@@ -82,6 +94,8 @@ namespace PsycheVR.UI
         public void ShowComponentInfo(ComponentData data)
         {
             if (data == null) return;
+            _lastShownData = data;
+            UpdateIcon(data.icon);
             SetText(data.DisplayTitle, data.description);
         }
 
@@ -92,11 +106,13 @@ namespace PsycheVR.UI
         {
             if (data == null) return;
             _snappedCount++;
+            _lastShownData = data;
 
             if (snapSound != null)
                 _audioSource.PlayOneShot(snapSound);
 
             UpdateProgress();
+            UpdateIcon(data.icon);
 
             if (_snappedCount >= _totalComponents)
             {
@@ -111,6 +127,8 @@ namespace PsycheVR.UI
             {
                 SetText(data.DisplayTitle + "  \u2714", data.description);
             }
+
+            PunchName();
         }
 
         /// <summary>
@@ -119,6 +137,8 @@ namespace PsycheVR.UI
         public void ShowDefault()
         {
             if (IsComplete) return;
+            _lastShownData = null;
+            UpdateIcon(null);
             SetText(defaultName, defaultInfo);
         }
 
@@ -158,6 +178,51 @@ namespace PsycheVR.UI
             }
 
             _fadeRoutine = null;
+        }
+
+        private void PunchName()
+        {
+            if (nameText == null) return;
+
+            if (_punchRoutine != null)
+                StopCoroutine(_punchRoutine);
+
+            _punchRoutine = StartCoroutine(PunchAnimation());
+        }
+
+        private IEnumerator PunchAnimation()
+        {
+            var tf = nameText.transform;
+            tf.localScale = _nameOriginalScale * snapPunchScale;
+
+            float t = 0f;
+            while (t < 0.3f)
+            {
+                t += Time.deltaTime;
+                tf.localScale = Vector3.Lerp(
+                    _nameOriginalScale * snapPunchScale,
+                    _nameOriginalScale,
+                    t / 0.3f);
+                yield return null;
+            }
+
+            tf.localScale = _nameOriginalScale;
+            _punchRoutine = null;
+        }
+
+        private void UpdateIcon(Sprite icon)
+        {
+            if (iconImage == null) return;
+
+            if (icon != null)
+            {
+                iconImage.sprite = icon;
+                iconImage.enabled = true;
+            }
+            else
+            {
+                iconImage.enabled = false;
+            }
         }
 
         private void UpdateProgress()

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -21,6 +22,8 @@ namespace PsycheVR.UI
         [Header("Visual Feedback")]
         [SerializeField] private Color highlightColor = new Color(0.4f, 0.8f, 1f, 1f);
         [SerializeField] private Color snappedColor = new Color(0.2f, 1f, 0.2f, 1f);
+        [Tooltip("Emission intensity when the piece is highlighted.")]
+        [SerializeField] private float highlightEmission = 0.3f;
 
         [Header("References")]
         [Tooltip("Leave empty to auto-find by 'Chalkboard' tag.")]
@@ -36,6 +39,7 @@ namespace PsycheVR.UI
         private bool _isHeld;
 
         public ComponentData Data => data;
+        public bool IsSnapped => _isSnapped;
 
         private void Awake()
         {
@@ -101,6 +105,7 @@ namespace PsycheVR.UI
             _isHeld = true;
             chalkboard?.ShowComponentInfo(data);
             SetColor(highlightColor);
+            SetEmission(highlightEmission);
         }
 
         private void OnMouseUp()
@@ -110,6 +115,7 @@ namespace PsycheVR.UI
             _isHeld = false;
             chalkboard?.ShowDefault();
             SetColor(_originalColor);
+            SetEmission(0f);
         }
 
         // --- VR Events ---
@@ -121,6 +127,7 @@ namespace PsycheVR.UI
             _isHeld = true;
             chalkboard?.ShowComponentInfo(data);
             SetColor(highlightColor);
+            SetEmission(highlightEmission);
         }
 
         private void OnReleased(SelectExitEventArgs args)
@@ -131,6 +138,7 @@ namespace PsycheVR.UI
             {
                 chalkboard?.ShowDefault();
                 SetColor(_originalColor);
+                SetEmission(0f);
             }
         }
 
@@ -138,12 +146,14 @@ namespace PsycheVR.UI
         {
             if (_isSnapped || _isHeld) return;
             transform.localScale = _originalScale * 1.05f;
+            SetEmission(highlightEmission * 0.5f);
         }
 
         private void OnHoverExit(HoverExitEventArgs args)
         {
             if (_isSnapped || _isHeld) return;
             transform.localScale = _originalScale;
+            SetEmission(0f);
         }
 
         // --- Snap Detection ---
@@ -153,9 +163,21 @@ namespace PsycheVR.UI
             if (_isSnapped) return;
 
             _isSnapped = true;
-            SetColor(snappedColor);
             transform.localScale = _originalScale;
+            SetColor(snappedColor);
+            SetEmission(0f);
             chalkboard?.ShowSnappedInfo(data);
+
+            StartCoroutine(SnapFlash());
+        }
+
+        private IEnumerator SnapFlash()
+        {
+            SetEmission(0.8f);
+            yield return new WaitForSeconds(0.15f);
+            SetEmission(0.4f);
+            yield return new WaitForSeconds(0.15f);
+            SetEmission(0f);
         }
 
         private void SetColor(Color color)
@@ -164,6 +186,23 @@ namespace PsycheVR.UI
 
             _renderer.GetPropertyBlock(_propBlock);
             _propBlock.SetColor("_BaseColor", color);
+            _renderer.SetPropertyBlock(_propBlock);
+        }
+
+        private void SetEmission(float intensity)
+        {
+            if (_renderer == null) return;
+
+            _renderer.GetPropertyBlock(_propBlock);
+            if (intensity > 0f)
+            {
+                Color emissionColor = (_isSnapped ? snappedColor : highlightColor) * intensity;
+                _propBlock.SetColor("_EmissionColor", emissionColor);
+            }
+            else
+            {
+                _propBlock.SetColor("_EmissionColor", Color.black);
+            }
             _renderer.SetPropertyBlock(_propBlock);
         }
     }
