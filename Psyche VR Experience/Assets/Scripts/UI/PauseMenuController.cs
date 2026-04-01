@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Events;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 
@@ -11,13 +13,13 @@ namespace PsycheVR.UI
         [Header("Placement")]
         [SerializeField] private Transform cameraTransform;
         [SerializeField] private bool showOnStart;
-        [SerializeField] private float distanceFromCamera = 1.1f;
-        [SerializeField] private float verticalOffset = -0.05f;
-        [SerializeField] private float menuScale = 0.0015f;
+        [SerializeField] private float distanceFromCamera = 1.35f;
+        [SerializeField] private float verticalOffset = -0.02f;
+        [SerializeField] private float menuScale = 0.0011f;
 
         [Header("Layout")]
-        [SerializeField] private Vector2 panelSize = new Vector2(1000f, 680f);
-        [SerializeField] private Vector2 buttonSize = new Vector2(0f, 96f);
+        [SerializeField] private Vector2 panelSize = new Vector2(760f, 520f);
+        [SerializeField] private Vector2 buttonSize = new Vector2(0f, 72f);
 
         [Header("Events")]
         [SerializeField] private UnityEvent onResumeRequested = new UnityEvent();
@@ -30,6 +32,7 @@ namespace PsycheVR.UI
         private void Awake()
         {
             EnsureCameraTransform();
+            EnsureEventSystem();
             BuildMenuIfNeeded();
         }
 
@@ -88,10 +91,7 @@ namespace PsycheVR.UI
                 return;
             }
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            Sprite uiSprite = Resources.GetBuiltinResource<Sprite>("UISprite.psd");
-            Sprite backgroundSprite = Resources.GetBuiltinResource<Sprite>("Background.psd");
-
+            Font font = LoadBuiltInFont();
             _menuRoot = CreateUiObject("Pause Menu", cameraTransform);
             _menuRoot.transform.localPosition = new Vector3(0f, verticalOffset, distanceFromCamera);
             _menuRoot.transform.localRotation = Quaternion.identity;
@@ -100,7 +100,8 @@ namespace PsycheVR.UI
             Canvas canvas = _menuRoot.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.worldCamera = cameraTransform.GetComponent<Camera>();
-            _menuRoot.AddComponent<CanvasScaler>().dynamicPixelsPerUnit = 20f;
+            _menuRoot.AddComponent<CanvasScaler>().dynamicPixelsPerUnit = 24f;
+            _menuRoot.AddComponent<GraphicRaycaster>();
             _menuRoot.AddComponent<TrackedDeviceGraphicRaycaster>();
 
             _canvasGroup = _menuRoot.AddComponent<CanvasGroup>();
@@ -112,54 +113,64 @@ namespace PsycheVR.UI
             RectTransform dimmerRect = dimmer.GetComponent<RectTransform>();
             StretchToFill(dimmerRect);
             Image dimmerImage = dimmer.AddComponent<Image>();
-            dimmerImage.sprite = backgroundSprite;
-            dimmerImage.type = Image.Type.Sliced;
-            dimmerImage.color = new Color(0.04f, 0.07f, 0.11f, 0.94f);
+            dimmerImage.color = new Color(0.02f, 0.04f, 0.08f, 0.78f);
 
             GameObject card = CreateUiObject("Card", _menuRoot.transform);
             RectTransform cardRect = card.GetComponent<RectTransform>();
-            StretchToFill(cardRect, 48f, 48f, 48f, 48f);
+            StretchToFill(cardRect, 62f, 62f, 58f, 58f);
             Image cardImage = card.AddComponent<Image>();
-            cardImage.sprite = uiSprite;
-            cardImage.type = Image.Type.Sliced;
-            cardImage.color = new Color(0.11f, 0.15f, 0.2f, 0.98f);
+            cardImage.color = new Color(0.09f, 0.12f, 0.17f, 0.96f);
 
-            VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(60, 60, 56, 56);
-            layout.spacing = 24f;
+            GameObject accent = CreateUiObject("Accent", card.transform);
+            RectTransform accentRect = accent.GetComponent<RectTransform>();
+            accentRect.anchorMin = new Vector2(0f, 1f);
+            accentRect.anchorMax = new Vector2(1f, 1f);
+            accentRect.pivot = new Vector2(0.5f, 1f);
+            accentRect.sizeDelta = new Vector2(0f, 10f);
+            accentRect.anchoredPosition = Vector2.zero;
+            Image accentImage = accent.AddComponent<Image>();
+            accentImage.color = new Color(0.27f, 0.71f, 0.86f, 1f);
+
+            GameObject content = CreateUiObject("Content", card.transform);
+            RectTransform contentRect = content.GetComponent<RectTransform>();
+            StretchToFill(contentRect, 34f, 34f, 42f, 28f);
+
+            VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(30, 30, 28, 22);
+            layout.spacing = 16f;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlHeight = false;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
 
-            ContentSizeFitter fitter = card.AddComponent<ContentSizeFitter>();
+            ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             CreateLabel(
                 "Title",
-                card.transform,
+                content.transform,
                 font,
                 "PAUSED",
-                56,
+                44,
                 FontStyle.Bold,
                 new Color(0.95f, 0.98f, 1f, 1f),
-                78f);
+                58f);
 
             CreateLabel(
                 "Subtitle",
-                card.transform,
+                content.transform,
                 font,
                 "Take a breath, then jump back in when you're ready.",
-                28,
+                20,
                 FontStyle.Normal,
                 new Color(0.72f, 0.8f, 0.88f, 1f),
-                64f);
+                46f);
 
-            CreateButton("Resume Button", card.transform, font, uiSprite, "Resume", new Color(0.17f, 0.52f, 0.42f, 1f), OnResumePressed);
-            CreateButton("Restart Button", card.transform, font, uiSprite, "Restart Scene", new Color(0.82f, 0.47f, 0.16f, 1f), OnRestartPressed);
-            CreateButton("Quit Button", card.transform, font, uiSprite, "Quit Game", new Color(0.66f, 0.22f, 0.24f, 1f), OnQuitPressed);
+            CreateButton("Resume Button", content.transform, font, "Resume", new Color(0.14f, 0.46f, 0.33f, 1f), OnResumePressed);
+            CreateButton("Restart Button", content.transform, font, "Restart Scene", new Color(0.73f, 0.38f, 0.12f, 1f), OnRestartPressed);
+            CreateButton("Quit Button", content.transform, font, "Quit Game", new Color(0.56f, 0.16f, 0.18f, 1f), OnQuitPressed);
         }
 
         private void EnsureCameraTransform()
@@ -170,6 +181,30 @@ namespace PsycheVR.UI
             Camera rigCamera = GetComponentInChildren<Camera>(true);
             if (rigCamera != null)
                 cameraTransform = rigCamera.transform;
+        }
+
+        private static Font LoadBuiltInFont()
+        {
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+            if (font == null)
+                Debug.LogWarning("PauseMenuController could not load LegacyRuntime.ttf.");
+
+            return font;
+        }
+
+        private static void EnsureEventSystem()
+        {
+            if (EventSystem.current != null)
+            {
+                if (EventSystem.current.GetComponent<InputSystemUIInputModule>() == null)
+                    EventSystem.current.gameObject.AddComponent<InputSystemUIInputModule>();
+
+                return;
+            }
+
+            GameObject eventSystemObject = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            DontDestroyOnLoad(eventSystemObject);
         }
 
         private void OnResumePressed()
@@ -188,7 +223,7 @@ namespace PsycheVR.UI
             onQuitRequested.Invoke();
         }
 
-        private Button CreateButton(string objectName, Transform parent, Font font, Sprite sprite, string label, Color baseColor, UnityAction onPressed)
+        private Button CreateButton(string objectName, Transform parent, Font font, string label, Color baseColor, UnityAction onPressed)
         {
             GameObject buttonObject = CreateUiObject(objectName, parent);
             RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
@@ -198,8 +233,6 @@ namespace PsycheVR.UI
             layoutElement.preferredHeight = buttonSize.y;
 
             Image image = buttonObject.AddComponent<Image>();
-            image.sprite = sprite;
-            image.type = Image.Type.Sliced;
             image.color = baseColor;
 
             Button button = buttonObject.AddComponent<Button>();
@@ -220,7 +253,7 @@ namespace PsycheVR.UI
                 buttonObject.transform,
                 font,
                 label,
-                34,
+                26,
                 FontStyle.Bold,
                 Color.white,
                 0f);
@@ -245,6 +278,7 @@ namespace PsycheVR.UI
             {
                 LayoutElement layoutElement = labelObject.AddComponent<LayoutElement>();
                 layoutElement.preferredHeight = preferredHeight;
+                layoutElement.minHeight = preferredHeight;
             }
             else
             {

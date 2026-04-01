@@ -1430,7 +1430,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraTransform: {fileID: 0}
-  showOnStart: 0
+  showOnStart: 1
   distanceFromCamera: 1.1
   verticalOffset: -0.05
   menuScale: 0.0015
