@@ -8,6 +8,7 @@ TagManager:
   - Gold_Box
   - Gray_Box
   - Info_Text
+  - PSYCHE_Antenna
   layers:
   - Default
   - TransparentFX

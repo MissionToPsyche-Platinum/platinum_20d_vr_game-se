@@ -30,10 +30,10 @@ public class SnapZone : MonoBehaviour
         if (grab == null) return;
 
         SnappableObject snapState = other.attachedRigidbody.GetComponent<SnappableObject>();
-        if (snapState != null && snapState.isSnapped) {
+        if (snapState != null && snapState.isSnapped)
+        {
             return;
-        };
-        
+        }
 
         currentObject = grab;
 
@@ -89,8 +89,15 @@ public class SnapZone : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        grab.transform.position = snapAnchor.position;
-        grab.transform.rotation = snapAnchor.rotation;
+        if (snapState != null)
+        {
+            snapState.SnapTo(snapAnchor);
+        }
+        else
+        {
+            grab.transform.position = snapAnchor.position;
+            grab.transform.rotation = snapAnchor.rotation;
+        }
 
         if (snapState != null)
             snapState.isSnapped = true;
