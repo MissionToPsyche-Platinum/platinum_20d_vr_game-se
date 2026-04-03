@@ -14,6 +14,10 @@ namespace PsycheVR.UI
     /// </summary>
     public class Chalkboard : MonoBehaviour
     {
+        [Header("Settings")]
+        [Tooltip("Shared tuning asset. Create via Assets > Create > Psyche VR > Chalkboard Settings.")]
+        [SerializeField] private ChalkboardSettings settings;
+
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI infoText;
@@ -32,11 +36,6 @@ namespace PsycheVR.UI
         [SerializeField] private string completionInfo =
             "All components are in place. The Psyche spacecraft is ready for its mission to explore asteroid 16 Psyche \u2014 a metal-rich world that may be the exposed core of an early planet.";
 
-        [Header("Animation")]
-        [SerializeField] private float fadeSpeed = 0.25f;
-        [Tooltip("Scale punch on the name text when a piece is snapped.")]
-        [SerializeField] private float snapPunchScale = 1.15f;
-
         [Header("Audio")]
         [Tooltip("Sound played when a component is snapped.")]
         [SerializeField] private AudioClip snapSound;
@@ -53,11 +52,14 @@ namespace PsycheVR.UI
         private Coroutine _fadeRoutine;
         private Coroutine _punchRoutine;
         private Vector3 _nameOriginalScale;
-        private ComponentData _lastShownData;
 
         public int SnappedCount => _snappedCount;
         public int TotalComponents => _totalComponents;
         public bool IsComplete => _totalComponents > 0 && _snappedCount >= _totalComponents;
+        public ChalkboardSettings Settings => settings;
+
+        private float FadeSpeed => settings != null ? settings.FadeSpeed : 0.25f;
+        private float PunchScale => settings != null ? settings.SnapPunchScale : 1.15f;
 
         private void Awake()
         {
@@ -78,6 +80,9 @@ namespace PsycheVR.UI
 
             if (nameText != null)
                 _nameOriginalScale = nameText.transform.localScale;
+
+            if (settings == null)
+                Debug.LogWarning("[Chalkboard] No ChalkboardSettings assigned. Using defaults.", this);
         }
 
         private void Start()
@@ -88,25 +93,17 @@ namespace PsycheVR.UI
             UpdateProgress();
         }
 
-        /// <summary>
-        /// Called by ComponentInfo when a piece is grabbed.
-        /// </summary>
         public void ShowComponentInfo(ComponentData data)
         {
             if (data == null) return;
-            _lastShownData = data;
             UpdateIcon(data.icon);
             SetText(data.DisplayTitle, data.description);
         }
 
-        /// <summary>
-        /// Called by ComponentInfo when a piece is snapped into place.
-        /// </summary>
         public void ShowSnappedInfo(ComponentData data)
         {
             if (data == null) return;
             _snappedCount++;
-            _lastShownData = data;
 
             if (snapSound != null)
                 _audioSource.PlayOneShot(snapSound);
@@ -131,13 +128,9 @@ namespace PsycheVR.UI
             PunchName();
         }
 
-        /// <summary>
-        /// Called by ComponentInfo when a piece is released without snapping.
-        /// </summary>
         public void ShowDefault()
         {
             if (IsComplete) return;
-            _lastShownData = null;
             UpdateIcon(null);
             SetText(defaultName, defaultInfo);
         }
@@ -157,7 +150,7 @@ namespace PsycheVR.UI
                 float t = _canvasGroup.alpha;
                 while (t > 0f)
                 {
-                    t -= Time.deltaTime / fadeSpeed;
+                    t -= Time.deltaTime / FadeSpeed;
                     _canvasGroup.alpha = Mathf.Max(0f, t);
                     yield return null;
                 }
@@ -171,7 +164,7 @@ namespace PsycheVR.UI
                 float t = 0f;
                 while (t < 1f)
                 {
-                    t += Time.deltaTime / fadeSpeed;
+                    t += Time.deltaTime / FadeSpeed;
                     _canvasGroup.alpha = Mathf.Min(1f, t);
                     yield return null;
                 }
@@ -193,14 +186,14 @@ namespace PsycheVR.UI
         private IEnumerator PunchAnimation()
         {
             var tf = nameText.transform;
-            tf.localScale = _nameOriginalScale * snapPunchScale;
+            tf.localScale = _nameOriginalScale * PunchScale;
 
             float t = 0f;
             while (t < 0.3f)
             {
                 t += Time.deltaTime;
                 tf.localScale = Vector3.Lerp(
-                    _nameOriginalScale * snapPunchScale,
+                    _nameOriginalScale * PunchScale,
                     _nameOriginalScale,
                     t / 0.3f);
                 yield return null;

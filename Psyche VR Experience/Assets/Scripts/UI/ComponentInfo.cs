@@ -8,7 +8,8 @@ namespace PsycheVR.UI
     /// <summary>
     /// Attach to each spacecraft piece. When grabbed, updates the Chalkboard
     /// with this component's educational data. When snapped, shows permanent
-    /// confirmation. Uses ScriptableObject ComponentData for content.
+    /// confirmation. Uses ScriptableObject ComponentData for content and
+    /// ChalkboardSettings for visual tuning.
     ///
     /// Works with PsycheGrabbable (VR) and mouse click (desktop testing).
     /// The Chalkboard is found automatically by the "Chalkboard" tag.
@@ -16,14 +17,8 @@ namespace PsycheVR.UI
     public class ComponentInfo : MonoBehaviour
     {
         [Header("Component Data")]
-        [Tooltip("ScriptableObject with this component's name and info. Create via Assets > Create > Psyche VR > Component Data.")]
+        [Tooltip("ScriptableObject with this component's name and info.")]
         [SerializeField] private ComponentData data;
-
-        [Header("Visual Feedback")]
-        [SerializeField] private Color highlightColor = new Color(0.4f, 0.8f, 1f, 1f);
-        [SerializeField] private Color snappedColor = new Color(0.2f, 1f, 0.2f, 1f);
-        [Tooltip("Emission intensity when the piece is highlighted.")]
-        [SerializeField] private float highlightEmission = 0.3f;
 
         [Header("References")]
         [Tooltip("Leave empty to auto-find by 'Chalkboard' tag.")]
@@ -37,6 +32,19 @@ namespace PsycheVR.UI
         private Vector3 _originalScale;
         private bool _isSnapped;
         private bool _isHeld;
+
+        // Pull colors from shared settings, with fallbacks
+        private Color HighlightColor => chalkboard?.Settings != null
+            ? chalkboard.Settings.HighlightColor
+            : new Color(0.4f, 0.8f, 1f, 1f);
+
+        private Color SnappedColor => chalkboard?.Settings != null
+            ? chalkboard.Settings.SnappedColor
+            : new Color(0.2f, 1f, 0.2f, 1f);
+
+        private float HighlightEmission => chalkboard?.Settings != null
+            ? chalkboard.Settings.HighlightEmission
+            : 0.3f;
 
         public ComponentData Data => data;
         public bool IsSnapped => _isSnapped;
@@ -66,6 +74,9 @@ namespace PsycheVR.UI
 
             if (data == null)
                 Debug.LogError($"[ComponentInfo] No ComponentData assigned on {gameObject.name}", this);
+
+            if (chalkboard == null)
+                Debug.LogWarning($"[ComponentInfo] No Chalkboard found. Tag a board as 'Chalkboard'.", this);
         }
 
         private void OnEnable()
@@ -104,8 +115,8 @@ namespace PsycheVR.UI
 
             _isHeld = true;
             chalkboard?.ShowComponentInfo(data);
-            SetColor(highlightColor);
-            SetEmission(highlightEmission);
+            SetColor(HighlightColor);
+            SetEmission(HighlightEmission);
         }
 
         private void OnMouseUp()
@@ -126,8 +137,8 @@ namespace PsycheVR.UI
 
             _isHeld = true;
             chalkboard?.ShowComponentInfo(data);
-            SetColor(highlightColor);
-            SetEmission(highlightEmission);
+            SetColor(HighlightColor);
+            SetEmission(HighlightEmission);
         }
 
         private void OnReleased(SelectExitEventArgs args)
@@ -146,7 +157,7 @@ namespace PsycheVR.UI
         {
             if (_isSnapped || _isHeld) return;
             transform.localScale = _originalScale * 1.05f;
-            SetEmission(highlightEmission * 0.5f);
+            SetEmission(HighlightEmission * 0.5f);
         }
 
         private void OnHoverExit(HoverExitEventArgs args)
@@ -164,7 +175,7 @@ namespace PsycheVR.UI
 
             _isSnapped = true;
             transform.localScale = _originalScale;
-            SetColor(snappedColor);
+            SetColor(SnappedColor);
             SetEmission(0f);
             chalkboard?.ShowSnappedInfo(data);
 
@@ -194,15 +205,10 @@ namespace PsycheVR.UI
             if (_renderer == null) return;
 
             _renderer.GetPropertyBlock(_propBlock);
-            if (intensity > 0f)
-            {
-                Color emissionColor = (_isSnapped ? snappedColor : highlightColor) * intensity;
-                _propBlock.SetColor("_EmissionColor", emissionColor);
-            }
-            else
-            {
-                _propBlock.SetColor("_EmissionColor", Color.black);
-            }
+            Color emissionColor = intensity > 0f
+                ? (_isSnapped ? SnappedColor : HighlightColor) * intensity
+                : Color.black;
+            _propBlock.SetColor("_EmissionColor", emissionColor);
             _renderer.SetPropertyBlock(_propBlock);
         }
     }
