@@ -9,6 +9,7 @@ TagManager:
   - Gray_Box
   - Info_Text
   - PSYCHE_Antenna
+  - PSYCHE_Right_Solar
   layers:
   - Default
   - TransparentFX
