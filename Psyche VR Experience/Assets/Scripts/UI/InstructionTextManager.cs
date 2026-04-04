@@ -7,7 +7,7 @@ public class InstructionTextManager : MonoBehaviour
 
     public void Start()
     {
-        this.SetText("Please Place the Gold Cube to the left of the transparent Gray Box");
+        this.SetText("Please place the PSYCHE Bus (Large Black Box) on top of the Cylinder to begin");
     }
     public void SetText(string message)
     {

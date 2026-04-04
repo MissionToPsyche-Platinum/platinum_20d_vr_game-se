@@ -1,11 +1,28 @@
 
-
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine;
+using System.Globalization;
 
 public class SnappableObject : MonoBehaviour
 {
     public Transform snapPoint;
     public bool isSnapped;
+    public string objTag => gameObject.tag;
+    public string description;
+    public InstructionTextManager textManager;
+
+    //disables grab for everything but the Bus (Tutorial object)
+    void Start()
+    {
+        XRGrabInteractable grab = GetComponent<XRGrabInteractable>();
+
+        if (!CompareTag("PSYCHE_Bus"))
+        {
+            if (grab != null)
+                grab.enabled = false;
+        }
+    }
 
     public void SnapTo(Transform snapAnchor)
     {
@@ -41,5 +58,26 @@ public class SnappableObject : MonoBehaviour
                   " | snapPoint = " + snapPoint.position);
 
         isSnapped = true;
+        textManager.SetText(description);
+        if (objTag.Equals("PSYCHE_Bus")) {
+            EnableAllOtherSnappables();
+        }
+    }
+
+    private void EnableAllOtherSnappables()
+    {
+        SnappableObject[] all = FindObjectsByType<SnappableObject>(FindObjectsSortMode.None);
+
+        foreach (SnappableObject obj in all)
+        {
+            if (!obj.CompareTag("PSYCHE_Bus"))
+            {
+                XRGrabInteractable grab = obj.GetComponent<XRGrabInteractable>();
+                if (grab != null)
+                {
+                    grab.enabled = true;
+                }
+            }
+        }
     }
 }
