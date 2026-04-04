@@ -33,7 +33,6 @@ namespace PsycheVR.UI
         [SerializeField] private Color panelTint = new Color(0.1f, 0.12f, 0.16f, 0.96f);
         [SerializeField] private Color titleTint = new Color(0.95f, 0.96f, 0.98f, 1f);
         [SerializeField] private Color resumeButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
-        [SerializeField] private Color restartButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
         [SerializeField] private Color quitButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
         [SerializeField] private Color buttonTextTint = new Color(0.95f, 0.96f, 0.98f, 1f);
 
@@ -204,7 +203,6 @@ namespace PsycheVR.UI
             BuildHeader(content.transform);
 
             CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
-            CreateButton("Restart Button", content.transform, "Restart Scene", restartButtonTint, OnRestartPressed);
             CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
         }
 
@@ -290,11 +288,6 @@ namespace PsycheVR.UI
         {
             HideMenu();
             onResumeRequested.Invoke();
-        }
-
-        private void OnRestartPressed()
-        {
-            onRestartRequested.Invoke();
         }
 
         private void OnQuitPressed()
