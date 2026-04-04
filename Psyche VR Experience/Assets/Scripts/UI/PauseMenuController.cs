@@ -6,6 +6,9 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace PsycheVR.UI
 {
@@ -293,6 +296,13 @@ namespace PsycheVR.UI
         private void OnQuitPressed()
         {
             onQuitRequested.Invoke();
+            ResumeGameplay();
+
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         private Button CreateButton(string objectName, Transform parent, string label, Color baseColor, UnityAction onPressed)
