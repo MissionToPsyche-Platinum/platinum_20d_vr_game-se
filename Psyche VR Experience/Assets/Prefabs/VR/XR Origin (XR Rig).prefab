@@ -1431,11 +1431,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraTransform: {fileID: 0}
   showOnStart: 1
-  distanceFromCamera: 1.1
-  verticalOffset: -0.05
-  menuScale: 0.0015
-  panelSize: {x: 1000, y: 680}
-  buttonSize: {x: 0, y: 96}
+  distanceFromCamera: 1.35
+  verticalOffset: -0.02
+  menuScale: 0.0011
+  panelSize: {x: 760, y: 560}
+  buttonSize: {x: 0, y: 58}
+  uiFont: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
+  roundedPanelSprite: {fileID: 21300000, guid: 65d31ca9600c4654e886aa7bab36e94b, type: 3}
+  roundedOutlineSprite: {fileID: 21300000, guid: 58bc8d49e10d1bc40813d8974b8b3a5c, type: 3}
+  pauseIconSprite: {fileID: 21300000, guid: 5f4d26dedc364e74d880a7125d57119c, type: 3}
   onResumeRequested:
     m_PersistentCalls:
       m_Calls: []

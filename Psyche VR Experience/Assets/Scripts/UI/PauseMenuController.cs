@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Events;
@@ -18,8 +19,14 @@ namespace PsycheVR.UI
         [SerializeField] private float menuScale = 0.0011f;
 
         [Header("Layout")]
-        [SerializeField] private Vector2 panelSize = new Vector2(760f, 520f);
-        [SerializeField] private Vector2 buttonSize = new Vector2(0f, 72f);
+        [SerializeField] private Vector2 panelSize = new Vector2(760f, 560f);
+        [SerializeField] private Vector2 buttonSize = new Vector2(0f, 58f);
+
+        [Header("Theme")]
+        [SerializeField] private TMP_FontAsset uiFont;
+        [SerializeField] private Sprite roundedPanelSprite;
+        [SerializeField] private Sprite roundedOutlineSprite;
+        [SerializeField] private Sprite pauseIconSprite;
 
         [Header("Events")]
         [SerializeField] private UnityEvent onResumeRequested = new UnityEvent();
@@ -58,7 +65,7 @@ namespace PsycheVR.UI
 
         public bool IsMenuVisible
         {
-            get { return _menuRoot != null && _menuRoot.activeSelf; }
+            get { return _canvasGroup != null && _canvasGroup.alpha > 0.99f; }
         }
 
         private void SetMenuVisible(bool isVisible)
@@ -67,8 +74,6 @@ namespace PsycheVR.UI
 
             if (_menuRoot == null)
                 return;
-
-            _menuRoot.SetActive(isVisible);
 
             if (_canvasGroup == null)
                 return;
@@ -91,7 +96,6 @@ namespace PsycheVR.UI
                 return;
             }
 
-            Font font = LoadBuiltInFont();
             _menuRoot = CreateUiObject("Pause Menu", cameraTransform);
             _menuRoot.transform.localPosition = new Vector3(0f, verticalOffset, distanceFromCamera);
             _menuRoot.transform.localRotation = Quaternion.identity;
@@ -105,72 +109,109 @@ namespace PsycheVR.UI
             _menuRoot.AddComponent<TrackedDeviceGraphicRaycaster>();
 
             _canvasGroup = _menuRoot.AddComponent<CanvasGroup>();
+            _canvasGroup.alpha = 0f;
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
 
             RectTransform menuRect = _menuRoot.GetComponent<RectTransform>();
             menuRect.sizeDelta = panelSize;
 
             GameObject dimmer = CreateUiObject("Dimmer", _menuRoot.transform);
-            RectTransform dimmerRect = dimmer.GetComponent<RectTransform>();
-            StretchToFill(dimmerRect);
+            StretchToFill(dimmer.GetComponent<RectTransform>());
             Image dimmerImage = dimmer.AddComponent<Image>();
-            dimmerImage.color = new Color(0.02f, 0.04f, 0.08f, 0.78f);
+            dimmerImage.color = new Color(0.03f, 0.03f, 0.06f, 0.6f);
+
+            GameObject shadow = CreateUiObject("Shadow", _menuRoot.transform);
+            RectTransform shadowRect = shadow.GetComponent<RectTransform>();
+            StretchToFill(shadowRect, 54f, 42f, 40f, 28f);
+            shadowRect.anchoredPosition = new Vector2(10f, -12f);
+            Image shadowImage = shadow.AddComponent<Image>();
+            ApplySlicedSprite(shadowImage, roundedPanelSprite);
+            shadowImage.color = new Color(0.01f, 0.01f, 0.02f, 0.55f);
+
+            GameObject outline = CreateUiObject("Outline", _menuRoot.transform);
+            StretchToFill(outline.GetComponent<RectTransform>(), 42f, 42f, 28f, 28f);
+            Image outlineImage = outline.AddComponent<Image>();
+            ApplySlicedSprite(outlineImage, roundedOutlineSprite);
+            outlineImage.color = new Color(0.36f, 0.74f, 0.96f, 0.95f);
 
             GameObject card = CreateUiObject("Card", _menuRoot.transform);
-            RectTransform cardRect = card.GetComponent<RectTransform>();
-            StretchToFill(cardRect, 62f, 62f, 58f, 58f);
+            StretchToFill(card.GetComponent<RectTransform>(), 48f, 48f, 34f, 34f);
             Image cardImage = card.AddComponent<Image>();
-            cardImage.color = new Color(0.09f, 0.12f, 0.17f, 0.96f);
-
-            GameObject accent = CreateUiObject("Accent", card.transform);
-            RectTransform accentRect = accent.GetComponent<RectTransform>();
-            accentRect.anchorMin = new Vector2(0f, 1f);
-            accentRect.anchorMax = new Vector2(1f, 1f);
-            accentRect.pivot = new Vector2(0.5f, 1f);
-            accentRect.sizeDelta = new Vector2(0f, 10f);
-            accentRect.anchoredPosition = Vector2.zero;
-            Image accentImage = accent.AddComponent<Image>();
-            accentImage.color = new Color(0.27f, 0.71f, 0.86f, 1f);
+            ApplySlicedSprite(cardImage, roundedPanelSprite);
+            cardImage.color = new Color(0.07f, 0.1f, 0.16f, 0.97f);
 
             GameObject content = CreateUiObject("Content", card.transform);
-            RectTransform contentRect = content.GetComponent<RectTransform>();
-            StretchToFill(contentRect, 34f, 34f, 42f, 28f);
+            StretchToFill(content.GetComponent<RectTransform>(), 42f, 42f, 34f, 34f);
 
             VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(30, 30, 28, 22);
-            layout.spacing = 16f;
+            layout.padding = new RectOffset(28, 28, 24, 24);
+            layout.spacing = 10f;
             layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlHeight = false;
+            layout.childControlHeight = true;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
 
-            ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-            CreateLabel(
-                "Title",
-                content.transform,
-                font,
-                "PAUSED",
-                44,
-                FontStyle.Bold,
-                new Color(0.95f, 0.98f, 1f, 1f),
-                58f);
+            BuildHeader(content.transform);
 
             CreateLabel(
                 "Subtitle",
                 content.transform,
-                font,
                 "Take a breath, then jump back in when you're ready.",
-                20,
-                FontStyle.Normal,
-                new Color(0.72f, 0.8f, 0.88f, 1f),
-                46f);
+                16f,
+                FontStyles.Normal,
+                new Color(0.76f, 0.82f, 0.9f, 1f),
+                new Vector2(0f, 36f),
+                TextAlignmentOptions.Center);
 
-            CreateButton("Resume Button", content.transform, font, "Resume", new Color(0.14f, 0.46f, 0.33f, 1f), OnResumePressed);
-            CreateButton("Restart Button", content.transform, font, "Restart Scene", new Color(0.73f, 0.38f, 0.12f, 1f), OnRestartPressed);
-            CreateButton("Quit Button", content.transform, font, "Quit Game", new Color(0.56f, 0.16f, 0.18f, 1f), OnQuitPressed);
+            GameObject spacer = CreateUiObject("Spacer", content.transform);
+            LayoutElement spacerLayout = spacer.AddComponent<LayoutElement>();
+            spacerLayout.preferredHeight = 4f;
+
+            CreateButton("Resume Button", content.transform, "Resume", new Color(0.1f, 0.36f, 0.28f, 1f), OnResumePressed);
+            CreateButton("Restart Button", content.transform, "Restart Scene", new Color(0.53f, 0.25f, 0.08f, 1f), OnRestartPressed);
+            CreateButton("Quit Button", content.transform, "Quit Game", new Color(0.39f, 0.11f, 0.12f, 1f), OnQuitPressed);
+        }
+
+        private void BuildHeader(Transform parent)
+        {
+            GameObject header = CreateUiObject("Header", parent);
+            LayoutElement headerLayout = header.AddComponent<LayoutElement>();
+            headerLayout.preferredHeight = 60f;
+
+            HorizontalLayoutGroup row = header.AddComponent<HorizontalLayoutGroup>();
+            row.spacing = 10f;
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.childControlWidth = false;
+            row.childControlHeight = false;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+
+            GameObject iconFrame = CreateUiObject("Pause Icon Frame", header.transform);
+            RectTransform iconFrameRect = iconFrame.GetComponent<RectTransform>();
+            iconFrameRect.sizeDelta = new Vector2(42f, 42f);
+            Image iconFrameImage = iconFrame.AddComponent<Image>();
+            ApplySlicedSprite(iconFrameImage, roundedPanelSprite);
+            iconFrameImage.color = new Color(0.12f, 0.19f, 0.28f, 1f);
+
+            GameObject icon = CreateUiObject("Pause Icon", iconFrame.transform);
+            RectTransform iconRect = icon.GetComponent<RectTransform>();
+            StretchToFill(iconRect, 9f, 9f, 9f, 9f);
+            Image iconImage = icon.AddComponent<Image>();
+            iconImage.sprite = pauseIconSprite;
+            iconImage.color = new Color(0.43f, 0.83f, 0.98f, 1f);
+            iconImage.preserveAspect = true;
+
+            CreateLabel(
+                "Title",
+                header.transform,
+                "PAUSED",
+                24f,
+                FontStyles.Bold,
+                new Color(0.96f, 0.99f, 1f, 1f),
+                new Vector2(200f, 42f),
+                TextAlignmentOptions.MidlineLeft);
         }
 
         private void EnsureCameraTransform()
@@ -181,16 +222,6 @@ namespace PsycheVR.UI
             Camera rigCamera = GetComponentInChildren<Camera>(true);
             if (rigCamera != null)
                 cameraTransform = rigCamera.transform;
-        }
-
-        private static Font LoadBuiltInFont()
-        {
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
-            if (font == null)
-                Debug.LogWarning("PauseMenuController could not load LegacyRuntime.ttf.");
-
-            return font;
         }
 
         private static void EnsureEventSystem()
@@ -223,7 +254,7 @@ namespace PsycheVR.UI
             onQuitRequested.Invoke();
         }
 
-        private Button CreateButton(string objectName, Transform parent, Font font, string label, Color baseColor, UnityAction onPressed)
+        private Button CreateButton(string objectName, Transform parent, string label, Color baseColor, UnityAction onPressed)
         {
             GameObject buttonObject = CreateUiObject(objectName, parent);
             RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
@@ -231,8 +262,10 @@ namespace PsycheVR.UI
 
             LayoutElement layoutElement = buttonObject.AddComponent<LayoutElement>();
             layoutElement.preferredHeight = buttonSize.y;
+            layoutElement.minHeight = buttonSize.y;
 
             Image image = buttonObject.AddComponent<Image>();
+            ApplySlicedSprite(image, roundedPanelSprite);
             image.color = baseColor;
 
             Button button = buttonObject.AddComponent<Button>();
@@ -248,54 +281,68 @@ namespace PsycheVR.UI
             button.colors = colors;
             button.onClick.AddListener(onPressed);
 
+            GameObject highlight = CreateUiObject("Top Glow", buttonObject.transform);
+            RectTransform highlightRect = highlight.GetComponent<RectTransform>();
+            highlightRect.anchorMin = new Vector2(0f, 1f);
+            highlightRect.anchorMax = new Vector2(1f, 1f);
+            highlightRect.pivot = new Vector2(0.5f, 1f);
+            highlightRect.sizeDelta = new Vector2(-18f, 4f);
+            highlightRect.anchoredPosition = new Vector2(0f, -8f);
+            Image highlightImage = highlight.AddComponent<Image>();
+            highlightImage.color = new Color(1f, 1f, 1f, 0.12f);
+
             CreateLabel(
                 "Label",
                 buttonObject.transform,
-                font,
                 label,
-                26,
-                FontStyle.Bold,
+                20f,
+                FontStyles.Bold,
                 Color.white,
-                0f);
+                Vector2.zero,
+                TextAlignmentOptions.Center);
 
             return button;
         }
 
-        private GameObject CreateLabel(
+        private TextMeshProUGUI CreateLabel(
             string objectName,
             Transform parent,
-            Font font,
             string content,
-            int fontSize,
-            FontStyle fontStyle,
+            float fontSize,
+            FontStyles fontStyle,
             Color color,
-            float preferredHeight)
+            Vector2 preferredSize,
+            TextAlignmentOptions alignment)
         {
             GameObject labelObject = CreateUiObject(objectName, parent);
             RectTransform rectTransform = labelObject.GetComponent<RectTransform>();
 
-            if (preferredHeight > 0f)
+            if (preferredSize.y > 0f)
             {
                 LayoutElement layoutElement = labelObject.AddComponent<LayoutElement>();
-                layoutElement.preferredHeight = preferredHeight;
-                layoutElement.minHeight = preferredHeight;
+                if (preferredSize.x > 0f)
+                    layoutElement.preferredWidth = preferredSize.x;
+
+                layoutElement.preferredHeight = preferredSize.y;
+                layoutElement.minHeight = preferredSize.y;
             }
             else
             {
                 StretchToFill(rectTransform);
             }
 
-            Text text = labelObject.AddComponent<Text>();
-            text.font = font;
+            TextMeshProUGUI text = labelObject.AddComponent<TextMeshProUGUI>();
+            text.font = uiFont;
             text.text = content;
             text.fontSize = fontSize;
             text.fontStyle = fontStyle;
-            text.alignment = TextAnchor.MiddleCenter;
+            text.alignment = alignment;
             text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.enableWordWrapping = true;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+            text.margin = new Vector4(8f, 0f, 8f, 0f);
 
-            return labelObject;
+            return text;
         }
 
         private static GameObject CreateUiObject(string objectName, Transform parent)
@@ -318,6 +365,12 @@ namespace PsycheVR.UI
             rectTransform.offsetMin = new Vector2(left, bottom);
             rectTransform.offsetMax = new Vector2(-right, -top);
             rectTransform.anchoredPosition = Vector2.zero;
+        }
+
+        private static void ApplySlicedSprite(Image image, Sprite sprite)
+        {
+            image.sprite = sprite;
+            image.type = sprite != null ? Image.Type.Sliced : Image.Type.Simple;
         }
     }
 }
