@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
@@ -43,17 +44,41 @@ namespace PsycheVR.UI
 
         private GameObject _menuRoot;
         private CanvasGroup _canvasGroup;
+        private InputAction _pauseToggleAction;
+        private float _timeScaleBeforePause = 1f;
+        private float _fixedDeltaTimeBeforePause = 0.02f;
 
         private void Awake()
         {
             EnsureCameraTransform();
             EnsureEventSystem();
+            EnsurePauseToggleAction();
             BuildMenuIfNeeded();
         }
 
         private void Start()
         {
             SetMenuVisible(showOnStart);
+        }
+
+        private void OnEnable()
+        {
+            EnsurePauseToggleAction();
+
+            if (_pauseToggleAction == null)
+                return;
+
+            _pauseToggleAction.performed += OnPauseTogglePerformed;
+            _pauseToggleAction.Enable();
+        }
+
+        private void OnDisable()
+        {
+            if (_pauseToggleAction == null)
+                return;
+
+            _pauseToggleAction.performed -= OnPauseTogglePerformed;
+            _pauseToggleAction.Disable();
         }
 
         public void ToggleMenu()
@@ -89,6 +114,11 @@ namespace PsycheVR.UI
             _canvasGroup.alpha = isVisible ? 1f : 0f;
             _canvasGroup.interactable = isVisible;
             _canvasGroup.blocksRaycasts = isVisible;
+
+            if (isVisible)
+                PauseGameplay();
+            else
+                ResumeGameplay();
         }
 
         private void BuildMenuIfNeeded()
@@ -217,6 +247,43 @@ namespace PsycheVR.UI
 
             GameObject eventSystemObject = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             DontDestroyOnLoad(eventSystemObject);
+        }
+
+        private void EnsurePauseToggleAction()
+        {
+            if (_pauseToggleAction != null)
+                return;
+
+            _pauseToggleAction = new InputAction("Pause Toggle", InputActionType.Button);
+            _pauseToggleAction.AddBinding("<Keyboard>/escape");
+            _pauseToggleAction.AddBinding("<Gamepad>/start");
+            _pauseToggleAction.AddBinding("<XRController>{LeftHand}/menuButton");
+            _pauseToggleAction.AddBinding("<XRController>{RightHand}/menuButton");
+        }
+
+        private void OnPauseTogglePerformed(InputAction.CallbackContext context)
+        {
+            ToggleMenu();
+        }
+
+        private void PauseGameplay()
+        {
+            if (Mathf.Approximately(Time.timeScale, 0f))
+                return;
+
+            _timeScaleBeforePause = Time.timeScale;
+            _fixedDeltaTimeBeforePause = Time.fixedDeltaTime;
+            Time.timeScale = 0f;
+            Time.fixedDeltaTime = 0f;
+        }
+
+        private void ResumeGameplay()
+        {
+            if (!Mathf.Approximately(Time.timeScale, 0f))
+                return;
+
+            Time.timeScale = _timeScaleBeforePause > 0f ? _timeScaleBeforePause : 1f;
+            Time.fixedDeltaTime = _fixedDeltaTimeBeforePause > 0f ? _fixedDeltaTimeBeforePause : 0.02f;
         }
 
         private void OnResumePressed()
