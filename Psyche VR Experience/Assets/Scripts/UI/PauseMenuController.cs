@@ -26,7 +26,15 @@ namespace PsycheVR.UI
         [SerializeField] private TMP_FontAsset uiFont;
         [SerializeField] private Sprite roundedPanelSprite;
         [SerializeField] private Sprite roundedOutlineSprite;
-        [SerializeField] private Sprite pauseIconSprite;
+        [SerializeField] private Color overlayTint = new Color(0.03f, 0.04f, 0.06f, 0.36f);
+        [SerializeField] private Color shadowTint = new Color(0.01f, 0.01f, 0.02f, 0.22f);
+        [SerializeField] private Color outlineTint = new Color(0.66f, 0.72f, 0.8f, 0.35f);
+        [SerializeField] private Color panelTint = new Color(0.1f, 0.12f, 0.16f, 0.96f);
+        [SerializeField] private Color titleTint = new Color(0.95f, 0.96f, 0.98f, 1f);
+        [SerializeField] private Color resumeButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
+        [SerializeField] private Color restartButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
+        [SerializeField] private Color quitButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
+        [SerializeField] private Color buttonTextTint = new Color(0.95f, 0.96f, 0.98f, 1f);
 
         [Header("Events")]
         [SerializeField] private UnityEvent onResumeRequested = new UnityEvent();
@@ -119,34 +127,44 @@ namespace PsycheVR.UI
             GameObject dimmer = CreateUiObject("Dimmer", _menuRoot.transform);
             StretchToFill(dimmer.GetComponent<RectTransform>());
             Image dimmerImage = dimmer.AddComponent<Image>();
-            dimmerImage.color = new Color(0.03f, 0.03f, 0.06f, 0.6f);
+            dimmerImage.color = overlayTint;
 
             GameObject shadow = CreateUiObject("Shadow", _menuRoot.transform);
             RectTransform shadowRect = shadow.GetComponent<RectTransform>();
             StretchToFill(shadowRect, 54f, 42f, 40f, 28f);
-            shadowRect.anchoredPosition = new Vector2(10f, -12f);
+            shadowRect.anchoredPosition = new Vector2(6f, -8f);
             Image shadowImage = shadow.AddComponent<Image>();
             ApplySlicedSprite(shadowImage, roundedPanelSprite);
-            shadowImage.color = new Color(0.01f, 0.01f, 0.02f, 0.55f);
+            shadowImage.color = shadowTint;
 
             GameObject outline = CreateUiObject("Outline", _menuRoot.transform);
             StretchToFill(outline.GetComponent<RectTransform>(), 42f, 42f, 28f, 28f);
             Image outlineImage = outline.AddComponent<Image>();
             ApplySlicedSprite(outlineImage, roundedOutlineSprite);
-            outlineImage.color = new Color(0.36f, 0.74f, 0.96f, 0.95f);
+            outlineImage.color = outlineTint;
 
             GameObject card = CreateUiObject("Card", _menuRoot.transform);
             StretchToFill(card.GetComponent<RectTransform>(), 48f, 48f, 34f, 34f);
             Image cardImage = card.AddComponent<Image>();
             ApplySlicedSprite(cardImage, roundedPanelSprite);
-            cardImage.color = new Color(0.07f, 0.1f, 0.16f, 0.97f);
+            cardImage.color = panelTint;
+
+            GameObject topSheen = CreateUiObject("Top Sheen", card.transform);
+            RectTransform topSheenRect = topSheen.GetComponent<RectTransform>();
+            topSheenRect.anchorMin = new Vector2(0f, 1f);
+            topSheenRect.anchorMax = new Vector2(1f, 1f);
+            topSheenRect.pivot = new Vector2(0.5f, 1f);
+            topSheenRect.sizeDelta = new Vector2(-42f, 4f);
+            topSheenRect.anchoredPosition = new Vector2(0f, -16f);
+            Image topSheenImage = topSheen.AddComponent<Image>();
+            topSheenImage.color = new Color(1f, 1f, 1f, 0.03f);
 
             GameObject content = CreateUiObject("Content", card.transform);
             StretchToFill(content.GetComponent<RectTransform>(), 42f, 42f, 34f, 34f);
 
             VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(28, 28, 24, 24);
-            layout.spacing = 10f;
+            layout.spacing = 14f;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlHeight = true;
             layout.childControlWidth = true;
@@ -155,63 +173,26 @@ namespace PsycheVR.UI
 
             BuildHeader(content.transform);
 
-            CreateLabel(
-                "Subtitle",
-                content.transform,
-                "Take a breath, then jump back in when you're ready.",
-                16f,
-                FontStyles.Normal,
-                new Color(0.76f, 0.82f, 0.9f, 1f),
-                new Vector2(0f, 36f),
-                TextAlignmentOptions.Center);
-
-            GameObject spacer = CreateUiObject("Spacer", content.transform);
-            LayoutElement spacerLayout = spacer.AddComponent<LayoutElement>();
-            spacerLayout.preferredHeight = 4f;
-
-            CreateButton("Resume Button", content.transform, "Resume", new Color(0.1f, 0.36f, 0.28f, 1f), OnResumePressed);
-            CreateButton("Restart Button", content.transform, "Restart Scene", new Color(0.53f, 0.25f, 0.08f, 1f), OnRestartPressed);
-            CreateButton("Quit Button", content.transform, "Quit Game", new Color(0.39f, 0.11f, 0.12f, 1f), OnQuitPressed);
+            CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
+            CreateButton("Restart Button", content.transform, "Restart Scene", restartButtonTint, OnRestartPressed);
+            CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
         }
 
         private void BuildHeader(Transform parent)
         {
             GameObject header = CreateUiObject("Header", parent);
             LayoutElement headerLayout = header.AddComponent<LayoutElement>();
-            headerLayout.preferredHeight = 60f;
-
-            HorizontalLayoutGroup row = header.AddComponent<HorizontalLayoutGroup>();
-            row.spacing = 10f;
-            row.childAlignment = TextAnchor.MiddleCenter;
-            row.childControlWidth = false;
-            row.childControlHeight = false;
-            row.childForceExpandWidth = false;
-            row.childForceExpandHeight = false;
-
-            GameObject iconFrame = CreateUiObject("Pause Icon Frame", header.transform);
-            RectTransform iconFrameRect = iconFrame.GetComponent<RectTransform>();
-            iconFrameRect.sizeDelta = new Vector2(42f, 42f);
-            Image iconFrameImage = iconFrame.AddComponent<Image>();
-            ApplySlicedSprite(iconFrameImage, roundedPanelSprite);
-            iconFrameImage.color = new Color(0.12f, 0.19f, 0.28f, 1f);
-
-            GameObject icon = CreateUiObject("Pause Icon", iconFrame.transform);
-            RectTransform iconRect = icon.GetComponent<RectTransform>();
-            StretchToFill(iconRect, 9f, 9f, 9f, 9f);
-            Image iconImage = icon.AddComponent<Image>();
-            iconImage.sprite = pauseIconSprite;
-            iconImage.color = new Color(0.43f, 0.83f, 0.98f, 1f);
-            iconImage.preserveAspect = true;
+            headerLayout.preferredHeight = 48f;
 
             CreateLabel(
                 "Title",
                 header.transform,
                 "PAUSED",
-                24f,
+                26f,
                 FontStyles.Bold,
-                new Color(0.96f, 0.99f, 1f, 1f),
-                new Vector2(200f, 42f),
-                TextAlignmentOptions.MidlineLeft);
+                titleTint,
+                new Vector2(0f, 40f),
+                TextAlignmentOptions.Center);
         }
 
         private void EnsureCameraTransform()
@@ -274,30 +255,20 @@ namespace PsycheVR.UI
 
             ColorBlock colors = button.colors;
             colors.normalColor = baseColor;
-            colors.highlightedColor = Color.Lerp(baseColor, Color.white, 0.18f);
-            colors.pressedColor = Color.Lerp(baseColor, Color.black, 0.2f);
+            colors.highlightedColor = Color.Lerp(baseColor, Color.white, 0.08f);
+            colors.pressedColor = Color.Lerp(baseColor, Color.black, 0.08f);
             colors.selectedColor = colors.highlightedColor;
             colors.disabledColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0.45f);
             button.colors = colors;
             button.onClick.AddListener(onPressed);
 
-            GameObject highlight = CreateUiObject("Top Glow", buttonObject.transform);
-            RectTransform highlightRect = highlight.GetComponent<RectTransform>();
-            highlightRect.anchorMin = new Vector2(0f, 1f);
-            highlightRect.anchorMax = new Vector2(1f, 1f);
-            highlightRect.pivot = new Vector2(0.5f, 1f);
-            highlightRect.sizeDelta = new Vector2(-18f, 4f);
-            highlightRect.anchoredPosition = new Vector2(0f, -8f);
-            Image highlightImage = highlight.AddComponent<Image>();
-            highlightImage.color = new Color(1f, 1f, 1f, 0.12f);
-
             CreateLabel(
                 "Label",
                 buttonObject.transform,
                 label,
-                20f,
+                19f,
                 FontStyles.Bold,
-                Color.white,
+                buttonTextTint,
                 Vector2.zero,
                 TextAlignmentOptions.Center);
 
@@ -341,6 +312,8 @@ namespace PsycheVR.UI
             text.enableWordWrapping = true;
             text.overflowMode = TextOverflowModes.Ellipsis;
             text.margin = new Vector4(8f, 0f, 8f, 0f);
+            text.characterSpacing = 0.5f;
+            text.lineSpacing = -4f;
 
             return text;
         }
