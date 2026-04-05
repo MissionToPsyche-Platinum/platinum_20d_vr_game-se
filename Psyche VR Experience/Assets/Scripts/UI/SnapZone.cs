@@ -13,6 +13,9 @@ public class SnapZone : MonoBehaviour
     public bool hasSnapped;
     public InstructionTextManager textManager;
 
+    public XRGrabInteractable[] grabbablesToEnable;
+    public GameObject[] objectsToEnable;
+
     private XRGrabInteractable currentObject;
 
     void Start()
@@ -27,13 +30,10 @@ public class SnapZone : MonoBehaviour
         if (other.attachedRigidbody == null) return;
 
         XRGrabInteractable grab = other.attachedRigidbody.GetComponent<XRGrabInteractable>();
-        if (grab == null) return;
+        if (grab == null || !grab.enabled) return;
 
         SnappableObject snapState = other.attachedRigidbody.GetComponent<SnappableObject>();
-        if (snapState != null && snapState.isSnapped) {
-            return;
-        };
-        
+        if (snapState != null && snapState.isSnapped) return;
 
         currentObject = grab;
 
@@ -82,6 +82,20 @@ public class SnapZone : MonoBehaviour
         if (snapState != null && snapState.isSnapped) yield break;
 
         Rigidbody rb = grab.GetComponent<Rigidbody>();
+
+        if (snapState != null)
+        {
+            snapState.SnapTo(snapAnchor);
+            snapState.isSnapped = true;
+        }
+        else
+        {
+            grab.transform.position = snapAnchor.position;
+            grab.transform.rotation = snapAnchor.rotation;
+        }
+
+        grab.enabled = false;
+
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
@@ -89,20 +103,14 @@ public class SnapZone : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        grab.transform.position = snapAnchor.position;
-        grab.transform.rotation = snapAnchor.rotation;
-
-        if (snapState != null)
-            snapState.isSnapped = true;
-
-        grab.enabled = false;
         hasSnapped = true;
 
         if (zoneRenderer != null)
             zoneRenderer.enabled = false;
 
         grab.selectExited.RemoveListener(OnReleased);
-        textManager.SetText("Correct!");
+
         currentObject = null;
     }
+
 }
