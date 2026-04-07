@@ -13,20 +13,26 @@ public class SnapZone : MonoBehaviour
     public bool hasSnapped;
     public InstructionTextManager textManager;
 
-    public XRGrabInteractable[] grabbablesToEnable;
-    public GameObject[] objectsToEnable;
-
     private XRGrabInteractable currentObject;
+
+    private const string BusZoneTag = "bus_SnapZone";
 
     void Start()
     {
+        // Only the bus snap zone starts active.
+        if (!CompareTag(BusZoneTag))
+        {
+            this.enabled = false;
+            return;
+        }
+
         if (zoneRenderer != null)
             zoneRenderer.enabled = false;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (hasSnapped) return;
+        if (hasSnapped || !this.enabled) return;
         if (other.attachedRigidbody == null) return;
 
         XRGrabInteractable grab = other.attachedRigidbody.GetComponent<XRGrabInteractable>();
@@ -40,7 +46,7 @@ public class SnapZone : MonoBehaviour
         if (zoneRenderer != null)
         {
             zoneRenderer.enabled = true;
-            zoneRenderer.material = grab.CompareTag(requiredTag) ? validMat : invalidMat;
+            SetZoneMaterial(grab.CompareTag(requiredTag) ? validMat : invalidMat);
         }
 
         grab.selectExited.AddListener(OnReleased);
@@ -110,7 +116,47 @@ public class SnapZone : MonoBehaviour
 
         grab.selectExited.RemoveListener(OnReleased);
 
+        if (CompareTag(BusZoneTag))
+        {
+            EnableAllOtherSnapZones();
+        }
+
+        if (textManager != null && snapState != null)
+        {
+            textManager.SetText(snapState.objectDescription);
+
+        }
+
         currentObject = null;
     }
 
+    private void EnableAllOtherSnapZones()
+    {
+        SnapZone[] allZones = FindObjectsByType<SnapZone>(FindObjectsSortMode.None);
+
+        foreach (SnapZone zone in allZones)
+        {
+            if (zone == null) continue;
+            if (zone == this) continue;
+
+            zone.enabled = true;
+
+            if (zone.zoneRenderer != null)
+                zone.zoneRenderer.enabled = false;
+        }
+    }
+
+    private void SetZoneMaterial(Material mat)
+    {
+        if (zoneRenderer == null || mat == null) return;
+
+        Material[] mats = new Material[zoneRenderer.sharedMaterials.Length];
+
+        for (int i = 0; i < mats.Length; i++)
+        {
+            mats[i] = mat;
+        }
+
+        zoneRenderer.materials = mats;
+    }
 }
