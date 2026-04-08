@@ -12,6 +12,8 @@ TagManager:
   - PSYCHE_Right_Solar
   - PSYCHE_Left_Solar
   - PSYCHE_Bus
+  - antenna_SnapZone
+  - bus_SnapZone
   layers:
   - Default
   - TransparentFX
