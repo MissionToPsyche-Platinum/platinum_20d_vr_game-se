@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 2505223071da93d40ba610651fdb0bf6
+timeCreated: 1551779102
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 117088
+  packageName: World Space Trees (FREE) - Shader
+  packageVersion: 1.23
+  assetPath: Assets/Trees_WorldSpace_FREE/Materials/SRP/TreeLeavesIJKL_AS.mat
+  uploadId: 393715
