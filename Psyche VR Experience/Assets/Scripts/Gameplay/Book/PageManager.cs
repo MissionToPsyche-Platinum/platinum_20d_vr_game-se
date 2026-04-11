@@ -21,6 +21,13 @@ namespace PsycheVR.Gameplay
         private PsycheGrabbable _grabbable;
         private bool _isBookHeld;
 
+        /// <summary>
+        /// When true, auto-open animation is in progress.
+        /// Pages stay disabled until the animation completes.
+        /// Set by BookAutoOpen.
+        /// </summary>
+        public bool IsAutoOpening { get; set; }
+
         private void Awake()
         {
             _grabbable = GetComponent<PsycheGrabbable>();
@@ -77,7 +84,7 @@ namespace PsycheVR.Gameplay
         /// </summary>
         public void RefreshInteractablePages()
         {
-            if (!_isBookHeld)
+            if (!_isBookHeld || IsAutoOpening)
             {
                 SetAllPagesEnabled(false);
                 return;
@@ -88,6 +95,7 @@ namespace PsycheVR.Gameplay
 
             for (int i = 0; i < pages.Count; i++)
             {
+                if (!pages[i].AllowHandInteraction) continue;
                 if (!pages[i].IsFlipped && activeRight == null)
                     activeRight = pages[i];
                 if (pages[i].IsFlipped)

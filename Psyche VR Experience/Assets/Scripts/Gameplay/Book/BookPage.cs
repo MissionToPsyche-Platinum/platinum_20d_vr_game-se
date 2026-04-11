@@ -11,6 +11,14 @@ namespace PsycheVR.Gameplay
     /// </summary>
     public class BookPage : XRBaseInteractable
     {
+        [Header("Interaction")]
+        [Tooltip("When false, this page cannot be grabbed by the player. " +
+                 "Used for covers driven only by BookAutoOpen.")]
+        [SerializeField] private bool allowHandInteraction = true;
+
+        /// <summary>Whether this page can be grabbed by the player.</summary>
+        public bool AllowHandInteraction => allowHandInteraction;
+
         [Header("Hinge")]
         [Tooltip("Local axis the page rotates around (spine edge).")]
         [SerializeField] private Vector3 hingeAxis = Vector3.right;
@@ -51,6 +59,9 @@ namespace PsycheVR.Gameplay
 
         /// <summary>Whether this page is currently on the flipped (left) side.</summary>
         public bool IsFlipped { get; private set; }
+
+        /// <summary>Current rotation angle in degrees.</summary>
+        public float CurrentAngle => currentAngle;
 
         protected override void Awake()
         {
@@ -206,6 +217,20 @@ namespace PsycheVR.Gameplay
 
             isAnimating = true;
             pageManager?.OnPageReleased(this);
+        }
+
+        /// <summary>
+        /// Sets the page to a specific angle immediately. Stops any ongoing animation.
+        /// Updates IsFlipped based on the min/max midpoint threshold.
+        /// Safe to call when the component is disabled.
+        /// </summary>
+        public void SetAngle(float angle)
+        {
+            currentAngle = angle;
+            isAnimating = false;
+            angleVelocity = 0f;
+            ApplyRotation();
+            IsFlipped = angle >= (minAngle + maxAngle) / 2f;
         }
 
 #if UNITY_EDITOR

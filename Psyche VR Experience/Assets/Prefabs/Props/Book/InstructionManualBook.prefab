@@ -187,6 +187,7 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+  allowHandInteraction: 1
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
@@ -207,6 +208,7 @@ GameObject:
   - component: {fileID: 858361513611285834}
   - component: {fileID: 7231154712724218338}
   - component: {fileID: 41666035560757636}
+  - component: {fileID: 7171197753755065247}
   m_Layer: 0
   m_Name: SpinePivot
   m_TagString: Untagged
@@ -451,6 +453,29 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.3166585, y: 0.23777843, z: 0.05652666}
   m_Center: {x: -0.13373876, y: 0.003585577, z: 0.0014779568}
+--- !u!114 &7171197753755065247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2672565334555448479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd346acce6143b94b8ea71588c5425cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BookAutoOpen
+  forwardPages:
+  - {fileID: 624634486778710919}
+  - {fileID: 8332289667202106234}
+  - {fileID: 209947285586585944}
+  - {fileID: 4672546209557616119}
+  - {fileID: 3813446379287036523}
+  backwardPages:
+  - {fileID: 6405852996118493071}
+  forwardAngle: 70
+  backwardAngle: -70
+  smoothTime: 0.25
 --- !u!1 &2805418538512034067
 GameObject:
   m_ObjectHideFlags: 0
@@ -670,10 +695,11 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+  allowHandInteraction: 0
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 0
-  pivotOffset: {x: 0, y: -0.019532202, z: -0.12}
+  pivotOffset: {x: 0, y: -0.019532202, z: -0.1}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
   snapSmoothTime: 0.05
 --- !u!1 &3693955710760875523
@@ -863,6 +889,7 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+  allowHandInteraction: 1
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
@@ -896,8 +923,8 @@ Transform:
   m_GameObject: {fileID: 3822546872799949659}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.1683, y: -0.1098, z: 0.0011}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0.1683, y: -0.1105, z: 0.0011}
+  m_LocalScale: {x: 1, y: 1, z: 1.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9036392884020674219}
@@ -1147,6 +1174,7 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+  allowHandInteraction: 1
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
@@ -1340,6 +1368,7 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+  allowHandInteraction: 1
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
@@ -1566,9 +1595,10 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+  allowHandInteraction: 0
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: 0
   maxAngle: 70
-  pivotOffset: {x: 0, y: 0.023017166, z: -0.12}
+  pivotOffset: {x: 0, y: 0.023017166, z: -0.1}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
   snapSmoothTime: 0.05
