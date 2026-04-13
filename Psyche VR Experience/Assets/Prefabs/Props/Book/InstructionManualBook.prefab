@@ -29,8 +29,8 @@ Transform:
   m_GameObject: {fileID: 1165456296065350546}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0.0235, y: -0.003589034, z: -0.012668848}
-  m_LocalScale: {x: 1.21, y: 1.05, z: 1}
+  m_LocalPosition: {x: 0, y: 0.0009, z: -0.0095}
+  m_LocalScale: {x: 1, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9036392884020674219}
@@ -68,7 +68,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 4382737335783463193, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: 67959183c9b3a804e9abc63045c226c8, type: 2}
+  - {fileID: 2100000, guid: d5ffa6af0facac140b61db1a250fb87a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -111,7 +112,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.25, y: 0.0029873906, z: 0.19625568}
+  m_Size: {x: 0.32, y: 0.0029873906, z: 0.19625568}
   m_Center: {x: -0.13, y: 0.00000006053597, z: 0}
 --- !u!114 &8332289667202106234
 MonoBehaviour:
@@ -191,9 +192,9 @@ MonoBehaviour:
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
-  pivotOffset: {x: 0, y: -0.012668848, z: -0.1}
+  pivotOffset: {x: 0, y: -0.0095, z: -0.105}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
-  snapSmoothTime: 0.05
+  snapSmoothTime: 0.1
 --- !u!1 &2672565334555448479
 GameObject:
   m_ObjectHideFlags: 0
@@ -209,6 +210,7 @@ GameObject:
   - component: {fileID: 7231154712724218338}
   - component: {fileID: 41666035560757636}
   - component: {fileID: 7171197753755065247}
+  - component: {fileID: 7662533054274892076}
   m_Layer: 0
   m_Name: SpinePivot
   m_TagString: Untagged
@@ -247,9 +249,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2672565334555448479}
   serializedVersion: 5
-  m_Mass: 0.5
-  m_LinearDamping: 5
-  m_AngularDamping: 5
+  m_Mass: 0.62
+  m_LinearDamping: 0.1
+  m_AngularDamping: 0.1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -476,6 +478,22 @@ MonoBehaviour:
   forwardAngle: 70
   backwardAngle: -70
   smoothTime: 0.25
+--- !u!114 &7662533054274892076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2672565334555448479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 786466f646a94c44fbff6ba3def86204, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BookHighlight
+  glowColor: {r: 0.7, g: 0.87, b: 1, a: 1}
+  rimPower: 4
+  fadeDuration: 0.25
+  targetRenderers: []
 --- !u!1 &2805418538512034067
 GameObject:
   m_ObjectHideFlags: 0
@@ -536,7 +554,7 @@ Transform:
   m_GameObject: {fileID: 2881903895585632498}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0, y: 0.0017551184, z: -0.019532204}
+  m_LocalPosition: {x: 0, y: 0.00175512, z: -0.0195}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -575,8 +593,9 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6003067754390612052, guid: 0f985063792999944a356c9be611fe66, type: 3}
-  - {fileID: -8801323860392387912, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: 6b8b59fda0116eb4cacca9d6fe545002, type: 2}
+  - {fileID: 2100000, guid: 31aeedce5bf179c4bb95a1bb7cc21540, type: 2}
+  - {fileID: 2100000, guid: 466c5762635f2a2458a677bd0a5b55b0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -620,7 +639,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.3007028, y: 0.0037024498, z: 0.22502495}
-  m_Center: {x: -0.115, y: 0.00021339324, z: -0.0018434525}
+  m_Center: {x: -0.132, y: 0.00021339324, z: -0.0018434525}
 --- !u!114 &6405852996118493071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,7 +718,7 @@ MonoBehaviour:
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 0
-  pivotOffset: {x: 0, y: -0.019532202, z: -0.1}
+  pivotOffset: {x: 0, y: -0.01953, z: -0.1}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
   snapSmoothTime: 0.05
 --- !u!1 &3693955710760875523
@@ -731,8 +750,8 @@ Transform:
   m_GameObject: {fileID: 3693955710760875523}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0.023499966, y: -0.003589034, z: 0.017060757}
-  m_LocalScale: {x: 1.21, y: 1.05, z: 1}
+  m_LocalPosition: {x: 0, y: 0.0009, z: 0.013}
+  m_LocalScale: {x: 1, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9036392884020674219}
@@ -770,7 +789,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 4382737335783463193, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: 8b5dc52338376d64ea205b919c83d79f, type: 2}
+  - {fileID: 2100000, guid: a05e905345cc262459f0b3c3ae8bf11d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -813,7 +833,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.25, y: 0.0029703975, z: 0.19625568}
+  m_Size: {x: 0.32, y: 0.0029703975, z: 0.19625568}
   m_Center: {x: -0.13, y: -0.000000059138983, z: 0}
 --- !u!114 &3813446379287036523
 MonoBehaviour:
@@ -893,9 +913,9 @@ MonoBehaviour:
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
-  pivotOffset: {x: 0, y: 0.017060755, z: -0.1}
+  pivotOffset: {x: 0, y: 0.013, z: -0.105}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
-  snapSmoothTime: 0.05
+  snapSmoothTime: 0.1
 --- !u!1 &3822546872799949659
 GameObject:
   m_ObjectHideFlags: 0
@@ -962,8 +982,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6003067754390612052, guid: 0f985063792999944a356c9be611fe66, type: 3}
-  - {fileID: -8801323860392387912, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: 6b8b59fda0116eb4cacca9d6fe545002, type: 2}
+  - {fileID: 2100000, guid: 6acbed1d92662e94b91e2079725f0edb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1016,8 +1036,8 @@ Transform:
   m_GameObject: {fileID: 4301211517720292575}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0.023499966, y: -0.003589034, z: 0.007160187}
-  m_LocalScale: {x: 1.21, y: 1.05, z: 1}
+  m_LocalPosition: {x: 0, y: 0.0009, z: 0.0055}
+  m_LocalScale: {x: 1, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9036392884020674219}
@@ -1055,7 +1075,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 4382737335783463193, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: 7a9898103f477dd48944781f583371ba, type: 2}
+  - {fileID: 2100000, guid: 27427cf7f94117546ac8ffa687b7e33d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1098,7 +1119,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.25, y: 0.0029700052, z: 0.19625568}
+  m_Size: {x: 0.32, y: 0.0029700052, z: 0.19625568}
   m_Center: {x: -0.13, y: 0, z: 0}
 --- !u!114 &4672546209557616119
 MonoBehaviour:
@@ -1178,9 +1199,9 @@ MonoBehaviour:
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
-  pivotOffset: {x: 0, y: 0.007160186, z: -0.1}
+  pivotOffset: {x: 0, y: 0.0055, z: -0.105}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
-  snapSmoothTime: 0.05
+  snapSmoothTime: 0.1
 --- !u!1 &5300576506436467450
 GameObject:
   m_ObjectHideFlags: 0
@@ -1210,8 +1231,8 @@ Transform:
   m_GameObject: {fileID: 5300576506436467450}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0.023499966, y: -0.003589034, z: -0.0027399063}
-  m_LocalScale: {x: 1.21, y: 1.05, z: 1}
+  m_LocalPosition: {x: 0, y: 0.0009, z: -0.002}
+  m_LocalScale: {x: 1, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9036392884020674219}
@@ -1249,7 +1270,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 4382737335783463193, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: ae25090fa6d62824abdc8bdcfdbd5e19, type: 2}
+  - {fileID: 2100000, guid: 1098cfa1ca2094044af589d8b9f05be3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1292,7 +1314,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.25, y: 0.0029700054, z: 0.19625568}
+  m_Size: {x: 0.32, y: 0.0029700054, z: 0.19625568}
   m_Center: {x: -0.13, y: 0, z: 0}
 --- !u!114 &209947285586585944
 MonoBehaviour:
@@ -1372,9 +1394,9 @@ MonoBehaviour:
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: -70
   maxAngle: 70
-  pivotOffset: {x: 0, y: -0.0027399065, z: -0.1}
+  pivotOffset: {x: 0, y: -0.002, z: -0.105}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
-  snapSmoothTime: 0.05
+  snapSmoothTime: 0.1
 --- !u!1 &5776565863804181597
 GameObject:
   m_ObjectHideFlags: 0
@@ -1436,7 +1458,7 @@ Transform:
   m_GameObject: {fileID: 6064942853566915042}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0, y: 0.0019761324, z: 0.023017168}
+  m_LocalPosition: {x: 0, y: 0.00197613, z: 0.023}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1475,8 +1497,9 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6003067754390612052, guid: 0f985063792999944a356c9be611fe66, type: 3}
-  - {fileID: -8801323860392387912, guid: 0f985063792999944a356c9be611fe66, type: 3}
+  - {fileID: 2100000, guid: 6b8b59fda0116eb4cacca9d6fe545002, type: 2}
+  - {fileID: 2100000, guid: 456f6d5c546f2ca42b936d9e48f7070d, type: 2}
+  - {fileID: 2100000, guid: da33dd5f880b3d54e96412989fa74590, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1507,7 +1530,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6064942853566915042}
-  m_Material: {fileID: 13400000, guid: e6f6f62e09f73bc41802e5e9eb145faf, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1520,7 +1543,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.3007028, y: 0.0038045223, z: 0.22545667}
-  m_Center: {x: -0.115, y: -0.00038319873, z: -0.0018372536}
+  m_Center: {x: -0.132, y: -0.00038319873, z: -0.0018372536}
 --- !u!114 &624634486778710919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1599,6 +1622,6 @@ MonoBehaviour:
   hingeAxis: {x: 1, y: 0, z: 0}
   minAngle: 0
   maxAngle: 70
-  pivotOffset: {x: 0, y: 0.023017166, z: -0.1}
+  pivotOffset: {x: 0, y: 0.023, z: -0.1}
   zeroAngleDirection: {x: 0, y: 0, z: 1}
   snapSmoothTime: 0.05
