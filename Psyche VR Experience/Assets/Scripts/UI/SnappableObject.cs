@@ -7,6 +7,7 @@ public class SnappableObject : MonoBehaviour
     public Transform snapPoint;
     public bool isSnapped;
     public string objectDescription;
+    public string objectTitle;
 
 
 
