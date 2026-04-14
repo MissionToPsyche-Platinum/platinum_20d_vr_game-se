@@ -112,7 +112,38 @@ These are the moments where the player is directly touching or acting on a Psych
 
 ## 2. Object & Material-Contact Sounds
 
-*TBD*
+These are the passive physics sounds — what you hear when objects hit, slide, or tumble against surfaces. Currently the puzzle pieces are completely silent when dropped, collided, or dragged. In VR this is especially jarring because the player sees a metal spacecraft part hit a wooden desk and hears… nothing.
+
+All of these would hook into Unity's `OnCollisionEnter` / `OnCollisionStay` callbacks on the piece Rigidbodies (via a new lightweight `CollisionAudio` component, or added to `PsycheGrabbable`). Velocity magnitude at impact determines volume and clip selection.
+
+### 2.1 Piece-on-Surface Contacts
+
+| Contact Pair | Description | Sound Character | Priority | Notes |
+|---|---|---|---|---|
+| **Metal piece → desk/table** | Piece dropped or set down on the wooden work surface | Metallic tap on wood, thunk | **P0** | The most frequent physics contact in the experience. Needs 3-4 clip variants to avoid the "machine-gun" effect of the same sample repeating. Scale volume by `relativeVelocity.magnitude`. |
+| **Metal piece → floor** | Piece falls off the table to the bedroom floor | Heavier metallic clang on carpet/tile | P1 | Should sound "further away" and more alarming than table contact — reinforces that the piece is lost. Pairs with Section 1 "piece lost" cue. |
+| **Piece set down gently** | Player carefully places a piece (low velocity) | Soft tap, barely audible | P1 | Velocity threshold below ~0.3 m/s — use a quieter, softer clip variant rather than just reducing volume. |
+
+### 2.2 Piece-on-Piece Contacts
+
+| Contact Pair | Description | Sound Character | Priority | Notes |
+|---|---|---|---|---|
+| **Metal piece → metal piece** | Two loose pieces collide while being moved around | Light metallic clink | P1 | Shorter and thinner than piece-on-table. Tag-check both colliders to confirm both are `SnappableObject`s. |
+| **Piece dragged across surface** | Player slides a piece along the desk without lifting | Scraping / sliding metallic | P2 | Uses `OnCollisionStay` with velocity check. Can be fatiguing — only add if playtesting shows it feels empty without it. |
+
+### 2.3 Other Object Contacts
+
+| Contact Pair | Description | Sound Character | Priority | Notes |
+|---|---|---|---|---|
+| **Pedestal / model base** | Assembled Psyche model interacted with on its stand | Solid, heavy metallic | P2 | Only relevant if the finished model is interactable post-completion. Low priority unless the design calls for a "admire your work" moment. |
+| **Chalkboard interaction** | Physical touch or tap on the chalkboard surface | Chalk-on-slate tap | P2 | The chalkboard is currently a display, not a physics object. Only needed if we add physical grab/touch interaction to it later. |
+
+### 2.4 Implementation Considerations
+
+- **Clip variation:** Any contact sound that can trigger more than once per second needs 3+ clip variants played via `AudioSource.PlayOneShot` with slight random pitch shift (0.95–1.05). This avoids the uncanny "machine-gun" repetition.
+- **Velocity gating:** Contacts below ~0.1 m/s should be silent (micro-jitter from physics solver). Contacts above ~2 m/s can share a single "hard impact" clip.
+- **Spatial audio:** All contact sounds should use 3D `AudioSource` settings (spatial blend = 1.0) so they localize to the impact point. The bedroom is small enough that attenuation rolloff can be tight (1–5m).
+- **No existing collision audio system:** The project currently has no `OnCollisionEnter` audio hooks anywhere in custom scripts. This would be a net-new system, which affects the effort estimate in Section 4.
 
 ## 3. Ambient & Environmental Sounds
 
