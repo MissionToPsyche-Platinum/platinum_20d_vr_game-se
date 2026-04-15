@@ -43,6 +43,32 @@ namespace PsycheVR.Gameplay
         [Tooltip("SmoothDamp smooth time in seconds. Lower = snappier settle.")]
         [SerializeField] private float snapSmoothTime = 0.15f;
 
+        [Header("Grab Tracking")]
+        [Tooltip("SmoothDamp smooth time (sec) for page rotation while held. " +
+                 "0 = instant 1:1 with hand. Higher = slower, more weighted feel.")]
+        [SerializeField] private float grabSmoothTime = 0.08f;
+
+        [Header("Velocity Flip")]
+        [Tooltip("Angular velocity (degrees/sec) above which a release is treated " +
+                 "as an intentional flick — page completes the flip in the velocity " +
+                 "direction regardless of current position.")]
+        [SerializeField] private float velocityFlipThreshold = 75f;
+
+        [Tooltip("Smoothing factor for angular velocity (0=no smoothing, 1=max). " +
+                 "Higher reduces jitter but adds latency.")]
+        [Range(0f, 0.95f)]
+        [SerializeField] private float velocitySmoothing = 0.6f;
+
+        [Header("Attach")]
+        [Tooltip("Where the XR ray connects when this page is grabbed. " +
+                 "If null, uses the page's own transform.")]
+        [SerializeField] private Transform attachTransform;
+
+        public override Transform GetAttachTransform(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRInteractor interactor)
+        {
+            return attachTransform != null ? attachTransform : base.GetAttachTransform(interactor);
+        }
+
         private const float SnapConvergenceThreshold = 0.5f;
 
         private float currentAngle;
@@ -50,6 +76,8 @@ namespace PsycheVR.Gameplay
         private float angleVelocity;
         private bool isAnimating;
         private float grabAngleOffset; // delta between hand angle and page angle at grab start
+        private float smoothedAngularVelocity; // smoothed degrees/sec during grab
+        private float grabSmoothVelocity; // SmoothDamp velocity buffer for grab tracking
         private Quaternion initialLocalRotation;
         private Vector3 initialLocalPosition;
         private Vector3 spineEdgeParent; // spine edge position in parent space
@@ -115,7 +143,24 @@ namespace PsycheVR.Gameplay
             if (rawAngle < minAngle - 10f || rawAngle > maxAngle + 10f)
                 rawAngle = currentAngle > (minAngle + maxAngle) / 2f ? maxAngle : minAngle;
 
-            currentAngle = Mathf.Clamp(rawAngle, minAngle, maxAngle);
+            float targetGrabAngle = Mathf.Clamp(rawAngle, minAngle, maxAngle);
+
+            // Smooth the page rotation toward the hand target so it feels weighted
+            // rather than 1:1. grabSmoothTime=0 keeps the original instant tracking.
+            float newAngle = grabSmoothTime > 0f
+                ? Mathf.SmoothDamp(currentAngle, targetGrabAngle,
+                    ref grabSmoothVelocity, grabSmoothTime)
+                : targetGrabAngle;
+
+            // Track angular velocity (deg/sec) with exponential smoothing for flick detection.
+            if (Time.deltaTime > 0f)
+            {
+                float instantVelocity = (newAngle - currentAngle) / Time.deltaTime;
+                smoothedAngularVelocity = Mathf.Lerp(
+                    instantVelocity, smoothedAngularVelocity, velocitySmoothing);
+            }
+
+            currentAngle = newAngle;
             ApplyRotation();
         }
 
@@ -189,6 +234,8 @@ namespace PsycheVR.Gameplay
             base.OnSelectEntered(args);
             isAnimating = false;
             angleVelocity = 0f;
+            smoothedAngularVelocity = 0f;
+            grabSmoothVelocity = 0f;
 
             // Cache the offset between where the hand is and where the page is,
             // so the page starts moving immediately with no jump or dead zone.
@@ -202,9 +249,21 @@ namespace PsycheVR.Gameplay
         {
             base.OnSelectExited(args);
 
-            // Snap to nearest rest angle.
-            float snapThreshold = (minAngle + maxAngle) / 2f;
-            if (currentAngle >= snapThreshold)
+            // If the user flicked the page hard enough, complete the flip in
+            // the velocity direction regardless of current position.
+            // Otherwise fall back to the midpoint snap.
+            bool flipForward;
+            if (Mathf.Abs(smoothedAngularVelocity) >= velocityFlipThreshold)
+            {
+                flipForward = smoothedAngularVelocity > 0f;
+            }
+            else
+            {
+                float snapThreshold = (minAngle + maxAngle) / 2f;
+                flipForward = currentAngle >= snapThreshold;
+            }
+
+            if (flipForward)
             {
                 targetAngle = maxAngle;
                 IsFlipped = true;
