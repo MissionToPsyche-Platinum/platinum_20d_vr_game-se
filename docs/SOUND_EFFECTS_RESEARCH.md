@@ -147,7 +147,48 @@ All of these would hook into Unity's `OnCollisionEnter` / `OnCollisionStay` call
 
 ## 3. Ambient & Environmental Sounds
 
-*TBD*
+Ambient audio is the bed of the mix — the sounds the player isn't consciously listening for, but whose absence makes the scene feel flat, sterile, or "empty VR demo." The bedroom scene currently runs in dead silence, which is arguably the single biggest immersion gap in the experience right now.
+
+Unlike Sections 1 and 2, these sounds are mostly looping or one-shot atmospherics triggered by scene state rather than direct player action.
+
+### 3.1 Room Tone & Atmosphere
+
+| Moment | Description | Category | Priority | Notes |
+|---|---|---|---|---|
+| **Bedroom room tone** | Continuous low-level ambience for the bedroom scene | Looping ambient bed | **P0** | Subtle HVAC hum + distant-outside murmur. Single stereo loop, very low volume (-30 dB), non-spatial. Sets the whole scene; the cheapest win in the entire doc. |
+| **Monitor / computer hum** | Electronics in the mission-control-adjacent setup | Looping ambient, spatial | P1 | 3D source near the monitor prefabs. Ties the TG-106/TG-111 lit-up screens into the soundscape. |
+| **Ceiling light buzz** | Fluorescent or LED hum near light fixtures | Looping ambient, spatial, very quiet | P2 | Only noticeable near the ceiling lights. Realistic but easily feels like a bug if too loud. |
+
+### 3.2 Scene & State Transitions
+
+| Moment | Description | Category | Priority | Notes |
+|---|---|---|---|---|
+| **Scene fade-in** | Start of the bedroom scene / after a TG-28 fade | Soft riser / welcome swell | P1 | Hooks into the TG-54 fade manager once it lands. Should be brief (< 1.5s) and not repeat on every transition. |
+| **Scene fade-out** | Leaving the scene / transition to next area | Soft fall / breath-out | P1 | Mirror of fade-in. Also hooks TG-54. |
+| **Puzzle reset triggered** | Global "state is resetting" moment (TG-124) | Magical whoosh bed | P1 | Distinct from the per-piece return sound in Section 1 — this is the *scene* response, a soft sweep that unifies the individual piece sounds. |
+| **First piece picked up** | One-time cue when the player first engages the puzzle | Discovery stinger | P2 | Optional narrative beat — signals "the experience has started." Low priority; easy to cut. |
+
+### 3.3 Chalkboard & Tooltip Ambience
+
+| Moment | Description | Category | Priority | Notes |
+|---|---|---|---|---|
+| **Chalkboard idle presence** | Subtle indicator that the chalkboard is "on" | Looping, very quiet | P2 | Possibly a faint chalk-dust or paper-rustle loop. Only if playtesters miss the chalkboard; TG-60 already ships strong visual presence. |
+| **Tooltip appear** | Text updates on the chalkboard as a piece is grabbed | UI cue, short | P1 | Soft "writing" or chalk-tap sound. Should feel like something *happened*, not intrude. Must not fire on every hover — debounce to significant content changes. |
+| **Category progression** | Moving between info categories on the chalkboard | UI cue, page-turn-like | P1 | Already partially covered by TG-60's existing audio — verify before adding new clips. |
+
+### 3.4 Environmental "Life" Details
+
+| Moment | Description | Category | Priority | Notes |
+|---|---|---|---|---|
+| **Outside world hint** | Very distant suggestion of a world beyond the bedroom | Looping, low-frequency, non-spatial | P2 | Anchors the scene in reality. Could be distant wind, faint traffic, or nothing at all depending on the narrative (space facility vs. home office). Decision ties to TG-96 exterior environment work. |
+| **Bus / vehicle cue** | Referenced in `BasketballPhysics.cs` and the "bus through floor" bug fix — is there a bus in-scene? | TBD | P2 | Flag for scope clarification. If there is a bus/vehicle prop in the bedroom, it may warrant its own ambient source. |
+
+### 3.5 Ambient Audio Guidelines
+
+- **One bed, not five:** The room tone should be a single unified loop. Layering too many ambient loops creates a muddy, tiring mix and wastes memory.
+- **Ducking on interaction:** When a P0 interaction sound plays (snap, valid grab), the ambient bed should duck by 3–6 dB for ~0.5s. This pushes the action forward in the mix without needing louder SFX.
+- **Mute on pause:** When the TG-108 pause menu is open, ambient loops should pause (not just duck). Use a global `AudioMixerSnapshot`.
+- **No music here:** This doc is explicitly not proposing soundtrack. If the design later adds music, the ambient guidelines above will need revisiting because music + room tone + loops competes quickly.
 
 ## 4. Prioritization & Implementation Notes
 
