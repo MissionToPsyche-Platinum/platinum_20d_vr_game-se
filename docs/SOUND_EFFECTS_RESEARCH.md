@@ -192,7 +192,72 @@ Unlike Sections 1 and 2, these sounds are mostly looping or one-shot atmospheric
 
 ## 4. Prioritization & Implementation Notes
 
-*TBD*
+This section consolidates the P0/P1/P2 candidates from Sections 1–3 into a sequenced rollout plan, with rough effort sizing and technical notes for whoever picks up the follow-up implementation ticket.
+
+### 4.1 Consolidated Priority List
+
+**P0 — must ship (core feedback gaps)**
+
+| # | Sound | Section | Why it's P0 |
+|---|---|---|---|
+| 1 | Valid snap / lock-in | 1.3 | Single most important puzzle sound. Without it the player can't tell a snap registered. |
+| 2 | Grab start | 1.1 | Core "I'm holding something" confirmation. VR hands don't feel real without it. |
+| 3 | Release over invalid zone | 1.2 | Currently silent; causes confusion and frustration when wrong parts don't snap. |
+| 4 | Full puzzle completion | 1.3 | Reward payoff for the whole experience. |
+| 5 | Metal piece → desk/table | 2.1 | Most frequent physics event in the experience, currently silent. |
+| 6 | Bedroom room tone | 3.1 | Kills the "sterile VR demo" feel; a single cheap loop. |
+
+**P1 — should ship (quality/immersion)**
+
+Hover cue, release-in-air landing, snap zone armed hum, piece-lost cue, reset button press, pieces returning home, piece-on-floor impact, gentle placement variant, piece-on-piece clink, scene fade-in/out, reset scene whoosh, tooltip appear, category progression verification, monitor hum.
+
+**P2 — nice-to-have**
+
+Grab fail/slip, pedestal contact, chalkboard physical touch, sliding/drag audio, ceiling light buzz, first-piece discovery stinger, chalkboard idle loop, outside-world hint, bus/vehicle ambient (pending scope clarification).
+
+### 4.2 Rollout Phases
+
+**Phase 1 — Core Feedback (P0 only)**
+Ships the 6 sounds above. Target outcome: the puzzle *feels responsive*. Estimated effort: ~1 sprint including asset sourcing. Deliverable: one PR per category (interaction + contact + ambient) to keep review tractable.
+
+**Phase 2 — Quality Pass (high-value P1s)**
+Hover, release landing, reset button, fade transitions, tooltip appear. Estimated effort: ~half a sprint. Requires TG-54 fade manager to be merged first.
+
+**Phase 3 — Polish (remaining P1 + selective P2)**
+Driven by playtest feedback. Only add P2 items that specifically address observed confusion or flatness.
+
+### 4.3 Technical Architecture Sketch
+
+The implementation ticket will need to stand up audio infrastructure that doesn't currently exist:
+
+1. **`AudioMixer` asset** with buses: `Master`, `Interaction`, `Physics`, `Ambient`, `UI`. Enables Section 3.5 ducking and pause behavior.
+2. **`CollisionAudio` component** — generic MonoBehaviour attached to any Rigidbody that should emit contact sounds. Holds a `List<CollisionAudioEntry>` mapping tag-pair → clip array → velocity curve.
+3. **`SnapZoneAudio` component** — subscribes to `SnapZone` events (valid snap, invalid drop, hover enter/exit). Keeps audio logic out of `SnapZone.cs` itself so gameplay code stays decoupled.
+4. **`AmbientLoopManager`** — singleton that owns looping beds, handles scene-load starts, and exposes `Duck(float dB, float seconds)` for interaction moments.
+5. **`CompletionAudio` hook** — listens for all `SnappableObject.isSnapped` flipping true and detects the "all snapped" state to fire the completion stinger. Could live on the future reset button manager.
+
+### 4.4 Asset Count Estimate
+
+Rough guess for Phase 1 assets:
+
+| Category | Unique clips | Variants each | Total files |
+|---|---|---|---|
+| Snap / lock-in | 1 | 2–3 | 3 |
+| Grab start | 1 | 3 | 3 |
+| Invalid drop | 1 | 1 | 1 |
+| Completion stinger | 1 | 1 | 1 |
+| Piece → desk | 1 | 4 | 4 |
+| Room tone | 1 | 1 (loop) | 1 |
+| **Phase 1 total** | — | — | **~13 files** |
+
+Phase 2 roughly doubles this. All-in, the project is likely looking at ~30–40 audio files if all P0+P1 ship.
+
+### 4.5 Decisions Needed Before Implementation Starts
+
+1. **Audio budget** — confirm build size and memory headroom for ~30–40 small WAV/OGG files.
+2. **Audio mixer ownership** — who maintains the mixer asset and sets bus levels. Recommend one owner to avoid drift.
+3. **Chalkboard audio reuse vs. new clips** — decide whether the completion stinger reuses the TG-60 chalkboard sound or is distinct. Listed as an open question in the doc header.
+4. **Scope of "the bus"** — clarify whether the reference in `BasketballPhysics.cs` / floor-phasing fix reflects an in-scene prop that needs its own audio treatment.
 
 ## 5. Asset Source References
 
