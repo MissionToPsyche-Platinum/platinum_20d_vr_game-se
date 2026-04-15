@@ -4739,6 +4739,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 136424688319008411}
+        m_TargetAssemblyTypeName: play_video, Assembly-CSharp
+        m_MethodName: StartVideo
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_SelectExited:
     m_PersistentCalls:
       m_Calls: []
@@ -9522,11 +9534,11 @@ PrefabInstance:
     - target: {fileID: -2868272761008288300, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: e0603ab48032f4f2e9b03627d47e5dc5, type: 2}
+      objectReference: {fileID: 2100000, guid: 2ea68b644e7e4034a9193ffa2a79aa05, type: 2}
     - target: {fileID: -2730127379904483413, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: e0603ab48032f4f2e9b03627d47e5dc5, type: 2}
+      objectReference: {fileID: 2100000, guid: 2ea68b644e7e4034a9193ffa2a79aa05, type: 2}
     - target: {fileID: -2045257923548263128, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
@@ -9558,7 +9570,7 @@ PrefabInstance:
     - target: {fileID: 1273097602874632127, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: e0603ab48032f4f2e9b03627d47e5dc5, type: 2}
+      objectReference: {fileID: 2100000, guid: 2ea68b644e7e4034a9193ffa2a79aa05, type: 2}
     - target: {fileID: 1502877291743220047, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
@@ -9570,7 +9582,7 @@ PrefabInstance:
     - target: {fileID: 4407366064157939303, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: e0603ab48032f4f2e9b03627d47e5dc5, type: 2}
+      objectReference: {fileID: 2100000, guid: 2ea68b644e7e4034a9193ffa2a79aa05, type: 2}
     - target: {fileID: 4418473098069316928, guid: 3758a32d2c7be12478678e62872573ca, type: 3}
       propertyPath: m_LocalPosition.x
       value: 40.8
@@ -11935,7 +11947,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5051295384034676390, guid: f1ce9c0e5b3d0684682cf51861fae5e2, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5259795940728312105, guid: f1ce9c0e5b3d0684682cf51861fae5e2, type: 3}
       propertyPath: m_Layer
@@ -12275,6 +12287,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2b61c9b829cced45beb29897a12e32a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonCaseController
+  launchButton: {fileID: 870112077}
 --- !u!1 &1876427680
 GameObject:
   m_ObjectHideFlags: 0
@@ -13486,6 +13499,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mission_Control_Shell_Final
       objectReference: {fileID: 0}
+    - target: {fileID: 7131206846311819711, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+      propertyPath: m_VideoClip
+      value: 
+      objectReference: {fileID: 32900000, guid: f6a3aee17ebd3d841bef631c6bb459e6, type: 3}
+    - target: {fileID: 7131206846311819711, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+      propertyPath: m_RenderMode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7516691691950304578, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+      propertyPath: m_Name
+      value: Video_Player
+      objectReference: {fileID: 0}
     - target: {fileID: 7976435424097307464, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.85494
@@ -13530,6 +13555,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7516691691950304578, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 136424688319008411}
     - targetCorrespondingSourceObject: {fileID: 2228306279302629731, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
@@ -13540,6 +13568,23 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+--- !u!1 &136424688319008410 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7516691691950304578, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+  m_PrefabInstance: {fileID: 136424688319008409}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &136424688319008411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136424688319008410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a39804da4b6a3b429a16954cbf00c83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::play_video
 --- !u!1001 &185915051056664817
 PrefabInstance:
   m_ObjectHideFlags: 0

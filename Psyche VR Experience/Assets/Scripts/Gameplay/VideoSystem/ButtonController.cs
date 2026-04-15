@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class ButtonController : MonoBehaviour
 {
@@ -10,11 +11,21 @@ public class ButtonController : MonoBehaviour
     private Vector3 _originalPosition;
     private Vector3 _pressedPosition;
     private bool _isAnimating = false;
+    private XRSimpleInteractable _interactable;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Debug.Log("Selected");
+        _interactable = GetComponent<XRSimpleInteractable>();
+
+        // Disable the interactable at startup
+        if (_interactable != null)
+        {
+            _interactable.enabled = false;
+        }
+
+
         if (buttonTop != null)
         {
             _originalPosition = buttonTop.localPosition;
@@ -22,14 +33,29 @@ public class ButtonController : MonoBehaviour
         }
     }
 
+    public void UnlockButton()
+    {
+        if (_interactable != null)
+        {
+            _interactable.enabled = true;
+            Debug.Log("Button is now interactable!");
+        }
+    }
+
     public void PressButton()
     {
         Debug.Log("Pressed Button");
+
+        if (_interactable != null)
+        {
+            _interactable.enabled = false; //Prevent double pressing
+        }
+
         if (!_isAnimating)
         {
             // 1. Play the up/down animation
             StartCoroutine(AnimateButton());
-
+            
         }
     }
 

@@ -6,6 +6,7 @@ public class ButtonCaseController : MonoBehaviour
     private bool _isOpen = false;
 
     public HingeJoint Hinge { get => _hinge; set => _hinge = value; }
+    [SerializeField] ButtonController launchButton;
 
 
     public bool GetIsOpen()
@@ -25,8 +26,6 @@ public class ButtonCaseController : MonoBehaviour
         {
             Debug.Log("Failed to load hinge!");
         }
-
-      
         
     }
 
@@ -75,8 +74,11 @@ public class ButtonCaseController : MonoBehaviour
             }
         }
 
+        //Unlock THE button
+        if(launchButton != null)
+        {
+            launchButton.UnlockButton();
+        }
      
-
-
     }
 }
