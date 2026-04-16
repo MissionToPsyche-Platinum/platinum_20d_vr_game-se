@@ -1,304 +1,284 @@
+using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using PsycheVR.Gameplay;
 
-namespace PsycheVR.EditorTools
+namespace PsycheVR.Editor
 {
-    /// <summary>
-    /// Editor utility to configure the InstructionManualBook prefab with the
-    /// Rigidbody + ConfigurableJoint + BookPageGrabbable architecture.
-    ///
-    /// Removes any pre-existing ArticulationBody / ArticulationGrabbable components,
-    /// re-parents the 6 page/cover pieces from SpinePivot to the empty
-    /// InstructionManualBook root, and configures every component per the spec.
-    ///
-    /// Idempotent — safe to re-run. Operates on whichever InstructionManualBook
-    /// it finds first: prefab stage in isolation, or scene instance.
-    /// </summary>
-    public static class BookSetupEditor
+public static class BookSetupEditor
+{
+    private const string PrefabPath =
+        "Assets/Prefabs/Props/Book/InstructionManualBook.prefab";
+
+    // Flip order: front cover opened first, back cover last.
+    private static readonly string[] PageOrder =
     {
-        private const string MenuPath = "Tools/Setup Book Hierarchy (Rigidbody)";
-        private const string GrabSettingsGuid = "d224529470e8b024d8a5ff0c6bad924d";
+        "Cover_Front", "Page_001", "Page_002",
+        "Page_003", "Page_004", "Cover_Back"
+    };
 
-        // Names that should be configured as page/cover pieces (joint children of the spine)
-        private static readonly string[] PageNames =
+    [MenuItem("Tools/Setup Book (Lever Pattern)")]
+    public static void SetupBook()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+        if (prefab == null)
         {
-            "Cover_Back", "Cover_Front",
-            "Page_001", "Page_002", "Page_003", "Page_004",
-        };
+            Debug.LogError($"[BookSetup] Prefab not found at {PrefabPath}");
+            return;
+        }
 
-        [MenuItem(MenuPath)]
-        public static void SetupBookHierarchy()
+        var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+        try
         {
-            GameObject root = FindBookRoot();
-            if (root == null)
-            {
-                Debug.LogError("[BookSetupEditor] Could not find an InstructionManualBook GameObject. Open the prefab in isolation, or load a scene that contains the book.");
-                return;
-            }
-
-            Transform spinePivot = root.transform.Find("SpinePivot");
+            ZeroRootRotation(root.transform);
+            var spinePivot = FindDescendant(root.transform, "SpinePivot");
             if (spinePivot == null)
             {
-                Debug.LogError("[BookSetupEditor] InstructionManualBook is missing its SpinePivot child.");
+                Debug.LogError("[BookSetup] SpinePivot not found.");
                 return;
             }
 
-            // Register the entire hierarchy with Undo so the user can Ctrl+Z if anything goes wrong
-            Undo.RegisterFullObjectHierarchyUndo(root, "Setup Book Hierarchy");
+            StripOldComponents(root.transform);
+            ReparentPagesUnderSpine(root.transform, spinePivot);
+            var bookCollider = ConfigureSpine(spinePivot);
+            var pages = ConfigurePages(spinePivot);
+            ConfigurePageManager(spinePivot, pages, bookCollider);
 
-            // Step 1: Remove legacy components from all descendants
-            RemoveLegacyComponents(root);
-
-            // Step 2: Re-parent the 6 page/cover pieces from SpinePivot to root.
-            // Collect refs first because changing parent mutates the iterator.
-            // worldPositionStays: true keeps each child at its existing world pose,
-            // which is correct here because SpinePivot is at identity local transform
-            // under InstructionManualBook in the authored prefab. If SpinePivot ever
-            // gets a non-identity local transform, this assumption needs revisiting.
-            var toReparent = new System.Collections.Generic.List<Transform>();
-            foreach (Transform child in spinePivot)
-            {
-                if (System.Array.IndexOf(PageNames, child.name) >= 0)
-                    toReparent.Add(child);
-            }
-            foreach (var t in toReparent)
-            {
-                t.SetParent(root.transform, worldPositionStays: true);
-            }
-
-            // Step 3: Configure SpinePivot
-            ConfigureSpinePivot(spinePivot.gameObject);
-            Rigidbody spineRb = spinePivot.GetComponent<Rigidbody>();
-            if (spineRb == null)
-            {
-                Debug.LogError("[BookSetupEditor] Failed to obtain Rigidbody on SpinePivot. Aborting page setup.");
-                return;
-            }
-
-            // Step 4: Configure each page/cover (now siblings of SpinePivot under root)
-            int configured = 0;
-            foreach (string name in PageNames)
-            {
-                Transform t = root.transform.Find(name);
-                if (t == null)
-                {
-                    Debug.LogError($"[BookSetupEditor] Missing expected child: {name}");
-                    continue;
-                }
-                ConfigurePageOrCover(t.gameObject, spineRb);
-                configured++;
-            }
-
-            // Step 5: Mark dirty + save
-            EditorUtility.SetDirty(root);
-            var stage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (stage != null)
-            {
-                EditorSceneManager.MarkSceneDirty(stage.scene);
-            }
-            else
-            {
-                EditorSceneManager.MarkSceneDirty(root.scene);
-            }
-
-            Debug.Log($"[BookSetupEditor] Setup complete. Configured SpinePivot + {configured} page/cover pieces. Save the scene/prefab to persist.");
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            Debug.Log("[BookSetup] Lever pattern setup complete!");
         }
-
-        private static GameObject FindBookRoot()
+        finally
         {
-            // Try open prefab stage first
-            var stage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (stage != null && stage.prefabContentsRoot != null && stage.prefabContentsRoot.name == "InstructionManualBook")
-                return stage.prefabContentsRoot;
-
-            // Fall back to scene instance
-            return GameObject.Find("InstructionManualBook");
-        }
-
-        private static void RemoveLegacyComponents(GameObject root)
-        {
-            // ArticulationGrabbable must be removed FIRST because it has
-            // [RequireComponent(typeof(ArticulationBody))]. Unity refuses to remove
-            // the ArticulationBody while the dependent script is still attached.
-            // Detect by type name so this editor script doesn't depend on the .cs
-            // file existing at compile time.
-            foreach (var mb in root.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                if (mb == null) continue;
-                if (mb.GetType().Name == "ArticulationGrabbable")
-                    Object.DestroyImmediate(mb);
-            }
-
-            // Now ArticulationBody can be removed safely.
-            foreach (var ab in root.GetComponentsInChildren<ArticulationBody>(true))
-            {
-                Object.DestroyImmediate(ab);
-            }
-        }
-
-        private static void ConfigureSpinePivot(GameObject go)
-        {
-            var rb = EnsureComponent<Rigidbody>(go);
-            rb.mass = 0.5f;
-            rb.useGravity = false;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            rb.solverIterations = 20;
-            rb.solverVelocityIterations = 4;
-            rb.linearDamping = 5f;
-            rb.angularDamping = 5f;
-
-            // BoxCollider should already exist with authored size — leave its dimensions alone
-            var box = EnsureComponent<BoxCollider>(go);
-
-            var grabbable = EnsureComponent<PsycheGrabbable>(go);
-            AssignGrabSettings(grabbable);
-            AssignInteractableColliders(grabbable, box);
-        }
-
-        private static void ConfigurePageOrCover(GameObject go, Rigidbody spineRb)
-        {
-            var rb = EnsureComponent<Rigidbody>(go);
-            rb.mass = 0.05f;
-            rb.useGravity = false;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            rb.solverIterations = 20;
-            rb.solverVelocityIterations = 4;
-            rb.linearDamping = 2f;
-            rb.angularDamping = 8f;
-
-            var box = EnsureComponent<BoxCollider>(go);
-
-            var joint = EnsureComponent<ConfigurableJoint>(go);
-
-            // Set axis/anchor BEFORE connectedBody so Unity's internal connectedAnchor
-            // recomputation (triggered when connectedBody changes) uses the right values.
-
-            // Anchor at body origin. The FBX pivot is placed at the spine line, so
-            // (0, 0, 0) in body-local IS the hinge point. The page collider extends
-            // away from the spine in +X (box.center.x ≈ 0.132), but the body origin
-            // remains at the spine.
-            joint.anchor = Vector3.zero;
-
-            // Hinge axis is body-local X. The pages have parent rotation X=270° at rest,
-            // which leaves body-local X aligned with world X (the X rotation only affects
-            // Y and Z). So pages rotate around the world X axis when flipped — a horizontal
-            // axis, which matches a book lying flat on a desk with the spine running E-W.
-            // (Earlier (0,0,1) put the hinge along world Y, which is vertical and wrong.)
-            joint.axis = new Vector3(1f, 0f, 0f);
-            joint.secondaryAxis = new Vector3(0f, 1f, 0f);
-
-            joint.connectedBody = spineRb;
-            joint.autoConfigureConnectedAnchor = true;
-
-            // Lock all linear motion
-            joint.xMotion = ConfigurableJointMotion.Locked;
-            joint.yMotion = ConfigurableJointMotion.Locked;
-            joint.zMotion = ConfigurableJointMotion.Locked;
-
-            // Single hinge degree of freedom: angularX
-            joint.angularXMotion = ConfigurableJointMotion.Limited;
-            joint.angularYMotion = ConfigurableJointMotion.Locked;
-            joint.angularZMotion = ConfigurableJointMotion.Locked;
-
-            // Joint limits +/- 80 degrees
-            var lowLimit = joint.lowAngularXLimit;
-            lowLimit.limit = -80f;
-            joint.lowAngularXLimit = lowLimit;
-
-            var highLimit = joint.highAngularXLimit;
-            highLimit.limit = 80f;
-            joint.highAngularXLimit = highLimit;
-
-            // No spring at limits
-            var limitSpring = joint.angularXLimitSpring;
-            limitSpring.spring = 0f;
-            limitSpring.damper = 0f;
-            joint.angularXLimitSpring = limitSpring;
-
-            // Drive starts at 0 spring + small damper. BookPageGrabbable raises spring on grab.
-            var drive = joint.angularXDrive;
-            drive.positionSpring = 0f;
-            drive.positionDamper = 2f;
-            drive.maximumForce = Mathf.Infinity;
-            joint.angularXDrive = drive;
-
-            // Projection — the fix for "rubbery" joint flex under load
-            joint.projectionMode = JointProjectionMode.PositionAndRotation;
-            joint.projectionDistance = 0.001f;
-            joint.projectionAngle = 1f;
-
-            joint.enablePreprocessing = false;
-
-            // Add the page-specific grab class (which itself inherits from PsycheGrabbable)
-            var grabbable = EnsureComponent<BookPageGrabbable>(go);
-            AssignGrabSettings(grabbable);
-            AssignInteractableColliders(grabbable, box);
-        }
-
-        private static void AssignGrabSettings(PsycheGrabbable grabbable)
-        {
-            string path = AssetDatabase.GUIDToAssetPath(GrabSettingsGuid);
-            if (string.IsNullOrEmpty(path))
-            {
-                Debug.LogWarning("[BookSetupEditor] GrabSettings asset not found by GUID. Falling back to type search.");
-                var found = AssetDatabase.FindAssets("t:GrabSettings");
-                if (found.Length > 0) path = AssetDatabase.GUIDToAssetPath(found[0]);
-            }
-            if (string.IsNullOrEmpty(path))
-            {
-                Debug.LogError("[BookSetupEditor] No GrabSettings asset in the project. Assign one manually on each grabbable.");
-                return;
-            }
-            var settings = AssetDatabase.LoadAssetAtPath<GrabSettings>(path);
-            if (settings == null)
-            {
-                Debug.LogError($"[BookSetupEditor] Failed to load GrabSettings at {path}.");
-                return;
-            }
-
-            var so = new SerializedObject(grabbable);
-            var prop = so.FindProperty("grabSettings");
-            if (prop == null)
-            {
-                Debug.LogWarning("[BookSetupEditor] PsycheGrabbable has no serialized field named 'grabSettings'. Field name may have changed — check PsycheGrabbable.cs.");
-                return;
-            }
-            prop.objectReferenceValue = settings;
-            so.ApplyModifiedProperties();
-        }
-
-        /// <summary>
-        /// Explicitly populates the XRBaseInteractable.m_Colliders list so XRI knows
-        /// which colliders represent this interactable. The previous ArticulationGrabbable
-        /// setup did this; without it the page interactables are unreachable by the
-        /// hand interactor (auto-discovery is unreliable when m_Colliders is initialized
-        /// to an empty list rather than null).
-        /// </summary>
-        private static void AssignInteractableColliders(PsycheGrabbable grabbable, Collider collider)
-        {
-            if (collider == null) return;
-            var so = new SerializedObject(grabbable);
-            var prop = so.FindProperty("m_Colliders");
-            if (prop == null)
-            {
-                Debug.LogWarning("[BookSetupEditor] Grabbable has no serialized field 'm_Colliders'.");
-                return;
-            }
-            prop.ClearArray();
-            prop.InsertArrayElementAtIndex(0);
-            prop.GetArrayElementAtIndex(0).objectReferenceValue = collider;
-            so.ApplyModifiedProperties();
-        }
-
-        private static T EnsureComponent<T>(GameObject go) where T : Component
-        {
-            T c = go.GetComponent<T>();
-            if (c == null) c = go.AddComponent<T>();
-            return c;
+            PrefabUtility.UnloadPrefabContents(root);
         }
     }
+
+    private static void ZeroRootRotation(Transform root)
+    {
+        if (root.localRotation == Quaternion.identity) return;
+
+        var children = new List<(Transform t, Vector3 pos, Quaternion rot)>();
+        foreach (Transform child in root)
+            children.Add((child, child.position, child.rotation));
+
+        root.localRotation = Quaternion.identity;
+        root.localScale = Vector3.one;
+
+        foreach (var (t, pos, rot) in children)
+            t.SetPositionAndRotation(pos, rot);
+    }
+
+    private static void StripOldComponents(Transform root)
+    {
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+        {
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(t.gameObject);
+            foreach (var j in t.GetComponents<Joint>())
+                Object.DestroyImmediate(j);
+            foreach (var ab in t.GetComponents<ArticulationBody>())
+                Object.DestroyImmediate(ab);
+        }
+
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name.Contains("Spine")) continue;
+            if (!t.name.StartsWith("Cover_") && !t.name.StartsWith("Page_")) continue;
+            var rb = t.GetComponent<Rigidbody>();
+            if (rb != null) Object.DestroyImmediate(rb);
+        }
+    }
+
+    private static void ReparentPagesUnderSpine(Transform root, Transform spinePivot)
+    {
+        var toReparent = new List<Transform>();
+        foreach (Transform child in root)
+        {
+            if (child == spinePivot) continue;
+            if (child.name.StartsWith("Cover_") || child.name.StartsWith("Page_"))
+                toReparent.Add(child);
+        }
+
+        foreach (var t in toReparent)
+            t.SetParent(spinePivot, worldPositionStays: true);
+    }
+
+    private static BoxCollider ConfigureSpine(Transform spinePivot)
+    {
+        var rb = spinePivot.GetComponent<Rigidbody>();
+        if (rb == null) rb = spinePivot.gameObject.AddComponent<Rigidbody>();
+        rb.mass = 0.5f;
+        rb.useGravity = true;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+
+        var grabbable = spinePivot.GetComponent<PsycheGrabbable>();
+        if (grabbable == null)
+            grabbable = spinePivot.gameObject.AddComponent<PsycheGrabbable>();
+
+        var guids = AssetDatabase.FindAssets("t:GrabSettings");
+        if (guids.Length > 0)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var settings = AssetDatabase.LoadAssetAtPath<GrabSettings>(path);
+            var so = new SerializedObject(grabbable);
+            so.FindProperty("grabSettings").objectReferenceValue = settings;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+        else
+        {
+            Debug.LogWarning("[BookSetup] No GrabSettings asset found.");
+        }
+
+        foreach (var old in spinePivot.GetComponents<BoxCollider>())
+            Object.DestroyImmediate(old);
+        var bookCollider = spinePivot.gameObject.AddComponent<BoxCollider>();
+        SizeColliderToChildren(spinePivot, bookCollider);
+        SetExplicitColliders(grabbable, bookCollider);
+
+        if (spinePivot.GetComponent<BookGravityToggle>() == null)
+            spinePivot.gameObject.AddComponent<BookGravityToggle>();
+
+        return bookCollider;
+    }
+
+    private static void SizeColliderToChildren(Transform parent, BoxCollider col)
+    {
+        Vector3 min = Vector3.positiveInfinity;
+        Vector3 max = Vector3.negativeInfinity;
+
+        foreach (var mf in parent.GetComponentsInChildren<MeshFilter>(true))
+        {
+            if (mf.sharedMesh == null) continue;
+            var bounds = mf.sharedMesh.bounds;
+
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = bounds.center + Vector3.Scale(bounds.extents,
+                    new Vector3(
+                        (i & 1) == 0 ? -1f : 1f,
+                        (i & 2) == 0 ? -1f : 1f,
+                        (i & 4) == 0 ? -1f : 1f));
+                Vector3 world = mf.transform.TransformPoint(corner);
+                Vector3 local = parent.InverseTransformPoint(world);
+                min = Vector3.Min(min, local);
+                max = Vector3.Max(max, local);
+            }
+        }
+
+        if (min.x < max.x)
+        {
+            col.center = (min + max) / 2f;
+            col.size = max - min;
+        }
+    }
+
+    private static void SetExplicitColliders(Component interactable, Collider collider)
+    {
+        var so = new SerializedObject(interactable);
+        var prop = so.FindProperty("m_Colliders");
+        prop.ClearArray();
+        prop.InsertArrayElementAtIndex(0);
+        prop.GetArrayElementAtIndex(0).objectReferenceValue = collider;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static List<BookPage> ConfigurePages(Transform spinePivot)
+    {
+        var pages = new List<BookPage>();
+
+        foreach (var pageName in PageOrder)
+        {
+            var pageTransform = FindDescendant(spinePivot, pageName);
+            if (pageTransform == null)
+            {
+                Debug.LogWarning($"[BookSetup] '{pageName}' not found under SpinePivot.");
+                continue;
+            }
+
+            var box = pageTransform.GetComponent<BoxCollider>();
+            if (box == null)
+            {
+                box = pageTransform.gameObject.AddComponent<BoxCollider>();
+                var mf = pageTransform.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    box.center = mf.sharedMesh.bounds.center;
+                    box.size = mf.sharedMesh.bounds.size;
+                }
+            }
+            box.isTrigger = false;
+
+            var bookPage = pageTransform.GetComponent<BookPage>();
+            if (bookPage == null)
+                bookPage = pageTransform.gameObject.AddComponent<BookPage>();
+
+            SetZeroAngleDirection(pageTransform, bookPage);
+            SetPivotOffset(pageTransform, bookPage);
+            pages.Add(bookPage);
+        }
+
+        return pages;
+    }
+
+    private static void SetPivotOffset(Transform page, BookPage bookPage)
+    {
+        Vector3 hingeAxis = Vector3.right;
+        Vector3 spineEdge = Vector3.Dot(page.localPosition, hingeAxis) * hingeAxis;
+        Vector3 offsetParent = spineEdge - page.localPosition;
+        Vector3 offsetLocal = Quaternion.Inverse(page.localRotation) * offsetParent;
+
+        var so = new SerializedObject(bookPage);
+        so.FindProperty("pivotOffset").vector3Value = offsetLocal;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void SetZeroAngleDirection(Transform page, BookPage bookPage)
+    {
+        var mf = page.GetComponent<MeshFilter>();
+        if (mf == null || mf.sharedMesh == null) return;
+
+        Vector3 localCenter = mf.sharedMesh.bounds.center;
+        Vector3 dirInParent = page.localRotation * localCenter;
+        float h = Vector3.Dot(dirInParent, Vector3.right);
+        Vector3 projected = dirInParent - h * Vector3.right;
+
+        if (projected.sqrMagnitude < 0.001f) return;
+
+        var so = new SerializedObject(bookPage);
+        so.FindProperty("zeroAngleDirection").vector3Value = projected.normalized;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void ConfigurePageManager(
+        Transform spinePivot, List<BookPage> pages, Collider bookGrabCollider)
+    {
+        var manager = spinePivot.GetComponent<PageManager>();
+        if (manager == null)
+            manager = spinePivot.gameObject.AddComponent<PageManager>();
+
+        var so = new SerializedObject(manager);
+
+        var prop = so.FindProperty("pages");
+        prop.ClearArray();
+        for (int i = 0; i < pages.Count; i++)
+        {
+            prop.InsertArrayElementAtIndex(i);
+            prop.GetArrayElementAtIndex(i).objectReferenceValue = pages[i];
+        }
+
+        so.FindProperty("bookGrabCollider").objectReferenceValue = bookGrabCollider;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static Transform FindDescendant(Transform parent, string exactName)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == exactName) return child;
+            var found = FindDescendant(child, exactName);
+            if (found != null) return found;
+        }
+        return null;
+    }
+}
 }
