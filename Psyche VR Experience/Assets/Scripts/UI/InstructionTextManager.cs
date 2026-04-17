@@ -12,11 +12,25 @@ public class InstructionTextManager : MonoBehaviour
     public int currPosition = 0;
     public int firstSolarPosition = -1;
     public bool solarAdded = false;
+    public GameObject nextButton;
+    public GameObject previousButton;
 
     public void Start()
     {
-        this.SetText("Please place the PSYCHE Bus (Large Black Box) on top of the Cylinder to begin");
-        this.SetTitle("Instruction");
+        SetText("Please place the PSYCHE Bus (Large Black Box) on top of the Cylinder to begin");
+        SetTitle("Instruction");
+        UpdateButtonState();
+    }
+
+    private void UpdateButtonState()
+    {
+        bool shouldShow = currSize > 1;
+
+        if (nextButton != null)
+            nextButton.SetActive(shouldShow);
+
+        if (previousButton != null)
+            previousButton.SetActive(shouldShow);
     }
 
     public void SetText(string message)
@@ -27,36 +41,36 @@ public class InstructionTextManager : MonoBehaviour
         }
     }
 
-    public void SetTitle(string title)
+    public void SetTitle(string newTitle)
     {
         if (titleText != null)
         {
-            titleText.text = title;
+            titleText.text = newTitle;
         }
     }
 
     public void AddItem(SnappableObject snapObject)
     {
         if (snapObject == null) return;
-        if (currSize >= description.Length) return;
-
-        string objectTag = snapObject.tag;
 
         if (snapObject.CompareTag("PSYCHE_Right_Solar") || snapObject.CompareTag("PSYCHE_Left_Solar"))
         {
-            if(solarAdded)
+            if (solarAdded)
             {
                 currPosition = firstSolarPosition;
                 SetTitle(title[firstSolarPosition]);
                 SetText(description[firstSolarPosition]);
+                UpdateButtonState();
                 return;
-            } else
+            }
+            else
             {
                 firstSolarPosition = currSize;
                 solarAdded = true;
             }
         }
 
+        if (currSize >= description.Length) return;
 
         string toAddDesc = snapObject.objectDescription;
         string toAddTitle = snapObject.objectTitle;
@@ -65,11 +79,11 @@ public class InstructionTextManager : MonoBehaviour
         description[currSize] = toAddDesc;
 
         currSize++;
-
         currPosition = currSize - 1;
 
         SetTitle(title[currPosition]);
         SetText(description[currPosition]);
+        UpdateButtonState();
     }
 
     public void Next()

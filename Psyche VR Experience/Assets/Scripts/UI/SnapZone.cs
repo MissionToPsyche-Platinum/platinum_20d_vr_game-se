@@ -125,6 +125,7 @@ public class SnapZone : MonoBehaviour
         {
             textManager.SetText(snapState.objectDescription);
             textManager.SetTitle(snapState.objectTitle);
+            textManager.AddItem(snapState);
         }
 
         currentObject = null;
