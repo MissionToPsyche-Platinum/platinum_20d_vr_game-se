@@ -1,7 +1,7 @@
 # Sound Effects Research — Psyche Puzzle Experience
 
 **Ticket:** TG-122 (parent: TG-121 — Investigate potential sound effects for the puzzle experience)
-**Status:** Draft / In Progress
+**Status:** Complete
 **Owner:** Branden Chong
 
 ---
@@ -261,4 +261,46 @@ Phase 2 roughly doubles this. All-in, the project is likely looking at ~30–40 
 
 ## 5. Asset Source References
 
-*TBD*
+This section lists free and paid sources for sourcing the audio clips identified in this research. Final asset selection is out of scope for TG-122 — this is a starting-point catalogue for whoever picks up the implementation ticket.
+
+### 5.1 Free / CC-Licensed Sources
+
+| Source | URL | License | Best For | Notes |
+|---|---|---|---|---|
+| **Freesound.org** | freesound.org | CC0 / CC-BY (per clip) | Physical impacts, room tones, UI ticks | Largest free library. Quality varies — filter by rating and check license per clip. CC-BY requires attribution in credits. |
+| **Sonniss GDC Bundle** | sonniss.com/gameaudiogdc | Royalty-free | Everything | Annual free pack (~30 GB). High quality, no attribution needed. Check if the 2025/2026 bundle is still available. |
+| **Mixkit** | mixkit.co/free-sound-effects | Royalty-free | UI cues, short stingers | Curated and consistent quality. Limited variety for physics impacts. |
+| **BBC Sound Effects** | sound-effects.bbcrewind.co.uk | RemArc license (non-commercial educational use) | Ambient loops, environmental | Massive archive. License restricts commercial use — verify ASU project falls under educational exemption. |
+| **ZapSplat** | zapsplat.com | Free tier (attribution required) / paid (no attribution) | Metal impacts, mechanical clicks | Good metallic sound library. Free tier watermarks on some downloads — check before committing. |
+
+### 5.2 Paid / Premium Sources (if budget allows)
+
+| Source | URL | Pricing Model | Best For | Notes |
+|---|---|---|---|---|
+| **Unity Asset Store — Audio** | assetstore.unity.com | Per-pack ($5–$50 typical) | Pre-packaged interaction SFX | Integrates directly into the project. Look for "VR interaction" or "physics SFX" packs. Some free packs exist. |
+| **A Sound Effect** | asoundeffect.com | Per-pack | Specialty / unusual sounds | Indie sound designers. Higher quality than most free sources, reasonable prices. |
+| **Epidemic Sound** | epidemicsound.com | Subscription | Ambient beds, stingers | Overkill for this project's scope but worth noting if the team already has a subscription. |
+
+### 5.3 Asset Format & Import Guidelines
+
+When importing audio for the Psyche VR project:
+
+- **Format:** `.ogg` for clips under 5 seconds (interaction, impacts), `.wav` for loops and ambient beds (avoids compression artifacts on repeats).
+- **Sample rate:** 44.1 kHz, 16-bit. No need for 48 kHz — the Quest 3 DAC doesn't benefit meaningfully and it wastes memory.
+- **Mono vs. stereo:** All spatial/3D sounds (contact, snap, grab) should be **mono** — Unity's spatial audio engine handles spatialization. Only the room tone bed and non-spatial UI cues should be stereo.
+- **Loudness normalization:** Normalize all clips to -6 dBFS peak before import. Let the mixer buses handle relative levels. This keeps gain staging sane when 13+ clips ship in Phase 1.
+- **Naming convention:** Follow the project's existing asset pattern: `SFX_[Category]_[Description]_[Variant].ogg`. Example: `SFX_Snap_MetalLock_01.ogg`, `SFX_Ambient_RoomTone_Loop.wav`.
+
+### 5.4 Licensing Checklist
+
+Before any audio file enters the repo:
+
+- [ ] Confirm license permits use in an educational / ASU capstone project
+- [ ] Confirm license permits distribution in a compiled APK (Quest store or sideload)
+- [ ] If CC-BY: add attribution entry to a `CREDITS.md` or in-game credits scene
+- [ ] If from a free tier with restrictions: verify no watermark in the downloaded file
+- [ ] Keep a copy of the license text or screenshot in `docs/audio-licenses/` for audit trail
+
+---
+
+*End of research document. Next step: create the implementation ticket using Section 4 as the spec, and begin Phase 1 asset sourcing using the references above.*
