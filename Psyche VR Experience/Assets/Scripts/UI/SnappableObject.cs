@@ -1,11 +1,16 @@
 
 using UnityEngine;
+using System.Collections.Generic;
 
 public class SnappableObject : MonoBehaviour
 {
     public Transform snapPoint;
     public bool isSnapped;
     public string objectDescription;
+    public string objectTitle;
+
+
+
 
     public void SnapTo(Transform snapAnchor)
     {
@@ -19,4 +24,6 @@ public class SnappableObject : MonoBehaviour
 
         isSnapped = true;
     }
+
+
 }
