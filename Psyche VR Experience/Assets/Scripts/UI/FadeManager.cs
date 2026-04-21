@@ -60,6 +60,13 @@ namespace PsycheVR.UI
                 return;
             }
 
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogWarning($"FadeManager could not load scene '{sceneName}'. Make sure it is added to Build Settings.");
+                StartManagedFade(FadePulseRoutine(fadeOutDuration, holdDuration, fadeInDuration));
+                return;
+            }
+
             StartManagedFade(LoadSceneRoutine(sceneName, fadeOutDuration, holdDuration, fadeInDuration));
         }
 
@@ -100,6 +107,14 @@ namespace PsycheVR.UI
             yield return WaitForSecondsRealtimeSafe(holdDuration);
 
             AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName);
+            if (loadOperation == null)
+            {
+                Debug.LogWarning($"FadeManager failed to start async load for scene '{sceneName}'.");
+                yield return FadeRoutine(0f, fadeInDuration);
+                _activeFadeRoutine = null;
+                yield break;
+            }
+
             while (!loadOperation.isDone)
                 yield return null;
 
@@ -113,6 +128,14 @@ namespace PsycheVR.UI
             yield return WaitForSecondsRealtimeSafe(holdDuration);
 
             AsyncOperation loadOperation = SceneManager.LoadSceneAsync(buildIndex);
+            if (loadOperation == null)
+            {
+                Debug.LogWarning($"FadeManager failed to start async load for build index '{buildIndex}'.");
+                yield return FadeRoutine(0f, fadeInDuration);
+                _activeFadeRoutine = null;
+                yield break;
+            }
+
             while (!loadOperation.isDone)
                 yield return null;
 
