@@ -248,6 +248,9 @@ MonoBehaviour:
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  useDynamicAttachOverride: 0
+  overrideEaseInDuration: 0
+  easeInDurationOverride: 0.15
 --- !u!114 &6693052528577237899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -580,6 +583,9 @@ MonoBehaviour:
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  useDynamicAttachOverride: 0
+  overrideEaseInDuration: 0
+  easeInDurationOverride: 0.15
 --- !u!114 &4238984354899526239
 MonoBehaviour:
   m_ObjectHideFlags: 0
