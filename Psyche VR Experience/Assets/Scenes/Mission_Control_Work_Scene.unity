@@ -13692,12 +13692,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2cc52072ff3548568b3189024b1004c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.GameplayTransitionTrigger
-  sceneName: PSYCHE_Model
+  sceneName: Bedroom
   sceneBuildIndex: -1
   useBuildIndex: 0
   fadeOutDuration: 0.35
   holdDuration: 0.05
   fadeInDuration: 0.35
+  applySpawnOverride: 1
+  targetRigPosition: {x: 3.655, y: 0.02, z: -1.227}
+  targetYawDegrees: 94.803
   onTriggered:
     m_PersistentCalls:
       m_Calls: []
