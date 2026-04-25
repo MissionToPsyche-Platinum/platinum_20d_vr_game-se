@@ -6,6 +6,7 @@ public class ButtonCaseController : MonoBehaviour
     private bool _isOpen = false;
 
     public HingeJoint Hinge { get => _hinge; set => _hinge = value; }
+    [SerializeField] private bool startOpenForTesting = true;
     [SerializeField] ButtonController launchButton;
 
 
@@ -26,7 +27,9 @@ public class ButtonCaseController : MonoBehaviour
         {
             Debug.Log("Failed to load hinge!");
         }
-        
+
+        if (startOpenForTesting)
+            UnlockCaseForTesting();
     }
 
     void Update()
@@ -80,5 +83,25 @@ public class ButtonCaseController : MonoBehaviour
             launchButton.UnlockButton();
         }
      
+    }
+
+    private void UnlockCaseForTesting()
+    {
+        SetIsOpen(true);
+
+        Collider caseCollider = GetComponent<Collider>();
+        if (caseCollider != null)
+            caseCollider.enabled = false;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+            rb.isKinematic = true;
+
+        var grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+        if (grabInteractable != null)
+            grabInteractable.enabled = false;
+
+        if (launchButton != null)
+            launchButton.UnlockButton();
     }
 }

@@ -48,7 +48,6 @@ namespace PsycheVR.UI
         private CanvasGroup _canvasGroup;
         private InputAction _pauseToggleAction;
         private float _timeScaleBeforePause = 1f;
-        private float _fixedDeltaTimeBeforePause = 0.02f;
 
         private void Awake()
         {
@@ -116,6 +115,9 @@ namespace PsycheVR.UI
             _canvasGroup.alpha = isVisible ? 1f : 0f;
             _canvasGroup.interactable = isVisible;
             _canvasGroup.blocksRaycasts = isVisible;
+
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
 
             if (isVisible)
                 PauseGameplay();
@@ -273,9 +275,7 @@ namespace PsycheVR.UI
                 return;
 
             _timeScaleBeforePause = Time.timeScale;
-            _fixedDeltaTimeBeforePause = Time.fixedDeltaTime;
             Time.timeScale = 0f;
-            Time.fixedDeltaTime = 0f;
         }
 
         private void ResumeGameplay()
@@ -284,7 +284,6 @@ namespace PsycheVR.UI
                 return;
 
             Time.timeScale = _timeScaleBeforePause > 0f ? _timeScaleBeforePause : 1f;
-            Time.fixedDeltaTime = _fixedDeltaTimeBeforePause > 0f ? _fixedDeltaTimeBeforePause : 0.02f;
         }
 
         private void OnResumePressed()

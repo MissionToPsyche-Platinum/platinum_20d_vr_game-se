@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Video;
 
 namespace PsycheVR.Gameplay
@@ -33,6 +34,11 @@ namespace PsycheVR.Gameplay
         [Tooltip("Color of the button when video is playing.")]
         [SerializeField] private Color playingColor = Color.green;
 
+        [Header("Events")]
+        [SerializeField] private UnityEvent onVideoStarted = new UnityEvent();
+        [SerializeField] private UnityEvent onVideoPaused = new UnityEvent();
+        [SerializeField] private UnityEvent onVideoCompleted = new UnityEvent();
+
         private VideoPlayer _videoPlayer;
         private Renderer _buttonRenderer;
         private MaterialPropertyBlock _propBlock;
@@ -54,6 +60,12 @@ namespace PsycheVR.Gameplay
             UpdateButtonColor();
         }
 
+        private void OnDestroy()
+        {
+            if (_videoPlayer != null)
+                _videoPlayer.loopPointReached -= HandleVideoCompleted;
+        }
+
         private void SetupVideoPlayer()
         {
             if (videoClip != null)
@@ -66,6 +78,8 @@ namespace PsycheVR.Gameplay
             if (targetRenderer != null)
                 _videoPlayer.targetMaterialRenderer = targetRenderer;
 
+            _videoPlayer.loopPointReached -= HandleVideoCompleted;
+            _videoPlayer.loopPointReached += HandleVideoCompleted;
             _videoPlayer.Prepare();
         }
 
@@ -87,14 +101,23 @@ namespace PsycheVR.Gameplay
             {
                 _videoPlayer.Pause();
                 _isPlaying = false;
+                onVideoPaused.Invoke();
             }
             else
             {
                 _videoPlayer.Play();
                 _isPlaying = true;
+                onVideoStarted.Invoke();
             }
 
             UpdateButtonColor();
+        }
+
+        private void HandleVideoCompleted(VideoPlayer source)
+        {
+            _isPlaying = false;
+            UpdateButtonColor();
+            onVideoCompleted.Invoke();
         }
 
         private void UpdateButtonColor()

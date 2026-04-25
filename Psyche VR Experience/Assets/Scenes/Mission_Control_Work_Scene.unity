@@ -2120,6 +2120,68 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 536720060}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &602617124
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1381022112}
+    m_Modifications:
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 7.446245
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.30403003
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.9257097
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_Name
+      value: XR Device Simulator
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+--- !u!4 &602617125 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+  m_PrefabInstance: {fileID: 602617124}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &625921095
 GameObject:
   m_ObjectHideFlags: 0
@@ -8828,6 +8890,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1376808282}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1381022112 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+  m_PrefabInstance: {fileID: 1615291563}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1441653932
 GameObject:
   m_ObjectHideFlags: 0
@@ -9825,13 +9892,20 @@ PrefabInstance:
       propertyPath: m_InteractionLayers.m_Bits
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7000000000000000001, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+      propertyPath: showOnStart
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8877177980677234388, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_InteractionLayers.m_Bits
       value: 4294967295
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 602617125}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
 --- !u!1 &1627941292 stripped
@@ -13558,6 +13632,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7516691691950304578, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 136424688319008411}
+    - targetCorrespondingSourceObject: {fileID: 7516691691950304578, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 136424688319008412}
     - targetCorrespondingSourceObject: {fileID: 2228306279302629731, guid: bf51adb69410cb04895bf0a8b43af43b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
@@ -13585,6 +13662,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a39804da4b6a3b429a16954cbf00c83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::play_video
+  onVideoStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onVideoCompleted:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 136424688319008412}
+        m_TargetAssemblyTypeName: PsycheVR.Gameplay.GameplayTransitionTrigger, Assembly-CSharp
+        m_MethodName: TriggerTransition
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &136424688319008412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136424688319008410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cc52072ff3548568b3189024b1004c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.GameplayTransitionTrigger
+  sceneName: Bedroom
+  sceneBuildIndex: -1
+  useBuildIndex: 0
+  fadeOutDuration: 0.35
+  holdDuration: 0.05
+  fadeInDuration: 0.35
+  applySpawnOverride: 1
+  targetRigPosition: {x: 3.655, y: 0.02, z: -1.227}
+  targetYawDegrees: 94.803
+  onTriggered:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &185915051056664817
 PrefabInstance:
   m_ObjectHideFlags: 0

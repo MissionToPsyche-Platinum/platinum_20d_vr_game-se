@@ -1,16 +1,12 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Initiate_Launch : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [SerializeField] private UnityEvent onLaunchInitiated = new UnityEvent();
 
-    // Update is called once per frame
-    void Update()
+    public void InitiateLaunch()
     {
-        
+        onLaunchInitiated.Invoke();
     }
 }
