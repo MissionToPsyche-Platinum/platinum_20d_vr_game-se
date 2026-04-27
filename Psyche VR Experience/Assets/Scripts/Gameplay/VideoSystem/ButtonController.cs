@@ -22,7 +22,7 @@ public class ButtonController : MonoBehaviour
         // Disable the interactable at startup
         if (_interactable != null)
         {
-            _interactable.enabled = false;
+            _interactable.enabled = true;
         }
 
 
