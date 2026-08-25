@@ -18,6 +18,16 @@ namespace PsycheVR.Gameplay
         [Tooltip("Shared grab settings asset. Must be assigned.")]
         [SerializeField] private GrabSettings grabSettings;
 
+        [Header("Per-Object Overrides")]
+        [Tooltip("Use dynamic attach (grab where your hand is instead of snapping to a fixed pose).")]
+        [SerializeField] private bool useDynamicAttachOverride;
+
+        [Tooltip("Override the ease-in duration from GrabSettings.")]
+        [SerializeField] private bool overrideEaseInDuration;
+
+        [Tooltip("Ease-in duration in seconds (only used if override is enabled).")]
+        [SerializeField] private float easeInDurationOverride = 0.15f;
+
         /// <inheritdoc />
         protected override void Awake()
         {
@@ -31,8 +41,10 @@ namespace PsycheVR.Gameplay
             // Configure before base.Awake() so XRI initializes correctly.
             movementType = MovementType.VelocityTracking;
             throwOnDetach = false;
-            useDynamicAttach = false;
-            attachEaseInTime = grabSettings.SnapEaseDuration;
+            useDynamicAttach = useDynamicAttachOverride;
+            attachEaseInTime = overrideEaseInDuration
+                ? easeInDurationOverride
+                : grabSettings.SnapEaseDuration;
 
             base.Awake();
 
