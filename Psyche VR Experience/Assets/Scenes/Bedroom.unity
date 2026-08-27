@@ -2780,6 +2780,52 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1194773653}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1219520302
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1219520304}
+  - component: {fileID: 1219520303}
+  m_Layer: 0
+  m_Name: TeleportAnchor_MissionControl
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1219520303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219520302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ba329e8d468379468924bbcc0a45334, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.VR.BlinkTeleportAnchor
+  useYawOverride: 0
+  yawOverride: 0
+--- !u!4 &1219520304
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219520302}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 26.8, y: 0.1, z: 0.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1233032385
 GameObject:
   m_ObjectHideFlags: 0
@@ -3665,6 +3711,53 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eeaad410de59e8c408e89f8f1260dece, type: 3}
+--- !u!1 &1415969438
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1415969440}
+  - component: {fileID: 1415969439}
+  m_Layer: 0
+  m_Name: TeleportRoute
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1415969439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415969438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cc0d4bd4d455144198986c63507e33f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.VR.BlinkTeleportRoute
+  teleporter: {fileID: 1544966813}
+  missionControlAnchor: {fileID: 1219520303}
+  bedroomAnchor: {fileID: 2040835016}
+--- !u!4 &1415969440
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415969438}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1518086765
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3834,37 +3927,49 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 215523748349728818, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+      propertyPath: holdDuration
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 215523748349728818, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+      propertyPath: fadeInDuration
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 215523748349728818, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+      propertyPath: fadeOutDuration
+      value: 0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503725, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.83
+      value: 26.8
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.01999998
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.45
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.6770782
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.73591113
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3898,6 +4003,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+--- !u!114 &1544966813 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 215523748349728818, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
+  m_PrefabInstance: {fileID: 1544966812}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fc8be271efdf9148bab7a391a0fa8c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.VR.BlinkTeleporter
 --- !u!114 &1549005417 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9221787125262704588, guid: 0554a75f3bafd5a47a197a4ad02d3687, type: 3}
@@ -5786,6 +5902,52 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &2040835015
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2040835017}
+  - component: {fileID: 2040835016}
+  m_Layer: 0
+  m_Name: TeleportAnchor_Bedroom
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2040835016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040835015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ba329e8d468379468924bbcc0a45334, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.VR.BlinkTeleportAnchor
+  useYawOverride: 0
+  yawOverride: 0
+--- !u!4 &2040835017
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040835015}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.73591983, z: 0, w: 0.6770687}
+  m_LocalPosition: {x: 3.83, y: 0.02, z: -1.45}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2068706667
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6705,3 +6867,6 @@ SceneRoots:
   - {fileID: 1799427977}
   - {fileID: 2071145828}
   - {fileID: 1242481681}
+  - {fileID: 1219520304}
+  - {fileID: 2040835017}
+  - {fileID: 1415969440}

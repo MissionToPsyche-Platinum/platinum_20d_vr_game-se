@@ -38,6 +38,12 @@ namespace PsycheVR.VR
         private Coroutine _activeRoutine;
         private readonly List<IXRSelectInteractable> _releaseBuffer = new List<IXRSelectInteractable>();
 
+        /// <summary>
+        /// World position of the rig root. Lets callers decide where to send the
+        /// player without reaching into this component's serialized fields.
+        /// </summary>
+        public Vector3 RigPosition => rigRoot != null ? rigRoot.position : transform.position;
+
         private void Reset()
         {
             rigRoot = transform;
