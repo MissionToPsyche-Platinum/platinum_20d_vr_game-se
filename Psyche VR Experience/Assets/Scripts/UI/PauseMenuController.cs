@@ -1,3 +1,4 @@
+using PsycheVR.VR;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -208,6 +209,17 @@ namespace PsycheVR.UI
             BuildHeader(content.transform);
 
             CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
+
+            // Only offered where a route exists. The XR Rig prefab is shared, and most
+            // scenes (Test_Snapzone, the blink harness) have no BlinkTeleportRoute to drive.
+            // Reuses resumeButtonTint rather than adding a serialized field, which would
+            // put a new property on the shared rig prefab for no visual gain -- every
+            // button already uses the same neutral tint.
+            if (FindFirstObjectByType<BlinkTeleportRoute>() != null)
+            {
+                CreateButton("Debug Teleport Button", content.transform, "Debug Teleport", resumeButtonTint, OnTeleportPressed);
+            }
+
             CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
         }
 
@@ -290,6 +302,25 @@ namespace PsycheVR.UI
         {
             HideMenu();
             onResumeRequested.Invoke();
+        }
+
+        /// <summary>
+        /// Switches the player to the other room and closes the menu. HideMenu restores
+        /// the time scale on its own, so gameplay resumes as part of the same press.
+        /// The blink itself is driven by unscaled time, so it plays correctly across the
+        /// pause-to-resume handoff.
+        /// </summary>
+        private void OnTeleportPressed()
+        {
+            var route = FindFirstObjectByType<BlinkTeleportRoute>();
+            if (route == null)
+            {
+                Debug.LogWarning("PauseMenuController: no BlinkTeleportRoute in the scene; ignoring teleport.", this);
+                return;
+            }
+
+            route.Trigger();
+            HideMenu();
         }
 
         private void OnQuitPressed()
