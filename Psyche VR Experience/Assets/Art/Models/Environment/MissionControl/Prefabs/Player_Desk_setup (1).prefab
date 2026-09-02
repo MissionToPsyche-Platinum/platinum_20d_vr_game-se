@@ -6258,7 +6258,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2b61c9b829cced45beb29897a12e32a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonCaseController
-  startOpenForTesting: 1
+  startOpenForTesting: 0
   launchButton: {fileID: 2970434335318025526}
 --- !u!4 &5307829777584650036 stripped
 Transform:
