@@ -1,0 +1,73 @@
+Scene: 1 - Mission Control (MC)
+
+*Game Starts*
+
+-Player gains control of character
+
+-Text appears on screen
+	-"Today is the day... the day I get to initiate the launch of the PSYCHE spacecraft.."
+	-"I've always dreamt of a day like this, ever since I was a kid building models in my room"
+	-"I still have the first one I built right here on my desk"
+
+-Arrow Directing user to interact with the PSYCHE Craft Model on the desk
+
+*User Interacts with Model*
+	*Screen Fades to Black (blink)*
+	-"I still remember building it like it was just yesterday..."
+
+-User "teleports" to Bedroom
+
+
+Scene: 2 - Bedroom (BR)
+
+*Screen fades in*
+
+"I cant wait to build my new model! I only have a few minutes before bed though, so I better get to work!"
+
+"First comes attaching the main Body!"
+
+*Arrow points to BUS directing user to grab*
+*User Grabs BUS*
+*Arrow points to stand directing user to place the Bus*
+*User connects bus to Stand*
+
+-"Great! Now I need to connect the antenna and both sets of solar panels!"
+
+*Arrows point to the 3 remaining pieces to connect*
+
+x = number of pieces left
+
+while (x >=0) {
+*User connects piece*
+
+if x > 0, then 
+	"Only x pieces left!" (x is the number of pieces left)
+else
+	"Craft assembled and ready to launch on my mark!"
+}
+
+*Arrow points to button on desk*
+*user presses button*
+"Blastoff!!!"
+
+*Screen fades out (blink)*
+
+"And to think... now I get to launch the real thing!"
+
+
+
+Scene: 1 - Mission Control (MC)
+*Screen fades in* 
+
+"Prepared to launch, on my mark"
+
+*User at desk - Arrow points user to press launch button on desk*
+
+*User presses launch button, starting the video of the launch*
+
+
+*Screen fades out*
+
+"A dream come true"
+
+

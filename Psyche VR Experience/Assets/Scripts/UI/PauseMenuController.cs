@@ -1,3 +1,4 @@
+using PsycheVR.VR;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,8 @@ namespace PsycheVR.UI
         [SerializeField] private Transform cameraTransform;
         [SerializeField] private bool showOnStart;
         [SerializeField] private float distanceFromCamera = 1.35f;
+        [SerializeField] private float minDistanceFromCamera = 0.45f;
+        [SerializeField] private float clearancePadding = 0.12f;
         [SerializeField] private float verticalOffset = -0.02f;
         [SerializeField] private float menuScale = 0.0011f;
 
@@ -112,6 +115,9 @@ namespace PsycheVR.UI
             if (_canvasGroup == null)
                 return;
 
+            if (isVisible)
+                PlaceMenuInFrontOfCamera();
+
             _canvasGroup.alpha = isVisible ? 1f : 0f;
             _canvasGroup.interactable = isVisible;
             _canvasGroup.blocksRaycasts = isVisible;
@@ -123,6 +129,52 @@ namespace PsycheVR.UI
                 PauseGameplay();
             else
                 ResumeGameplay();
+        }
+
+        /// <summary>
+        /// Places the panel in front of the headset, pulled up short of anything solid.
+        ///
+        /// A fixed <see cref="distanceFromCamera"/> breaks anywhere the player stands close
+        /// to geometry. The bedroom teleport anchor faces a wall about a metre out, so the
+        /// world-space canvas materialised inside it and the depth test hid the menu
+        /// completely -- gameplay paused with nothing on screen.
+        ///
+        /// Scale tracks the distance so the panel keeps the same apparent size wherever it
+        /// lands, and hits on the rig itself are skipped: the sweep starts inside the
+        /// player's own CharacterController, which would otherwise read as a blocker at
+        /// zero distance.
+        /// </summary>
+        private void PlaceMenuInFrontOfCamera()
+        {
+            if (_menuRoot == null || cameraTransform == null)
+                return;
+
+            // Half the panel's short edge, so a wall that covers the panel is caught without
+            // a full-width sweep snagging on desks and floors the panel would clear anyway.
+            float sweepRadius = panelSize.y * menuScale * 0.5f;
+            float distance = distanceFromCamera;
+
+            RaycastHit[] hits = Physics.SphereCastAll(
+                cameraTransform.position,
+                sweepRadius,
+                cameraTransform.forward,
+                distanceFromCamera,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                if (hits[i].transform.IsChildOf(transform))
+                    continue;
+
+                distance = Mathf.Min(distance, hits[i].distance - clearancePadding);
+            }
+
+            distance = Mathf.Clamp(distance, minDistanceFromCamera, distanceFromCamera);
+
+            _menuRoot.transform.localPosition = new Vector3(0f, verticalOffset, distance);
+            _menuRoot.transform.localRotation = Quaternion.identity;
+            _menuRoot.transform.localScale = Vector3.one * (menuScale * (distance / distanceFromCamera));
         }
 
         private void BuildMenuIfNeeded()
@@ -208,6 +260,17 @@ namespace PsycheVR.UI
             BuildHeader(content.transform);
 
             CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
+
+            // Only offered where a route exists. The XR Rig prefab is shared, and most
+            // scenes (Test_Snapzone, the blink harness) have no BlinkTeleportRoute to drive.
+            // Reuses resumeButtonTint rather than adding a serialized field, which would
+            // put a new property on the shared rig prefab for no visual gain -- every
+            // button already uses the same neutral tint.
+            if (FindFirstObjectByType<BlinkTeleportRoute>() != null)
+            {
+                CreateButton("Debug Teleport Button", content.transform, "Debug Teleport", resumeButtonTint, OnTeleportPressed);
+            }
+
             CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
         }
 
@@ -290,6 +353,25 @@ namespace PsycheVR.UI
         {
             HideMenu();
             onResumeRequested.Invoke();
+        }
+
+        /// <summary>
+        /// Switches the player to the other room and closes the menu. HideMenu restores
+        /// the time scale on its own, so gameplay resumes as part of the same press.
+        /// The blink itself is driven by unscaled time, so it plays correctly across the
+        /// pause-to-resume handoff.
+        /// </summary>
+        private void OnTeleportPressed()
+        {
+            var route = FindFirstObjectByType<BlinkTeleportRoute>();
+            if (route == null)
+            {
+                Debug.LogWarning("PauseMenuController: no BlinkTeleportRoute in the scene; ignoring teleport.", this);
+                return;
+            }
+
+            route.Trigger();
+            HideMenu();
         }
 
         private void OnQuitPressed()
