@@ -1281,15 +1281,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 60.3
+      value: 5.8
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.10591996
+      value: 7.9
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -96.12
+      value: -0.7
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: 53fdf910dd5efeb47be2647b29e408a7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2986,6 +2986,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 471987908362039037, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 797518901996711883, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 60.7732
@@ -3026,6 +3030,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 814588834011974623, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 3151383640492913254, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.559
@@ -3037,6 +3045,10 @@ PrefabInstance:
     - target: {fileID: 4469729511932763499, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_Name
       value: Snappable
+      objectReference: {fileID: 0}
+    - target: {fileID: 4502116278510169930, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
