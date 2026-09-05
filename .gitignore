@@ -32,6 +32,7 @@ sysinfo.txt
 *.slnx
 
 # Build outputs
+Builds/
 *.apk
 *.aab
 *.unitypackage
