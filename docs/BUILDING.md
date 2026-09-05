@@ -50,6 +50,10 @@ The first log line from the game says which mode it booted into:
 
 ## Changing which mode the editor plays in
 
-Press Play uses the mode saved in `GameModeConfig.asset` (currently Event). To try Story in
-the editor without changing the asset, use the gated mode switch in the pause menu once it
-lands, or temporarily change the asset and revert it before committing.
+Press Play uses the mode saved in `GameModeConfig.asset` (currently Event). To switch at
+runtime without touching the asset, open the pause menu and hold the admin combo: both
+grips and both thumbstick clicks together for 4 seconds. A small ring in the top-right
+corner of the menu starts filling after the first second. When it completes, an ADMIN
+section appears with Story Mode and Event Mode buttons (the current one restarts) and, in
+Story mode only, Debug Teleport. In the editor, hold **F8** instead of the controller
+combo. Closing the menu hides the section again.
