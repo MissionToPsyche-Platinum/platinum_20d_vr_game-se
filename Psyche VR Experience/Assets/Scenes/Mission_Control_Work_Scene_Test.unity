@@ -2639,7 +2639,6 @@ Transform:
   - {fileID: 1365261460}
   - {fileID: 2146508606}
   - {fileID: 173734035}
-  - {fileID: 1739887645}
   m_Father: {fileID: 1281792260}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &593445350 stripped
@@ -4646,7 +4645,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fe5e6123cb822440a7a5ecded4224b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrowButton
-  manager: {fileID: 1739887646}
+  manager: {fileID: 114004137}
 --- !u!114 &1365261456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5495,68 +5494,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6cf62c35903d2794b81cf284d4970a54, type: 3}
   m_PrefabInstance: {fileID: 1736122772}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1739887644
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1739887645}
-  - component: {fileID: 1739887646}
-  m_Layer: 0
-  m_Name: InstructionTextManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1739887645
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1739887644}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.16317871, y: 0.7612159, z: 0.22212096, w: -0.5870139}
-  m_LocalPosition: {x: -38.688396, y: 1.070318, z: -0.79065806}
-  m_LocalScale: {x: 2.2986498, y: 1.3495755, z: 12.52397}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 527259250}
-  m_LocalEulerAnglesHint: {x: -31.988, y: -104.485, z: -0.834}
---- !u!114 &1739887646
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1739887644}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83c6d047c0cf6ca4fa159a62cdde8323, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InstructionTextManager
-  instructionText: {fileID: 1234012590}
-  titleText: {fileID: 173734031}
-  description:
-  - 
-  - 
-  - 
-  - 
-  title:
-  - 
-  - 
-  - 
-  - 
-  currSize: 0
-  currPosition: 0
-  firstSolarPosition: -1
-  solarAdded: 0
-  nextButton: {fileID: 2146508600}
-  previousButton: {fileID: 1365261454}
 --- !u!1001 &1842119284
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6112,7 +6049,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fe5e6123cb822440a7a5ecded4224b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrowButton
-  manager: {fileID: 1739887646}
+  manager: {fileID: 114004137}
 --- !u!114 &2146508602
 MonoBehaviour:
   m_ObjectHideFlags: 0
