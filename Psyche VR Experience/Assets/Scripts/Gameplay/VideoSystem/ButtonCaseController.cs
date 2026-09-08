@@ -7,9 +7,10 @@ public class ButtonCaseController : MonoBehaviour
     private XRGrabInteractable _grabInteractable;
     private bool _isOpen = false;
     private bool _assistActive = false;
+    private bool _forceOpening = false;
 
     public HingeJoint Hinge { get => _hinge; set => _hinge = value; }
-    [SerializeField] private bool startOpenForTesting = true;
+    [SerializeField] private bool startOpenForTesting = false;
     [SerializeField] ButtonController launchButton;
 
     [Header("Open Behavior")]
@@ -32,6 +33,40 @@ public class ButtonCaseController : MonoBehaviour
     }
 
     public void SetIsOpen(bool value) => _isOpen = value;
+
+    // Wired to this object's own XRGrabInteractable Select Entered event, so
+    // selecting the case (the "Open The Case" prompt) opens it immediately
+    // instead of requiring the player to physically swing it open. Reuses
+    // the same finalize-open logic the hinge swing itself used to reach, so
+    // the end state is identical either way.
+    public void OpenOnInteract()
+    {
+        if (GetIsOpen())
+            return;
+
+        if (Hinge == null)
+            Hinge = GetComponent<HingeJoint>();
+
+        if (Hinge == null)
+        {
+            Debug.LogError("[ButtonCaseController] OpenOnInteract called but no HingeJoint was found.", this);
+            return;
+        }
+
+        // Do not jump straight to LockCaseOpen() here: it makes the
+        // Rigidbody kinematic immediately, which would freeze the case
+        // wherever it currently sits (likely still closed at 0 degrees)
+        // since a kinematic body no longer responds to the hinge spring.
+        // Instead, kick off the same spring-assisted swing used when a
+        // player releases the case mid-swing, and let Update() finish the
+        // job once the hinge has actually rotated past openAngleThreshold.
+        // _forceOpening keeps that spring engaged every frame regardless of
+        // angle, since the normal manual-swing logic below would otherwise
+        // turn it back off immediately (it only expects the assist to run
+        // once the player has already swung past assistAngleThreshold).
+        _forceOpening = true;
+        ApplyOpenAssist();
+    }
 
     void Start()
     {
@@ -57,9 +92,17 @@ public class ButtonCaseController : MonoBehaviour
 
         float angle = Hinge.angle;
 
-        if (angle >= openAngleThreshold)
+        if (Mathf.Abs(angle) >= Mathf.Abs(openAngleThreshold))
         {
             LockCaseOpen();
+            return;
+        }
+
+        if (_forceOpening)
+        {
+            // Keep driving toward open every frame until the threshold
+            // above is reached, regardless of grab state or angle.
+            ApplyOpenAssist();
             return;
         }
 
@@ -67,7 +110,7 @@ public class ButtonCaseController : MonoBehaviour
         // finish the motion for them instead of requiring the final few
         // degrees to be landed precisely while holding it.
         bool isGrabbed = _grabInteractable != null && _grabInteractable.isSelected;
-        bool pastAssistPoint = angle >= assistAngleThreshold;
+        bool pastAssistPoint = Mathf.Abs(angle) >= Mathf.Abs(assistAngleThreshold);
 
         if (pastAssistPoint && !isGrabbed)
         {
@@ -90,7 +133,7 @@ public class ButtonCaseController : MonoBehaviour
         JointSpring spring = Hinge.spring;
         spring.spring = assistSpringForce;
         spring.damper = assistSpringDamper;
-        spring.targetPosition = Hinge.limits.max;
+        spring.targetPosition = GetOpenTargetAngle();
         Hinge.spring = spring;
     }
 
@@ -106,6 +149,7 @@ public class ButtonCaseController : MonoBehaviour
     {
         SetIsOpen(true);
 
+        _forceOpening = false;
         RemoveOpenAssist();
 
         Rigidbody rb = GetComponent<Rigidbody>();
@@ -114,10 +158,11 @@ public class ButtonCaseController : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        // Lock the hinge permanently at 90 degree
+        // Lock the hinge at the configured open limit.
         JointLimits limits = Hinge.limits;
-        limits.min = 90f;
-        limits.max = 90f;
+        float openAngle = GetOpenTargetAngle();
+        limits.min = openAngle;
+        limits.max = openAngle;
         Hinge.limits = limits;
 
         // disable the grab interactable
@@ -140,6 +185,12 @@ public class ButtonCaseController : MonoBehaviour
             launchButton.UnlockButton();
         }
      
+    }
+
+    private float GetOpenTargetAngle()
+    {
+        JointLimits limits = Hinge.limits;
+        return Mathf.Abs(limits.max) >= Mathf.Abs(limits.min) ? limits.max : limits.min;
     }
 
     private void UnlockCaseForTesting()
