@@ -1,0 +1,11 @@
+Interact with the PSYCHE Model Spacecraft to begin
+
+Grab the Bus
+
+Release the Bus within the Green Square to lock into place
+
+Now continue to put together the pieces of the PSYCHE craft to learn more about each piece!
+
+Press the reset button on the blackboard if you lose a piece
+
+Click next or previous to toggle between information of connected pieces
