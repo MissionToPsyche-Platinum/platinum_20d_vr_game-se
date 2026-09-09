@@ -1,3 +1,4 @@
+using PsycheVR.Modes;
 using PsycheVR.VR;
 using TMPro;
 using UnityEngine;
@@ -42,21 +43,48 @@ namespace PsycheVR.UI
         [SerializeField] private Color quitButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
         [SerializeField] private Color buttonTextTint = new Color(0.95f, 0.96f, 0.98f, 1f);
 
+        [Header("Admin")]
+        [Tooltip("Seconds both grips and both thumbstick clicks must be held, with the menu open, to reveal the admin section. F8 in the editor.")]
+        [SerializeField] private float adminHoldSeconds = 4f;
+        [Tooltip("Seconds into the hold before the progress ring appears. A brief accidental press shows nothing.")]
+        [SerializeField] private float adminIndicatorDelaySeconds = 1f;
+
         [Header("Events")]
         [SerializeField] private UnityEvent onResumeRequested = new UnityEvent();
         [SerializeField] private UnityEvent onRestartRequested = new UnityEvent();
         [SerializeField] private UnityEvent onQuitRequested = new UnityEvent();
+
+        private const float ContentSpacing = 14f;
+        private const float AdminLabelHeight = 22f;
+        private const float AdminLabelFontSize = 15f;
+        private const float AdminRingSize = 34f;
+        private const float AdminRingAlpha = 0.7f;
+        private static readonly Vector2 AdminRingOffset = new Vector2(-26f, -22f);
+        private const int RingTextureSize = 64;
+        private const float RingInnerRadiusFraction = 0.36f;
+        private const string CurrentModeSuffix = " (current)";
+
+        private static Sprite _ringSprite;
 
         private GameObject _menuRoot;
         private CanvasGroup _canvasGroup;
         private InputAction _pauseToggleAction;
         private float _timeScaleBeforePause = 1f;
 
+        private AdminCombo _adminCombo;
+        private GameObject _adminSection;
+        private Image _adminRing;
+        private TextMeshProUGUI _storyModeLabel;
+        private TextMeshProUGUI _eventModeLabel;
+        private GameObject _debugTeleportButton;
+        private bool _adminRevealed;
+
         private void Awake()
         {
             EnsureCameraTransform();
             EnsureEventSystem();
             EnsurePauseToggleAction();
+            EnsureAdminCombo();
             BuildMenuIfNeeded();
         }
 
@@ -68,6 +96,8 @@ namespace PsycheVR.UI
         private void OnEnable()
         {
             EnsurePauseToggleAction();
+            EnsureAdminCombo();
+            _adminCombo?.Enable();
 
             if (_pauseToggleAction == null)
                 return;
@@ -78,11 +108,36 @@ namespace PsycheVR.UI
 
         private void OnDisable()
         {
+            _adminCombo?.Disable();
+
             if (_pauseToggleAction == null)
                 return;
 
             _pauseToggleAction.performed -= OnPauseTogglePerformed;
             _pauseToggleAction.Disable();
+        }
+
+        private void OnDestroy()
+        {
+            if (_adminCombo == null)
+                return;
+
+            _adminCombo.Completed -= RevealAdminSection;
+            _adminCombo.Dispose();
+            _adminCombo = null;
+        }
+
+        /// <summary>
+        /// Advances the admin combo only while the menu is open. Unscaled time, because
+        /// the menu holds the time scale at zero.
+        /// </summary>
+        private void Update()
+        {
+            if (_adminCombo == null || _adminRevealed || !IsMenuVisible)
+                return;
+
+            _adminCombo.Tick(Time.unscaledDeltaTime);
+            UpdateAdminRing();
         }
 
         public void ToggleMenu()
@@ -126,9 +181,16 @@ namespace PsycheVR.UI
                 EventSystem.current.SetSelectedGameObject(null);
 
             if (isVisible)
+            {
                 PauseGameplay();
+            }
             else
+            {
+                // The admin section never survives a close: the next open starts hidden.
+                HideAdminSection();
+                _adminCombo?.Reset();
                 ResumeGameplay();
+            }
         }
 
         /// <summary>
@@ -250,7 +312,7 @@ namespace PsycheVR.UI
 
             VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(28, 28, 24, 24);
-            layout.spacing = 14f;
+            layout.spacing = ContentSpacing;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlHeight = true;
             layout.childControlWidth = true;
@@ -260,18 +322,186 @@ namespace PsycheVR.UI
             BuildHeader(content.transform);
 
             CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
+            CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
 
-            // Only offered where a route exists. The XR Rig prefab is shared, and most
-            // scenes (Test_Snapzone, the blink harness) have no BlinkTeleportRoute to drive.
-            // Reuses resumeButtonTint rather than adding a serialized field, which would
-            // put a new property on the shared rig prefab for no visual gain -- every
-            // button already uses the same neutral tint.
-            if (FindFirstObjectByType<BlinkTeleportRoute>() != null)
+            BuildAdminSection(content.transform);
+            BuildAdminRing(card.transform);
+        }
+
+        /// <summary>
+        /// Staff-only controls, hidden until <see cref="AdminCombo"/> completes. Story Mode
+        /// and Event Mode call <see cref="GameModeManager.SwitchTo"/>; pressing the current
+        /// mode restarts it. Debug Teleport is only shown in Story mode, and only where a
+        /// <see cref="BlinkTeleportRoute"/> exists (the rig prefab is shared with test
+        /// scenes that have none). All buttons reuse resumeButtonTint: every button already
+        /// uses the same neutral tint, and a new serialized colour would put another
+        /// property on the shared rig prefab for no visual gain.
+        /// </summary>
+        private void BuildAdminSection(Transform parent)
+        {
+            _adminSection = CreateUiObject("Admin Section", parent);
+
+            VerticalLayoutGroup layout = _adminSection.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = ContentSpacing;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+
+            CreateLabel(
+                "Admin Label",
+                _adminSection.transform,
+                "ADMIN",
+                AdminLabelFontSize,
+                FontStyles.Bold,
+                outlineTint,
+                new Vector2(0f, AdminLabelHeight),
+                TextAlignmentOptions.Center);
+
+            GameObject modeRow = CreateUiObject("Mode Row", _adminSection.transform);
+            LayoutElement rowLayout = modeRow.AddComponent<LayoutElement>();
+            rowLayout.preferredHeight = buttonSize.y;
+            rowLayout.minHeight = buttonSize.y;
+
+            HorizontalLayoutGroup rowGroup = modeRow.AddComponent<HorizontalLayoutGroup>();
+            rowGroup.spacing = ContentSpacing;
+            rowGroup.childControlHeight = true;
+            rowGroup.childControlWidth = true;
+            rowGroup.childForceExpandHeight = true;
+            rowGroup.childForceExpandWidth = true;
+
+            Button storyButton = CreateButton("Story Mode Button", modeRow.transform, "Story Mode", resumeButtonTint, () => OnModePressed(GameMode.Story));
+            Button eventButton = CreateButton("Event Mode Button", modeRow.transform, "Event Mode", resumeButtonTint, () => OnModePressed(GameMode.Event));
+            _storyModeLabel = storyButton.GetComponentInChildren<TextMeshProUGUI>();
+            _eventModeLabel = eventButton.GetComponentInChildren<TextMeshProUGUI>();
+
+            _debugTeleportButton = CreateButton("Debug Teleport Button", _adminSection.transform, "Debug Teleport", resumeButtonTint, OnTeleportPressed).gameObject;
+
+            _adminSection.SetActive(false);
+        }
+
+        /// <summary>
+        /// Small radial ring in the card's top-right corner. Hidden until the combo has
+        /// been held past the indicator delay, fills as the hold completes.
+        /// </summary>
+        private void BuildAdminRing(Transform parent)
+        {
+            GameObject ring = CreateUiObject("Admin Progress Ring", parent);
+            RectTransform rect = ring.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.one;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = Vector2.one;
+            rect.sizeDelta = new Vector2(AdminRingSize, AdminRingSize);
+            rect.anchoredPosition = AdminRingOffset;
+
+            _adminRing = ring.AddComponent<Image>();
+            _adminRing.sprite = GetRingSprite();
+            _adminRing.type = Image.Type.Filled;
+            _adminRing.fillMethod = Image.FillMethod.Radial360;
+            _adminRing.fillOrigin = (int)Image.Origin360.Top;
+            _adminRing.fillClockwise = true;
+            _adminRing.fillAmount = 0f;
+            _adminRing.raycastTarget = false;
+            _adminRing.color = new Color(outlineTint.r, outlineTint.g, outlineTint.b, AdminRingAlpha);
+
+            ring.SetActive(false);
+        }
+
+        private void UpdateAdminRing()
+        {
+            if (_adminRing == null)
+                return;
+
+            bool visible = _adminCombo != null && _adminCombo.IndicatorVisible;
+            if (_adminRing.gameObject.activeSelf != visible)
+                _adminRing.gameObject.SetActive(visible);
+
+            if (visible)
+                _adminRing.fillAmount = _adminCombo.Progress;
+        }
+
+        private void RevealAdminSection()
+        {
+            if (_adminSection == null || _adminRevealed)
+                return;
+
+            bool isStory = GameModeManager.IsStory;
+            bool showTeleport = isStory && FindFirstObjectByType<BlinkTeleportRoute>() != null;
+
+            if (_storyModeLabel != null)
+                _storyModeLabel.text = "Story Mode" + (isStory ? CurrentModeSuffix : string.Empty);
+            if (_eventModeLabel != null)
+                _eventModeLabel.text = "Event Mode" + (isStory ? string.Empty : CurrentModeSuffix);
+            if (_debugTeleportButton != null)
+                _debugTeleportButton.SetActive(showTeleport);
+
+            int rows = showTeleport ? 2 : 1;
+            float extraHeight = AdminLabelHeight + rows * buttonSize.y + (rows + 1) * ContentSpacing;
+            _menuRoot.GetComponent<RectTransform>().sizeDelta = panelSize + new Vector2(0f, extraHeight);
+
+            _adminSection.SetActive(true);
+            _adminRevealed = true;
+
+            if (_adminRing != null)
+                _adminRing.gameObject.SetActive(false);
+
+            Debug.Log($"PauseMenuController: admin section revealed in {GameModeManager.ActiveMode} mode.", this);
+        }
+
+        private void HideAdminSection()
+        {
+            _adminRevealed = false;
+
+            if (_adminSection != null && _adminSection.activeSelf)
+                _adminSection.SetActive(false);
+
+            if (_adminRing != null && _adminRing.gameObject.activeSelf)
+                _adminRing.gameObject.SetActive(false);
+
+            if (_menuRoot != null)
+                _menuRoot.GetComponent<RectTransform>().sizeDelta = panelSize;
+        }
+
+        /// <summary>
+        /// Procedural ring so the menu needs no extra sprite asset on the shared rig prefab.
+        /// </summary>
+        private static Sprite GetRingSprite()
+        {
+            if (_ringSprite != null)
+                return _ringSprite;
+
+            var texture = new Texture2D(RingTextureSize, RingTextureSize, TextureFormat.RGBA32, false)
             {
-                CreateButton("Debug Teleport Button", content.transform, "Debug Teleport", resumeButtonTint, OnTeleportPressed);
+                name = "Admin Ring",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+
+            float center = (RingTextureSize - 1) * 0.5f;
+            float outer = RingTextureSize * 0.5f - 1f;
+            float inner = RingTextureSize * RingInnerRadiusFraction;
+            var pixels = new Color32[RingTextureSize * RingTextureSize];
+
+            for (int y = 0; y < RingTextureSize; y++)
+            {
+                for (int x = 0; x < RingTextureSize; x++)
+                {
+                    float distance = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                    // One-pixel soft edge on both sides of the band.
+                    float coverage = Mathf.Clamp01(outer - distance) * Mathf.Clamp01(distance - inner);
+                    pixels[y * RingTextureSize + x] = new Color32(255, 255, 255, (byte)(coverage * 255f));
+                }
             }
 
-            CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+
+            _ringSprite = Sprite.Create(texture, new Rect(0f, 0f, RingTextureSize, RingTextureSize), new Vector2(0.5f, 0.5f), 100f);
+            _ringSprite.name = "Admin Ring";
+            _ringSprite.hideFlags = HideFlags.HideAndDontSave;
+            return _ringSprite;
         }
 
         private void BuildHeader(Transform parent)
@@ -327,9 +557,29 @@ namespace PsycheVR.UI
             _pauseToggleAction.AddBinding("<XRController>{RightHand}/menuButton");
         }
 
+        private void EnsureAdminCombo()
+        {
+            if (_adminCombo != null)
+                return;
+
+            _adminCombo = new AdminCombo(adminHoldSeconds, adminIndicatorDelaySeconds);
+            _adminCombo.Completed += RevealAdminSection;
+        }
+
         private void OnPauseTogglePerformed(InputAction.CallbackContext context)
         {
             ToggleMenu();
+        }
+
+        /// <summary>
+        /// Starts <paramref name="mode"/> from a cold boot by reloading the master scene.
+        /// The time scale is restored first: the reload replaces this menu, and the fresh
+        /// scene's own pause menu decides whether to start paused.
+        /// </summary>
+        private void OnModePressed(GameMode mode)
+        {
+            ResumeGameplay();
+            GameModeManager.SwitchTo(mode);
         }
 
         private void PauseGameplay()

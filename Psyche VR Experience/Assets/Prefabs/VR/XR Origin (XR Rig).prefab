@@ -1289,6 +1289,7 @@ GameObject:
   - component: {fileID: 5033801203051696737}
   - component: {fileID: 7000000000000000001}
   - component: {fileID: 215523748349728818}
+  - component: {fileID: 1979891839871700167}
   m_Layer: 2
   m_Name: XR Origin (XR Rig)
   m_TagString: Untagged
@@ -1440,6 +1441,8 @@ MonoBehaviour:
   cameraTransform: {fileID: 0}
   showOnStart: 1
   distanceFromCamera: 1.35
+  minDistanceFromCamera: 0.45
+  clearancePadding: 0.12
   verticalOffset: -0.02
   menuScale: 0.0011
   panelSize: {x: 760, y: 560}
@@ -1484,6 +1487,18 @@ MonoBehaviour:
   fadeOutDuration: 1
   holdDuration: 1
   fadeInDuration: 1
+--- !u!114 &1979891839871700167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1717954561962503725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccccd44b64f808540b451723eae75a8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Modes.ModeSpawnPlacer
 --- !u!1 &1787516059220952802
 GameObject:
   m_ObjectHideFlags: 0
