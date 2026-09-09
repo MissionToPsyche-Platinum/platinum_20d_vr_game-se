@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
@@ -25,6 +26,12 @@ public class ButtonCaseController : MonoBehaviour
 
     [Tooltip("Spring damper used alongside assistSpringForce.")]
     [SerializeField] private float assistSpringDamper = 4f;
+
+    [Tooltip("How close (degrees) the hinge has to be to the open angle before the case is frozen in place.")]
+    [SerializeField] private float lockAngleTolerance = 2f;
+
+    [Tooltip("Seconds to wait for the case to finish its swing before freezing it wherever it is.")]
+    [SerializeField] private float lockSettleTimeout = 2f;
 
 
     public bool GetIsOpen()
@@ -148,43 +155,73 @@ public class ButtonCaseController : MonoBehaviour
     private void LockCaseOpen()
     {
         SetIsOpen(true);
-
         _forceOpening = false;
+
+        // Release the grab before touching the Rigidbody. While the case is
+        // still selected, the XRGrabInteractable keeps driving the body toward
+        // the player's hand, so freezing it here can leave the case stuck in a
+        // pose the hinge never actually reached.
+        ReleaseGrab();
+
+        // Narrow the hinge limits to a small window at the open angle and keep
+        // the spring pushing into it. openAngleThreshold is only the point at
+        // which the case counts as open; the case still has to finish its swing
+        // before it is frozen, otherwise it stops short of the open position.
+        float openAngle = GetOpenTargetAngle();
+        JointLimits limits = Hinge.limits;
+        limits.min = openAngle >= 0f ? openAngle - lockAngleTolerance : openAngle;
+        limits.max = openAngle >= 0f ? openAngle : openAngle + lockAngleTolerance;
+        Hinge.limits = limits;
+
+        ApplyOpenAssist();
+        StartCoroutine(FreezeWhenOpen(openAngle));
+
+        //Unlock THE button
+        if (launchButton != null)
+        {
+            launchButton.UnlockButton();
+        }
+    }
+
+    // Cancels any in-progress selection, then takes the interactable out of
+    // play so the case cannot be grabbed again once it is open.
+    private void ReleaseGrab()
+    {
+        if (_grabInteractable == null)
+            _grabInteractable = GetComponent<XRGrabInteractable>();
+
+        if (_grabInteractable == null)
+            return;
+
+        if (_grabInteractable.isSelected && _grabInteractable.interactionManager != null)
+            _grabInteractable.interactionManager.CancelInteractableSelection(
+                (IXRSelectInteractable)_grabInteractable);
+
+        _grabInteractable.enabled = false;
+    }
+
+    // Waits for the spring to carry the case the rest of the way open, then
+    // freezes it there. The timeout is a backstop: if something blocks the
+    // swing, the case still ends up locked rather than swinging forever.
+    private IEnumerator FreezeWhenOpen(float openAngle)
+    {
+        float deadline = Time.time + lockSettleTimeout;
+
+        while (Time.time < deadline &&
+               Mathf.Abs(Hinge.angle - openAngle) > lockAngleTolerance)
+        {
+            yield return new WaitForFixedUpdate();
+        }
+
         RemoveOpenAssist();
 
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
         }
-
-        // Lock the hinge at the configured open limit.
-        JointLimits limits = Hinge.limits;
-        float openAngle = GetOpenTargetAngle();
-        limits.min = openAngle;
-        limits.max = openAngle;
-        Hinge.limits = limits;
-
-        // disable the grab interactable
-        var grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-        if (grabInteractable != null)
-        {
-            grabInteractable.enabled = false;
-        } else
-        {
-            var oldGrab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-            if (oldGrab != null)
-            {
-                oldGrab.enabled = false;
-            }
-        }
-
-        //Unlock THE button
-        if(launchButton != null)
-        {
-            launchButton.UnlockButton();
-        }
-     
     }
 
     private float GetOpenTargetAngle()
