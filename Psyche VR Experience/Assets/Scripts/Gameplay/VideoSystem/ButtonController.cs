@@ -133,7 +133,6 @@ public class ButtonController : MonoBehaviour
         if (_interactable != null)
         {
             _interactable.enabled = true;
-            Debug.Log("Button is now interactable!");
         }
 
         FindHands();
@@ -143,8 +142,6 @@ public class ButtonController : MonoBehaviour
     {
         if (_isAnimating)
             return;
-
-        Debug.Log("Pressed Button");
 
         if (_interactable != null)
         {
