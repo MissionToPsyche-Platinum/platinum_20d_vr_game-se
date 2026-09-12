@@ -91,6 +91,7 @@ namespace PsycheVR.Gameplay
                         content.pages[3].back, content.pageEdges, content.pages[3].front);
             }
 
+#if UNITY_EDITOR
             // Verbose summary so it's easy to verify which materials were assigned.
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[BookContentApplier] Applied '{content.name}' to '{name}' ({applied} renderers):");
@@ -102,8 +103,10 @@ namespace PsycheVR.Gameplay
             LogRendererMats(sb, "Page_003");
             LogRendererMats(sb, "Page_004");
             Debug.Log(sb.ToString(), this);
+#endif
         }
 
+#if UNITY_EDITOR
         private void LogRendererMats(System.Text.StringBuilder sb, string childName)
         {
             var t = FindChildRecursive(transform, childName);
@@ -115,6 +118,7 @@ namespace PsycheVR.Gameplay
                 names[i] = mats[i] != null ? mats[i].name : "null";
             sb.AppendLine($"  {childName}: [{string.Join(", ", names)}]");
         }
+#endif
 
         private int SetMaterials(string childName, params Material[] mats)
         {
