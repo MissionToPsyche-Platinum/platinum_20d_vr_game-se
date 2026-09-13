@@ -102,7 +102,7 @@ These are the moments where the player is directly touching or acting on a Psych
 
 | Moment | Description | Category | Priority | Notes |
 |---|---|---|---|---|
-| **Button press** | Player presses the in-world reset button | UI cue, mechanical | P1 | Borrow the `VideoPlayerButton` pattern — short click on `OnMouseDown`. |
+| **Button press** | Player presses the in-world reset button | UI cue, mechanical | P1 | Play a short click from the reset button's press handler. |
 | **Pieces returning home** | Unsnapped pieces teleport back to their starting positions | Magical / soft whoosh | P1 | One collective sound is better than one-per-piece (avoids a noisy cluster). |
 
 ### 1.5 Cross-References
