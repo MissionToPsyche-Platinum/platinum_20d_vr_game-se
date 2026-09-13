@@ -78,12 +78,9 @@ public class ButtonCaseController : MonoBehaviour
     void Start()
     {
         Hinge = GetComponent<HingeJoint>();
-        if (Hinge != null)
+        if (Hinge == null)
         {
-            Debug.Log("Succefully stored hinge!");
-        } else
-        {
-            Debug.Log("Failed to load hinge!");
+            Debug.LogError("[ButtonCaseController] No HingeJoint was found.", this);
         }
 
         _grabInteractable = GetComponent<XRGrabInteractable>();
