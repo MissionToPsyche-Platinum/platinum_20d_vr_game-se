@@ -1458,6 +1458,8 @@ MonoBehaviour:
   resumeButtonTint: {r: 0.18, g: 0.22, b: 0.27, a: 1}
   quitButtonTint: {r: 0.18, g: 0.22, b: 0.27, a: 1}
   buttonTextTint: {r: 0.95, g: 0.96, b: 0.98, a: 1}
+  adminHoldSeconds: 4
+  adminIndicatorDelaySeconds: 1
   onResumeRequested:
     m_PersistentCalls:
       m_Calls: []
