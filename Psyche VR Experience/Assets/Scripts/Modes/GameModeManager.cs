@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -34,6 +35,12 @@ namespace PsycheVR.Modes
         public static bool IsStory => ActiveMode == GameMode.Story;
 
         /// <summary>
+        /// Raised before an accepted admin restart or mode switch reloads the scene.
+        /// The argument is the next mode; ActiveMode still identifies the ending mode.
+        /// </summary>
+        public static event Action<GameMode> SessionRestarting;
+
+        /// <summary>
         /// Creates the persistent manager before the first scene loads and reads the
         /// default mode from <see cref="GameModeConfig"/>. Runs in builds and in the
         /// editor alike, whatever scene Play starts in.
@@ -66,6 +73,7 @@ namespace PsycheVR.Modes
             }
 
             Debug.Log($"{LogPrefix} Switching {ActiveMode} -> {mode}; reloading '{MasterSceneName}'.");
+            SessionRestarting?.Invoke(mode);
             ActiveMode = mode;
             // A reload is a cold boot: the pause menu that may have frozen time is about to
             // be destroyed without restoring it, and time scale survives a scene load.
