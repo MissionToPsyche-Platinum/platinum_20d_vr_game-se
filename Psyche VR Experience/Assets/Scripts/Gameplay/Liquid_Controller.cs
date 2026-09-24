@@ -1,9 +1,12 @@
+using System;
+using System.Security.Cryptography;
 using UnityEngine;
 
 public class CoffeeLiquidController : MonoBehaviour
 {
     public Transform mug;
     public ParticleSystem coffeePour;
+    public ParticleSystem steam;
 
     public float pourAngle = 60f;
 
@@ -17,7 +20,6 @@ public class CoffeeLiquidController : MonoBehaviour
     void Start()
     {
         uprightDirection = mug.forward;
-
         coffeePour.Stop();
         initialScale = transform.localScale;
     }
@@ -48,6 +50,14 @@ public class CoffeeLiquidController : MonoBehaviour
         {
             if (coffeePour.isPlaying)
                 coffeePour.Stop();
+                
         }
+        if(coffeeRemaining <= 0f)
+        {
+            GetComponent<MeshRenderer>().enabled = false;
+            steam.Stop();
+
+
+        };
     }
 }
