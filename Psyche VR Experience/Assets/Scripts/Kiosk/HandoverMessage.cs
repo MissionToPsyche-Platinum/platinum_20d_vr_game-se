@@ -6,10 +6,13 @@ using UnityEngine.UI;
 namespace PsycheVR.Kiosk
 {
     /// <summary>
-    /// A head-locked line of text that fades in, holds, fades out and destroys itself.
-    /// Built in code under the camera at the moment it is needed, so no prefab has to
-    /// carry it and it cannot exist in Story mode by accident. Sized like the pause menu
-    /// so it reads the same on the headset and on the cast screen.
+    /// A head-locked dark panel with bold white text that fades in, holds, fades out and
+    /// destroys itself. Built in code under the camera at the moment it is needed, so no
+    /// prefab has to carry it and it cannot exist in Story mode by accident. Sized like
+    /// the pause menu so it reads the same on the headset and on the cast screen.
+    ///
+    /// The panel is not optional: the message follows the launch video, so the visitor is
+    /// usually looking straight at the bright wall screen, where bare white text vanishes.
     ///
     /// The panel is fully head-locked -- pitch and roll as well as yaw -- exactly like the
     /// pause menu, so it stays centred in view however the visitor is looking.
@@ -31,10 +34,11 @@ namespace PsycheVR.Kiosk
         private const float MaxFontSize = 44f;
         private const float MinFontSize = 28f;
         private static readonly Color PanelTint = new Color(0.03f, 0.04f, 0.06f, 0.82f);
-        private static readonly Color TextTint = new Color(0.95f, 0.96f, 0.98f, 1f);
+        private static readonly Color TextTint = Color.white;
 
         private CanvasGroup _group;
         private TMP_Text _text;
+        private Material _materialInstance;
 
         /// <summary>
         /// Creates the message as a child of <paramref name="cameraTransform"/>, invisible.
@@ -88,6 +92,8 @@ namespace PsycheVR.Kiosk
             text.enableAutoSizing = true;
             text.fontSizeMin = MinFontSize;
             text.fontSizeMax = MaxFontSize;
+            text.fontStyle = FontStyles.Bold;
+            Material materialInstance = ApplyPlainWhite(text);
 
             var message = root.AddComponent<HandoverMessage>();
             message._group = root.GetComponent<CanvasGroup>();
@@ -95,7 +101,38 @@ namespace PsycheVR.Kiosk
             message._group.interactable = false;
             message._group.blocksRaycasts = false;
             message._text = text;
+            message._materialInstance = materialInstance;
             return message;
+        }
+
+        /// <summary>
+        /// Gives the label its own material so the look does not depend on the project's
+        /// default font material. That shared material was changed to a black face with a
+        /// white underlay and a dark outline for the mission control test room, which is
+        /// why an unstyled label here came out as black text on a white smear. Plain white
+        /// face, no outline, no underlay: the panel supplies the contrast. The instance is
+        /// returned so the owner can destroy it; TMP does not.
+        /// </summary>
+        private static Material ApplyPlainWhite(TMP_Text text)
+        {
+            Material material = text.fontMaterial;
+            material.SetColor(ShaderUtilities.ID_FaceColor, TextTint);
+            material.SetFloat(ShaderUtilities.ID_FaceDilate, 0f);
+            material.SetFloat(ShaderUtilities.ID_OutlineWidth, 0f);
+            material.SetFloat(ShaderUtilities.ID_OutlineSoftness, 0f);
+            material.DisableKeyword(ShaderUtilities.Keyword_Outline);
+            material.DisableKeyword(ShaderUtilities.Keyword_Underlay);
+            material.DisableKeyword(ShaderUtilities.Keyword_Glow);
+            // The shared material's outline and underlay had padded every glyph quad;
+            // resize the quads for the plain material so nothing is drawn outside the letters.
+            text.UpdateMeshPadding();
+            return material;
+        }
+
+        private void OnDestroy()
+        {
+            if (_materialInstance != null)
+                Destroy(_materialInstance);
         }
 
         /// <summary>
