@@ -19,6 +19,7 @@ namespace PsycheVR.UI
     {
         [Header("Placement")]
         [SerializeField] private Transform cameraTransform;
+        [Tooltip("Open the menu when the scene starts. Story mode only: Event mode boots straight into the room for kiosk visitors.")]
         [SerializeField] private bool showOnStart;
         [SerializeField] private float distanceFromCamera = 1.35f;
         [SerializeField] private float minDistanceFromCamera = 0.45f;
@@ -90,7 +91,8 @@ namespace PsycheVR.UI
 
         private void Start()
         {
-            SetMenuVisible(showOnStart);
+            // A kiosk visitor must never see a Resume button; Event mode starts unpaused.
+            SetMenuVisible(showOnStart && GameModeManager.IsStory);
         }
 
         private void OnEnable()
