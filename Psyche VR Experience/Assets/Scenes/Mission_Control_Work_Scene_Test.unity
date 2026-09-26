@@ -697,6 +697,11 @@ MonoBehaviour:
   buttonTop: {fileID: 261635127}
   pressDistance: 0.01
   pressSpeed: 5
+  videoToStart: {fileID: 0}
+  slapRadius: 0.12
+  minSlapSpeed: 0.3
+  slapCooldown: 0.5
+  handRefreshInterval: 0.5
 --- !u!114 &261635123
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4037,6 +4042,63 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 1400b70628163c245b6759197c71882d, type: 3}
+--- !u!1001 &7605743386469148601
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.4512
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 7.0585
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.0763
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.038767196
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.043579478
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.70999396
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.7017881
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 269.229
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 27.050995
+      objectReference: {fileID: 0}
+    - target: {fileID: 2490628873455414395, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 146.272
+      objectReference: {fileID: 0}
+    - target: {fileID: 3016195068497524417, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
+      propertyPath: m_Name
+      value: CoffeeMug_2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e231ba2633cb8db47ac297ba6d8a580e, type: 3}
 --- !u!1001 &8024326420329987947
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4406,3 +4468,4 @@ SceneRoots:
   - {fileID: 1117924685}
   - {fileID: 898799973}
   - {fileID: 8390058048184329193}
+  - {fileID: 7605743386469148601}
