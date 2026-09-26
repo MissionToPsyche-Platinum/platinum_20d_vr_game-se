@@ -15,6 +15,12 @@ public class SnapZone : MonoBehaviour
 
     private XRGrabInteractable currentObject;
 
+    /// <summary>Raised when any snap zone accepts its piece. Static so listeners need no reference to each zone.</summary>
+    public static event System.Action<SnapZone> Snapped;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => Snapped = null;
+
     private const string BusZoneTag = "bus_SnapZone";
 
     void Start()
@@ -129,6 +135,8 @@ public class SnapZone : MonoBehaviour
         }
 
         currentObject = null;
+
+        Snapped?.Invoke(this);
     }
 
     private void EnableAllOtherSnapZones()

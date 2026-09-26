@@ -75,6 +75,9 @@ namespace PsycheVR.Modes
             Debug.Log($"{LogPrefix} Switching {ActiveMode} -> {mode}; reloading '{MasterSceneName}'.");
             SessionRestarting?.Invoke(mode);
             ActiveMode = mode;
+            // A reload is a cold boot: the pause menu that may have frozen time is about to
+            // be destroyed without restoring it, and time scale survives a scene load.
+            Time.timeScale = 1f;
             SceneManager.LoadScene(MasterSceneName, LoadSceneMode.Single);
         }
 

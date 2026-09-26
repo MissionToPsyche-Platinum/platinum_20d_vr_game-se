@@ -10,6 +10,16 @@ public class play_video : MonoBehaviour
 
     void Start()
     {
+        EnsurePlayer();
+    }
+
+    // Start order between MonoBehaviours is unspecified, so a caller may reach StartVideo
+    // before this component's own Start has run.
+    private void EnsurePlayer()
+    {
+        if (_videoPlayer != null)
+            return;
+
         _videoPlayer = GetComponent<VideoPlayer>();
         if (_videoPlayer != null)
         {
@@ -26,6 +36,7 @@ public class play_video : MonoBehaviour
 
     public void StartVideo()
     {
+        EnsurePlayer();
         if (_videoPlayer == null)
             return;
 
