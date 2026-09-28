@@ -64,3 +64,7 @@ Desktop.ini
 *_BurstDebugInformation_DoNotShip/
 *_BackUpThisFolder_ButDontShipItWithYourGame/
 .utmp/
+
+# TG-278: the test scene is not in the build; bake it locally, never commit the outputs
+Psyche VR Experience/Assets/Scenes/Mission_Control_Work_Scene_Test/
+Psyche VR Experience/Assets/Scenes/Mission_Control_Work_Scene_Test.meta
