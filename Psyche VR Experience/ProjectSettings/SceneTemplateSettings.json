@@ -73,16 +73,6 @@
         },
         {
             "userAdded": false,
-            "type": "UnityEngine.Rendering.PostProcessing.PostProcessProfile",
-            "defaultInstantiationMode": 0
-        },
-        {
-            "userAdded": false,
-            "type": "UnityEngine.Rendering.PostProcessing.PostProcessResources",
-            "defaultInstantiationMode": 0
-        },
-        {
-            "userAdded": false,
             "type": "UnityEngine.Rendering.VolumeProfile",
             "defaultInstantiationMode": 0
         },
