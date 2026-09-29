@@ -59,10 +59,15 @@ namespace PsycheVR.Gameplay
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
         }
 
+        /// <summary>The last controller that held this object, for landing feedback after a throw.</summary>
+        public XRBaseInputInteractor LastHolder { get; private set; }
+
         /// <inheritdoc />
         protected override void OnSelectEntered(SelectEnterEventArgs args)
         {
             base.OnSelectEntered(args);
+            if (args.interactorObject is XRBaseInputInteractor holder)
+                LastHolder = holder;
             SendGrabHaptic(args);
         }
 

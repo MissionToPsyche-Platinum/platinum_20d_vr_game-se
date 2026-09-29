@@ -5,10 +5,11 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 namespace PsycheVR.Gameplay
 {
     /// <summary>
-    /// Rewards a crumpled sheet landing in the waste basket. Sits on a trigger collider low
-    /// inside the can. A ball that is crumpled and no longer held pulses the controller that
-    /// threw it. Flat sheets, and balls carried in by hand, get nothing. One pulse per visit:
-    /// leaving the trigger re-arms that ball, so fishing one out and dropping it back works.
+    /// Rewards a ball landing in a basket. Sits on a trigger collider low inside the waste can
+    /// or just under a hoop's rim. A crumpled sheet, or a basketball, that is no longer held
+    /// pulses the controller that threw it. Flat sheets, and balls carried in by hand, get
+    /// nothing. One pulse per visit: leaving the trigger re-arms that ball, so fishing one out
+    /// and dropping it back works.
     ///
     /// No sound yet: the landing clip belongs to the second audio pass (TG-265).
     /// </summary>
@@ -26,7 +27,7 @@ namespace PsycheVR.Gameplay
         [Tooltip("Optional. Left empty until TG-265 supplies a landing clip.")]
         [SerializeField] private AudioSource landingAudio;
 
-        private readonly HashSet<PaperCrumple> _inside = new HashSet<PaperCrumple>();
+        private readonly HashSet<Rigidbody> _inside = new HashSet<Rigidbody>();
         private bool _valid;
 
         private void Awake()
@@ -41,14 +42,14 @@ namespace PsycheVR.Gameplay
             if (!_valid)
                 return;
 
-            PaperCrumple paper = FindPaper(other);
-            if (paper == null || !paper.IsCrumpled || paper.IsHeld)
+            Rigidbody body = other.attachedRigidbody;
+            XRBaseInputInteractor thrower;
+            if (body == null || !IsScoringBall(body, out thrower))
                 return;
 
-            if (!_inside.Add(paper))
+            if (!_inside.Add(body))
                 return;
 
-            XRBaseInputInteractor thrower = paper.LastHolder;
             if (thrower != null)
                 thrower.SendHapticImpulse(landingHapticIntensity, landingHapticDuration);
 
@@ -58,15 +59,36 @@ namespace PsycheVR.Gameplay
 
         private void OnTriggerExit(Collider other)
         {
-            PaperCrumple paper = FindPaper(other);
-            if (paper != null)
-                _inside.Remove(paper);
+            Rigidbody body = other.attachedRigidbody;
+            if (body != null)
+                _inside.Remove(body);
         }
 
-        private static PaperCrumple FindPaper(Collider other)
+        /// <summary>
+        /// A crumpled, unheld sheet or an unheld basketball scores; anything else does not.
+        /// </summary>
+        private static bool IsScoringBall(Rigidbody body, out XRBaseInputInteractor thrower)
         {
-            Rigidbody rb = other.attachedRigidbody;
-            return rb != null ? rb.GetComponent<PaperCrumple>() : null;
+            thrower = null;
+
+            PaperCrumple paper = body.GetComponent<PaperCrumple>();
+            if (paper != null)
+            {
+                if (!paper.IsCrumpled || paper.IsHeld)
+                    return false;
+                thrower = paper.LastHolder;
+                return true;
+            }
+
+            if (body.GetComponent<BasketballPhysics>() == null)
+                return false;
+
+            PsycheGrabbable grabbable = body.GetComponent<PsycheGrabbable>();
+            if (grabbable == null || grabbable.isSelected)
+                return false;
+
+            thrower = grabbable.LastHolder;
+            return true;
         }
     }
 }
