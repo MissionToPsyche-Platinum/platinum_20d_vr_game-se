@@ -69,6 +69,15 @@ namespace PsycheVR.Gameplay
             SetAllPagesEnabled(false);
         }
 
+        private void Update()
+        {
+            // A far grab switches the book's colliders off for the pull-in and PsycheGrabbable
+            // switches them all back on when the book arrives, spine collider included. Keep it
+            // off for as long as the book is held, or the other hand can take the spine.
+            if (_isBookHeld && bookGrabCollider != null && bookGrabCollider.enabled)
+                bookGrabCollider.enabled = false;
+        }
+
         /// <summary>Called by BookPage on grab. Hook for future features.</summary>
         public void OnPageGrabbed(BookPage page) { }
 

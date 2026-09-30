@@ -80,11 +80,8 @@ namespace PsycheVR.Gameplay
                 return true;
             }
 
-            if (body.GetComponent<BasketballPhysics>() == null)
-                return false;
-
             PsycheGrabbable grabbable = body.GetComponent<PsycheGrabbable>();
-            if (grabbable == null || grabbable.isSelected)
+            if (grabbable == null || grabbable.Profile != GrabProfileKind.Ball || grabbable.isSelected)
                 return false;
 
             thrower = grabbable.LastHolder;

@@ -12,9 +12,8 @@ namespace PsycheVR.Gameplay
     /// inputs because the project's digital Select action is bound to both controls).
     ///
     /// Crumpling is one-way. It swaps the visual children, swaps which root collider is
-    /// enabled, and hands the Rigidbody from DeskToyPhysics (drops near the hand) to
-    /// BasketballPhysics (throws hard) by toggling the two components; their own
-    /// OnDisable/OnEnable restore and apply the throw scales, so no physics is duplicated.
+    /// enabled, and hands the Rigidbody from the Paper grab profile (drops near the hand)
+    /// to the CrumpledPaper profile (throws hard) through PsycheGrabbable.SetProfile.
     /// The kiosk reset (scene reload) is what un-crumples everything.
     ///
     /// Both colliders must live on the root object: XRBaseInteractable.Awake gathers its
@@ -32,18 +31,12 @@ namespace PsycheVR.Gameplay
         [Tooltip("Root collider matching the flat sheet. Enabled until crumpled.")]
         [SerializeField] private Collider sheetCollider;
 
-        [Tooltip("Physics for the flat sheet (drops near the hand). Enabled until crumpled.")]
-        [SerializeField] private DeskToyPhysics sheetPhysics;
-
         [Header("Ball State")]
         [Tooltip("Visual root of the crumpled ball. Inactive until crumpled.")]
         [SerializeField] private GameObject ballVisual;
 
         [Tooltip("Root collider matching the ball. Disabled until crumpled.")]
         [SerializeField] private Collider ballCollider;
-
-        [Tooltip("Physics for the ball (basketball throw). Disabled until crumpled.")]
-        [SerializeField] private BasketballPhysics ballPhysics;
 
         [Header("Squeeze Input")]
         [Tooltip("How far the free control must be squeezed to crumple.")]
@@ -69,7 +62,6 @@ namespace PsycheVR.Gameplay
         private const float SheetContactOffset = 0.002f;
 
         private PsycheGrabbable _grabbable;
-        private Rigidbody _rb;
         private XRBaseInputInteractor _holder;
         private bool _squeezeIsTrigger;
         private bool _squeezeHeld;
@@ -89,12 +81,10 @@ namespace PsycheVR.Gameplay
         private void Awake()
         {
             _grabbable = GetComponent<PsycheGrabbable>();
-            _rb = GetComponent<Rigidbody>();
 
-            if (sheetVisual == null || sheetCollider == null || sheetPhysics == null
-                || ballVisual == null || ballCollider == null || ballPhysics == null)
+            if (sheetVisual == null || sheetCollider == null || ballVisual == null || ballCollider == null)
             {
-                Debug.LogError("[PaperCrumple] Sheet and ball visuals, colliders and physics must all be assigned!", this);
+                Debug.LogError("[PaperCrumple] Sheet and ball visuals and colliders must all be assigned!", this);
                 enabled = false;
                 return;
             }
@@ -208,19 +198,9 @@ namespace PsycheVR.Gameplay
 
         private void ApplyState(bool crumpled)
         {
-            // Physics first: disable both so their OnDisable restores defaults before the
-            // target's OnEnable applies its own throw scales. Both may start enabled when
-            // Instantiate runs their OnEnable ahead of this Awake, so the target always
-            // goes last.
-            sheetPhysics.enabled = false;
-            ballPhysics.enabled = false;
-            MonoBehaviour target = crumpled ? ballPhysics : (MonoBehaviour)sheetPhysics;
-            target.enabled = true;
-
-            // The target's OnEnable turns gravity on, which is wrong mid-hold: XRI switched
-            // it off on grab and the physics component's own OnGrabbed listener already ran.
-            if (_holder != null)
-                _rb.useGravity = false;
+            // The profile swap carries the physics: Paper drops near the hand, Ball throws
+            // hard. PsycheGrabbable keeps gravity off while held and XRI restores it on release.
+            _grabbable.SetProfile(crumpled ? GrabProfileKind.CrumpledPaper : GrabProfileKind.Paper);
 
             sheetCollider.enabled = !crumpled;
             ballCollider.enabled = crumpled;
