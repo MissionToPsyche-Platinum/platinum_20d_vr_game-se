@@ -12,6 +12,131 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00b86c507336a6a41a659dbe0a69c4c6, type: 3}
   m_Name: GrabSettings
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.GrabSettings
-  snapEaseDuration: 10
+  minSnapDuration: 0.12
+  maxSnapDuration: 1.5
+  pullSpeed: 4
+  nearThreshold: 0.15
+  maxHeldVelocity: 3
+  maxHeldAngularVelocity: 10
+  maxHeldSpeed: 10
+  holdBreakDistance: 0.4
+  holdBreakSeconds: 0.25
+  pressedContactSteps: 6
+  pressedVelocityScale: 0.25
   grabHapticIntensity: 0.5
   hapticDuration: 0.08
+  farGrabEnabled: 0
+  nearGrabRadius: 0.16
+  nearGrabForwardOffset: 0.04
+  farDwellSeconds: 0.5
+  dwellLineColor: {r: 1, g: 1, b: 1, a: 0.8}
+  dwellLineWidth: 0.004
+  glowColor: {r: 0.35, g: 0.95, b: 0.9, a: 0.45}
+  glowRimPower: 2
+  glowFadeDuration: 0.15
+  glowOverlayMaterial: {fileID: 2100000, guid: 76678652904035560b96560cf8873a2e, type: 2}
+  hoverFloorBand: 0.3
+  hoverHandReach: 0.85
+  hoverHandRayRadius: 0.1
+  hoverHandRayDownTilt: 10
+  hoverHeight: 0.5
+  hoverRiseSeconds: 0.6
+  hoverLingerSeconds: 0
+  hoverBobAmplitude: 0.02
+  hoverBobFrequency: 0.5
+  drawerFriction: 0.6
+  drawerReleaseScale: 1
+  drawerMaxSpeed: 1.5
+  drawerBreakDistance: 0.2
+  drawerPushCarry: 0.4
+  profiles:
+  - kind: 0
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 1.25
+      throwAngularVelocityScale: 2.5
+      mass: 0.05
+      linearDamping: 0
+      angularDamping: 0.05
+      physicsMaterial: {fileID: 13400000, guid: 10bde48ef542d6a4fbee12145283824a, type: 2}
+      collisionDetection: 3
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 1
+      kinematicHold: 0
+      passThroughStaticWhileHeld: 0
+  - kind: 1
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 0.9
+      throwAngularVelocityScale: 2.5
+      mass: 0.62
+      linearDamping: 0
+      angularDamping: 0.05
+      physicsMaterial: {fileID: 13400000, guid: 6bda26fe85a25a84db0b29fe1aafc9df, type: 2}
+      collisionDetection: 3
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 1
+      kinematicHold: 0
+      passThroughStaticWhileHeld: 0
+  - kind: 2
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 0.35
+      throwAngularVelocityScale: 0.2
+      mass: 0.05
+      linearDamping: 0.5
+      angularDamping: 0.5
+      physicsMaterial: {fileID: 0}
+      collisionDetection: 3
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 1
+      kinematicHold: 0
+      passThroughStaticWhileHeld: 0
+  - kind: 3
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 0.9
+      throwAngularVelocityScale: 0.4
+      mass: 0.8
+      linearDamping: 0
+      angularDamping: 0.2
+      physicsMaterial: {fileID: 0}
+      collisionDetection: 3
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 0
+      kinematicHold: 0
+      passThroughStaticWhileHeld: 0
+  - kind: 4
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 1.25
+      throwAngularVelocityScale: 2.5
+      mass: 0.05
+      linearDamping: 0
+      angularDamping: 0.05
+      physicsMaterial: {fileID: 13400000, guid: 10bde48ef542d6a4fbee12145283824a, type: 2}
+      collisionDetection: 0
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 1
+      kinematicHold: 1
+      passThroughStaticWhileHeld: 1
+  - kind: 5
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 1.25
+      throwAngularVelocityScale: 2.5
+      mass: 0.62
+      linearDamping: 0
+      angularDamping: 0.05
+      physicsMaterial: {fileID: 13400000, guid: 6bda26fe85a25a84db0b29fe1aafc9df, type: 2}
+      collisionDetection: 3
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 1
+      kinematicHold: 0
+      passThroughStaticWhileHeld: 0

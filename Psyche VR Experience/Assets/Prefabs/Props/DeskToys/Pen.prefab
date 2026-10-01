@@ -101,9 +101,6 @@ PrefabInstance:
       addedObject: {fileID: 2640588323461307155}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2189480789215059117}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 7284516580823068302}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}
       insertIndex: -1
@@ -281,9 +278,8 @@ MonoBehaviour:
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  profile: 0
   useDynamicAttachOverride: 0
-  overrideEaseInDuration: 0
-  easeInDurationOverride: 0.15
 --- !u!114 &2640588323461307155
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,20 +303,6 @@ MonoBehaviour:
   m_MinimumScaleRatio: 0.25
   m_MaximumScaleRatio: 2
   m_ScaleMultiplier: 0.25
---- !u!114 &2189480789215059117
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4266592660020840868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c1695656bf9c8b2e9607f4dbfce7a61, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.DeskToyPhysics
-  throwVelocityScale: 0.35
-  throwAngularVelocityScale: 0.2
 --- !u!114 &7284516580823068302
 MonoBehaviour:
   m_ObjectHideFlags: 0
