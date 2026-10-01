@@ -101,3 +101,9 @@
 
 # TG-173: two tiny hand-made meshes kept in plain git (org LFS budget exhausted 2026-09-26)
 "Psyche VR Experience/Assets/Art/Models/Props/ScrappedPlan/*.fbx" -filter -diff -merge -text
+
+# TG-279: two small glove meshes (Quaternius "Glove", CC0, poly.pizza) kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Art/Models/Characters/Hands/*.fbx" -filter -diff -merge -text
+
+# TG-279: launch video re-encoded to VP8 webm (the Linux editor cannot import the H.264 mp4), kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Video/PsycheLaunch.webm" -filter -diff -merge -text
