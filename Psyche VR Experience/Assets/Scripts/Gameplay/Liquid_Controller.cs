@@ -31,13 +31,18 @@ public class CoffeeLiquidController : MonoBehaviour
 
         // Measure rotation relative to the starting orientation.
         float tilt = Vector3.Angle(mug.forward, Vector3.up);
+        float tiltEffect = Mathf.InverseLerp(pourAngle, 90f, tilt);
+
+        tiltEffect = tiltEffect * tiltEffect;
+
+        float currentPourSpeed = Mathf.Lerp(0.1f, 1.0f, tiltEffect);
 
         if (tilt >= pourAngle && coffeeRemaining > 0f)
         {
             if (!coffeePour.isPlaying)
                 coffeePour.Play();
 
-            coffeeRemaining -= pourSpeed * Time.deltaTime;
+            coffeeRemaining -= currentPourSpeed * Time.deltaTime;
 
             coffeeRemaining = Mathf.Clamp01(coffeeRemaining);
 
