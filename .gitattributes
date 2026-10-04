@@ -107,3 +107,6 @@
 
 # TG-279: launch video re-encoded to VP8 webm (the Linux editor cannot import the H.264 mp4), kept in plain git (org LFS budget exhausted 2026-09-26)
 "Psyche VR Experience/Assets/Video/PsycheLaunch.webm" -filter -diff -merge -text
+
+# TG-288: office desk ("Office Desk" by Ryan Donaldson, CC-BY, Poly Pizza; modified), small mesh kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Art/Models/Props/OfficeDesk/*.fbx" -filter -diff -merge -text
