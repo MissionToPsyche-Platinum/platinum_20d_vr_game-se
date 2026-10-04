@@ -219,3 +219,129 @@ Google references: [web app request handling](https://developers.google.com/apps
 [Drive file replacement](https://developers.google.com/apps-script/reference/drive/file#setContent(String)),
 [Sheet row appending](https://developers.google.com/apps-script/reference/spreadsheet/sheet#appendRow(Object)),
 and [script locks](https://developers.google.com/apps-script/reference/lock/lock-service).
+
+## Deployment and verification how-to — TG-282
+
+### Create the destinations and web app
+
+1. Sign in to the intended ASU Google account. Create a Drive folder named
+   `Psyche VR Session Logs` and a spreadsheet named `Psyche VR Session Index`.
+   Keep the spreadsheet outside the log folder so the folder contains only logs.
+   Rename the spreadsheet's initial tab to `Sessions` and leave it empty.
+2. Record the folder ID from its URL and the spreadsheet ID between `/d/` and
+   `/edit` in its URL. Create a standalone project at `script.google.com`, named
+   `Psyche VR Session Upload`. Copy the repository's `Code.gs` into its editor.
+   Enable the manifest in Project Settings and copy `appsscript.json` as well.
+3. In Project Settings > Script Properties, set the four properties documented
+   above. Generate a random upload token locally, for example with
+   `openssl rand -hex 32`, and store it in `UPLOAD_TOKEN`. Keep it in the team's
+   approved secret storage for the future client configuration. Do not put it in
+   the Sheet, this document, commit messages, or command arguments.
+4. Choose Deploy > New deployment > Web app. Set **Execute as: Me** (the ASU
+   owner) and access to **Anyone**, including callers without Google sign-in.
+   This exposes the POST handler; its token gates writes. The Drive folder and
+   Sheet themselves should remain restricted to the team. Review and authorize
+   the script's Drive and Sheets permissions, then deploy.
+5. Copy the deployed URL ending in `/exec`. Do not use the editor-only `/dev`
+   test URL. If the ASU account does not offer anonymous access, stop and resolve
+   that with the project owner; a Google sign-in page cannot serve the headset's
+   token-only POST requests.
+
+These settings follow Google's [web app deployment documentation](https://developers.google.com/apps-script/guides/web).
+Script Properties are edited as described in the
+[Properties Service guide](https://developers.google.com/apps-script/guides/properties).
+
+### Share with the team
+
+Use Share on both the folder and spreadsheet. Add the confirmed team addresses
+or team Google Group with the agreed viewer/editor role. Keep General access
+restricted. Check the resulting access list on **both** items, and have a teammate
+verify they can open them. Folder access covers the uploaded files; the index
+spreadsheet needs its own sharing because it is outside that folder. Script
+edit access is separate and gives access to Script Properties, including the token;
+only give that role to intended maintainers.
+
+### Verify the ten September 26 samples using curl
+
+The helper uses Python 3.9+ and `curl`. It reads the ZIP without extracting it,
+requires exactly ten distinct `.jsonl` filenames, and asks for the token through
+a hidden prompt. The token is passed to curl through standard input; it is not
+saved in a request file or exposed in process arguments.
+
+First inspect the expected session summaries without network requests:
+
+```sh
+python3 tools/session-log-upload/verify_upload.py "/absolute/path/session-logs-2026-09-26.zip" --dry-run
+```
+
+Then run against the deployed URL (replace `DEPLOYMENT_ID`):
+
+```sh
+python3 tools/session-log-upload/verify_upload.py "/absolute/path/session-logs-2026-09-26.zip" \
+  --url "https://script.google.com/macros/s/DEPLOYMENT_ID/exec"
+```
+
+The helper sends two negative requests (missing/wrong token), the ten samples,
+and a repeat of the first sample. It stops at the first unexpected response.
+It uses `curl --location --data-binary @-`, without `-X POST`, so the initial
+request is POST and the response redirect can switch to GET. Apps Script's
+[ContentService requires following redirects](https://developers.google.com/apps-script/guides/content).
+The default upload labels are `TG-282 sample verification` and
+`legacy-0.1.0-sep26`; override them with `--device-name` and `--build-stamp` if needed.
+
+HTTP acknowledgments alone do not prove the stored data is correct. After a
+successful run against initially empty destinations, verify:
+
+- The Drive folder contains **10 files**, not 11, with the original filenames.
+  Neither `tg282_missing_token.jsonl` nor `tg282_wrong_token.jsonl` exists.
+- Download the stored files and compare them with the originals byte for byte.
+  Repeating the first file must keep its Drive file ID and update its contents.
+- The `Sessions` tab has the header plus **11 data rows**: ten initial uploads
+  and the repeated upload. No row comes from either negative request.
+- Compare all nine columns with the dry-run summaries and upload labels. Check
+  that timestamps are UTC, elapsed duration and counts match, and missing end
+  events yield `suspended`. The last row repeats the first sample's summary with
+  a new upload time.
+- Confirm the team's access to the folder, files, and Sheet.
+
+Each repeat of the whole verification run adds another 11 rows. Record the
+starting row count if testing existing destinations. The helper does not delete
+test data or automatically retry ambiguous network failures.
+
+The verifier's local tests can be run without Google access:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/session-log-upload -p 'test_*.py'
+```
+
+### Redeploy and retire
+
+After editing the script, save it, then use Deploy > Manage deployments > Edit >
+New version > Deploy to update the existing deployment and preserve its URL.
+Rerun verification and record the version/date. Saving source alone does not
+update the versioned `/exec` deployment. Changing Script Properties changes
+configuration shared by the script, so coordinate token changes with clients.
+
+At semester end, archive the deployment through Manage deployments and remove
+the upload token from Script Properties. Agree with the team on retention and
+ownership of collected files before removing any stored data or access.
+
+### Live deployment record
+
+Fill these in only after live deployment and verification:
+
+| Item | Status |
+| --- | --- |
+| ASU deployment owner | Pending |
+| Apps Script project URL | Pending |
+| Deployed `/exec` URL and version | Pending |
+| Drive folder URL | Pending |
+| Index spreadsheet URL | Pending |
+| Token location | Script Properties > `UPLOAD_TOKEN`; value never recorded here |
+| Team recipients and roles | Pending confirmation |
+| Ten September 26 samples | Awaiting ZIP |
+| curl rejection/upload/repeat checks | Not run against Google |
+| Drive contents and Sheet summary checks | Not run against Google |
+| Team access check | Not performed |
+
+TG-282 remains incomplete until the live checks and sharing are verified.
