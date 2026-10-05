@@ -110,3 +110,6 @@
 
 # TG-288: office desk ("Office Desk" by Ryan Donaldson, CC-BY, Poly Pizza; modified), small mesh kept in plain git (org LFS budget exhausted 2026-09-26)
 "Psyche VR Experience/Assets/Art/Models/Props/OfficeDesk/*.fbx" -filter -diff -merge -text
+
+# TG-194: mission ops console props (keyboard and mouse by Poly by Google, CC-BY; tower by Luca Regazzi, CC-BY; screen by Kenney, CC0; all modified), small meshes kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Art/Models/Props/OpsConsole/*.fbx" -filter -diff -merge -text

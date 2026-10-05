@@ -105,6 +105,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3659090442820587615}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1784621872677600491}
   m_SourcePrefab: {fileID: 100100000, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}
 --- !u!4 &1232462406510320493 stripped
 Transform:
@@ -278,8 +281,8 @@ MonoBehaviour:
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
-  profile: 0
-  useDynamicAttachOverride: 0
+  profile: 6
+  holdWhereGrabbed: 0
 --- !u!114 &2640588323461307155
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,10 +346,31 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.016
-  m_Height: 0.25182796
+  m_Radius: 0.014882572
+  m_Height: 0.26182997
   m_Direction: 2
-  m_Center: {x: 0.0058, y: 0, z: 0.12591398}
+  m_Center: {x: 0.0058102533, y: -0.000000022351742, z: 0.13091499}
+--- !u!65 &1784621872677600491
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4266592660020840868}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.026503079, y: 0.012383461, z: 0.08546257}
+  m_Center: {x: -0.007441286, y: -0.000000029802322, z: 0.19434558}
 --- !u!4 &8879424195913140084 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5534536879966303105, guid: ecc5d712334f0214a82d19be5132ae5b, type: 3}

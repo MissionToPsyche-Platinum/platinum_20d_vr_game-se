@@ -25,7 +25,8 @@ namespace PsycheVR.Gameplay
     /// early far selects. With <see cref="GrabSettings.FarGrabEnabled"/> off, only near selects
     /// pass and no far dwell starts; the UI line still draws. A drawer handle loses to any other
     /// near target and is refused while the palm is inside its drawer, so reaching in for a prop
-    /// takes the prop.
+    /// takes the prop, or above the top of its drawer front, so a hand on the desk top never
+    /// takes it.
     /// Also this interactor's <see cref="IXRTargetFilter"/>: XRI's Near-Far interactor hands on
     /// only its first valid target, sorted by its own distance measure, so a sheet in a drawer
     /// lost to the drawer handle every time and was never found (2026-09-30). The filter sorts
@@ -51,6 +52,12 @@ namespace PsycheVR.Gameplay
 
         /// <summary>A palm this far (m) behind a drawer's front face is inside the drawer and cannot take its handle.</summary>
         private const float HandleBehindFaceMargin = 0.03f;
+
+        /// <summary>
+        /// A palm this far (m) above a drawer's front face is over the desk top and cannot take its
+        /// handle, so slapping the keyboard never lights up the drawer under it.
+        /// </summary>
+        private const float HandleAboveFaceMargin = 0.02f;
 
         /// <summary>Sort penalty for a near target the other hand holds, so free targets always rank first.</summary>
         private const float HeldByOtherPenalty = 1000f;
@@ -78,6 +85,9 @@ namespace PsycheVR.Gameplay
 
         /// <summary>Centre of this hand's near grab zone.</summary>
         public Transform GrabCentre => _grabCentre;
+
+        /// <summary>This hand's Near-Far interactor (haptics, selection).</summary>
+        public NearFarInteractor Interactor => interactor;
 
         /// <summary>True while this hand holds something.</summary>
         public bool IsHolding => interactor != null && interactor.hasSelection;
@@ -247,14 +257,16 @@ namespace PsycheVR.Gameplay
         }
 
         /// <summary>
-        /// True for a drawer handle this hand must not take: the palm is inside that drawer, or
-        /// another near target (a prop in the drawer) is in range.
+        /// True for a drawer handle this hand must not take: the palm is inside that drawer or above
+        /// the top of its front (over the desk top), or another near target (a prop in the drawer)
+        /// is in range.
         /// </summary>
         private bool HandleBlocked(IXRSelectInteractable target, List<IXRInteractable> others)
         {
             var drawer = DrawerSlide.ForHandle(target);
             if (drawer == null) return false;
             if (drawer.IsBehindFace(palmAnchor.position, HandleBehindFaceMargin)) return true;
+            if (drawer.IsAboveFace(palmAnchor.position, HandleAboveFaceMargin)) return true;
 
             foreach (var t in others)
             {

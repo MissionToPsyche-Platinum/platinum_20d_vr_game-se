@@ -120,6 +120,12 @@ namespace PsycheVR.Gameplay
             return _box.Contains(transform.InverseTransformPoint(world));
         }
 
+        /// <summary>True when the point is above the top edge of the front face by more than <paramref name="margin"/> (m).</summary>
+        public bool IsAboveFace(Vector3 world, float margin)
+        {
+            return transform.InverseTransformPoint(world).y > frontCentre.y + frontSize.y * 0.5f + margin;
+        }
+
         /// <summary>True when the point is more than <paramref name="margin"/> (m) behind the front face, over the drawer.</summary>
         public bool IsBehindFace(Vector3 world, float margin)
         {

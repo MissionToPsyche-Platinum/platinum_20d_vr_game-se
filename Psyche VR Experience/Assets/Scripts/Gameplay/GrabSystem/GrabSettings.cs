@@ -14,6 +14,8 @@ namespace PsycheVR.Gameplay
         Puzzle,
         /// <summary>A sheet after crumpling: thrown lighter-handed than the basketball.</summary>
         CrumpledPaper,
+        /// <summary>Pens: very light, continuous collision so a thin barrel cannot slip through the cup wall.</summary>
+        Pen,
     }
 
     /// <summary>Rigidbody and throw tuning for one kind of grabbable.</summary>

@@ -42,6 +42,9 @@ namespace PsycheVR.Gameplay
         [Tooltip("Which physics profile from GrabSettings this object uses.")]
         [SerializeField] private GrabProfileKind profile = GrabProfileKind.DeskToy;
 
+        [Tooltip("Stay where the hand caught it instead of flying the object's origin into the palm, and keep its colliders on. For containers (the pen cup): a fly-in jerks it out from under its contents, and the far pull-in collider gate drops them through it.")]
+        [SerializeField] private bool holdWhereGrabbed;
+
         private Rigidbody _rb;
         private GrabProfile _profile;
         private bool _pullingIn;
@@ -114,6 +117,12 @@ namespace PsycheVR.Gameplay
             selectMode = InteractableSelectMode.Single;
             matchAttachPosition = false;
             matchAttachRotation = true;
+            if (holdWhereGrabbed)
+            {
+                // the dynamic attach takes the hand's attach position at grab time: no fly-in
+                useDynamicAttach = true;
+                matchAttachPosition = true;
+            }
 
             // Held into the desk, an uncapped velocity-tracked object is shoved back every step and
             // fights the hand (two near-freezes on 2026-09-29). The contact watchdog in FixedUpdate
@@ -199,7 +208,7 @@ namespace PsycheVR.Gameplay
                     grabSettings.MinSnapDuration,
                     grabSettings.MaxSnapDuration);
 
-                if (distance > grabSettings.NearThreshold)
+                if (distance > grabSettings.NearThreshold && !holdWhereGrabbed)
                     GateColliders();
 
                 // Before base: XRI records isKinematic here and restores it on release, so a

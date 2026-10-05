@@ -35,6 +35,9 @@ public class ButtonController : MonoBehaviour
     private readonly List<Transform> _hands = new List<Transform>();
     private readonly Dictionary<Transform, Vector3> _lastHandPositions = new Dictionary<Transform, Vector3>();
     private float _lastSlapTime = -Mathf.Infinity;
+
+    private const float SlapHapticIntensity = 0.5f;
+    private const float SlapHapticDuration = 0.06f;
     private float _nextHandRefreshTime = -Mathf.Infinity;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -123,6 +126,9 @@ public class ButtonController : MonoBehaviour
             {
                 _lastSlapTime = Time.time;
                 PressButton();
+                // Haptic pulse on the hand that slapped it.
+                var slapper = hand.GetComponent<NearFarInteractor>();
+                if (slapper != null) slapper.SendHapticImpulse(SlapHapticIntensity, SlapHapticDuration);
                 break;
             }
         }

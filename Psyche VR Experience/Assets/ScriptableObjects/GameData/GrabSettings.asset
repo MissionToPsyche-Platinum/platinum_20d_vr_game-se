@@ -140,3 +140,18 @@ MonoBehaviour:
       keepGrabbedRotation: 1
       kinematicHold: 0
       passThroughStaticWhileHeld: 0
+  - kind: 6
+    profile:
+      gravityWhenFree: 1
+      throwOnRelease: 1
+      throwVelocityScale: 1.25
+      throwAngularVelocityScale: 2.5
+      mass: 0.012
+      linearDamping: 0
+      angularDamping: 0.05
+      physicsMaterial: {fileID: 13400000, guid: 10bde48ef542d6a4fbee12145283824a, type: 2}
+      collisionDetection: 2
+      maxDepenetrationVelocity: 1
+      keepGrabbedRotation: 1
+      kinematicHold: 0
+      passThroughStaticWhileHeld: 0
