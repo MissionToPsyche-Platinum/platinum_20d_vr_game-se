@@ -98,3 +98,6 @@
 *.shadervariants merge=unityyamlmerge eol=lf
 *.spriteatlas merge=unityyamlmerge eol=lf
 *.terrainlayer merge=unityyamlmerge eol=lf
+
+# TG-173: two tiny hand-made meshes kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Art/Models/Props/ScrappedPlan/*.fbx" -filter -diff -merge -text
