@@ -113,3 +113,6 @@
 
 # TG-194: mission ops console props (keyboard and mouse by Poly by Google, CC-BY; tower by Luca Regazzi, CC-BY; screen by Kenney, CC0; all modified), small meshes kept in plain git (org LFS budget exhausted 2026-09-26)
 "Psyche VR Experience/Assets/Art/Models/Props/OpsConsole/*.fbx" -filter -diff -merge -text
+
+# TG-195: monitor UI fonts (Barlow Condensed SemiBold and Inter Regular, SIL OFL 1.1), small, kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Fonts/*.ttf" -filter -diff -merge -text
