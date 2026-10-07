@@ -116,3 +116,6 @@
 
 # TG-195: monitor UI fonts (Barlow Condensed SemiBold and Inter Regular, SIL OFL 1.1), small, kept in plain git (org LFS budget exhausted 2026-09-26)
 "Psyche VR Experience/Assets/Fonts/*.ttf" -filter -diff -merge -text
+
+# TG-196: monitor tab images (NASA/JPL-Caltech, NASA/JPL-Caltech/ASU, project diagrams), kept in plain git (org LFS budget exhausted 2026-09-26)
+"Psyche VR Experience/Assets/Art/Textures/OpsMonitor/*" -filter -diff -merge -text

@@ -13,7 +13,7 @@ namespace PsycheVR.Gameplay
     public class PhotoPanel : MonoBehaviour
     {
         private const float CaptionShare = 0.18f;
-        private const float CaptionAlpha = 0.7f;
+        private const float CaptionAlpha = 0.95f;   // blended in linear space: 0.95 still reads as a dark strip over white
         private const float CaptionSize = 7f;          // mm
         private const float CaptionPad = 3f;           // mm
         private const float FadeSeconds = 0.8f;
@@ -29,9 +29,6 @@ namespace PsycheVR.Gameplay
         private int _index;
         private float _clock;
         private bool _playing;
-
-        /// <summary>Credit line of the photo on screen, or empty when none shows.</summary>
-        public string CurrentCredit => _photos.Length > 0 ? _photos[_index].credit ?? "" : "";
 
         /// <summary>
         /// Creates a photo panel stretched over <paramref name="parent"/>. The caption uses the content's

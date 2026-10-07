@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1905259526967283395}
   - component: {fileID: 8721120338195041768}
   - component: {fileID: 2691832028713888457}
+  - component: {fileID: 885201952432797474}
   m_Layer: 0
   m_Name: Mouse
   m_TagString: Untagged
@@ -215,6 +216,20 @@ MonoBehaviour:
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
   profile: 6
   holdWhereGrabbed: 0
+--- !u!114 &885201952432797474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 512944002218771889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f439e02ac7cce92cd82013f8fa2bfedf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.ThrusterPushHaptic
+  console: {fileID: 8543337223004389834}
+  grabbable: {fileID: 2691832028713888457}
 --- !u!1 &2938008229122699392
 GameObject:
   m_ObjectHideFlags: 0

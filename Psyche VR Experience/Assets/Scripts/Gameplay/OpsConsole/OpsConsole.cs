@@ -22,7 +22,9 @@ namespace PsycheVR.Gameplay
         private const string CanvasName = "MonitorCanvas";
         private const float IdleSeconds = 45f;
         private const float AttractStepSeconds = 10f;
-        private const int DsnTab = 1;              // the ping (TG-227) jumps here
+        private const int MarsFlybyIndex = 0;
+        private const int DsnIndex = 1;            // the ping (TG-227) jumps here
+        private const int SolarPowerIndex = 2;
         private const int TabTotal = 4;
 
         [Tooltip("The monitor's screen face; the screen canvas is built on it.")]
@@ -52,6 +54,8 @@ namespace PsycheVR.Gameplay
         public UnityEvent<int> OnTabShown => onTabShown;
         /// <summary>Fires with the new power state.</summary>
         public UnityEvent<bool> OnPowerChanged => onPowerChanged;
+        /// <summary>Everything the screen shows (read by the mouse's push haptic for its lines).</summary>
+        public MonitorContent Content => content;
 
         private ConsoleState _state;
         private MonitorScreen _screen;
@@ -60,6 +64,8 @@ namespace PsycheVR.Gameplay
         private bool _attractShown;
         private bool _failed;
         private bool _addedScreen;   // MonitorScreen was added by EnsureBuilt (not authored on the prefab)
+        private bool _footerOverridden;
+        private string _tabFooter;   // the tab's own footer, restored when the override ends
 
         private void Awake()
         {
@@ -85,10 +91,30 @@ namespace PsycheVR.Gameplay
             SetPower(!IsOn);
         }
 
+        /// <summary>
+        /// Shows <paramref name="text"/> in the footer instead of the current tab's footer; null puts
+        /// the tab's footer back. A tab change or a power change ends the override on its own.
+        /// </summary>
+        public void SetFooterOverride(string text)
+        {
+            if (_screen == null || _screen.Footer == null) return;
+            if (text == null)
+            {
+                if (!_footerOverridden) return;
+                _footerOverridden = false;
+                _screen.Footer.text = _tabFooter;
+                return;
+            }
+            if (!_footerOverridden) _tabFooter = _screen.Footer.text;
+            _footerOverridden = true;
+            _screen.Footer.text = text;
+        }
+
         /// <summary>Turns the screen on (showing the current tab) or off (black).</summary>
         public void SetPower(bool on)
         {
             if (_state == null) return;
+            SetFooterOverride(null);
             _state.SetPower(on);
             _screen.SetBlack(!on);
             _screen.HideAttract();
@@ -151,9 +177,8 @@ namespace PsycheVR.Gameplay
             for (int i = 0; i < TabTotal; i++)
             {
                 var tab = i < data.Length && data[i] != null ? data[i] : new MonitorContent.Tab();
-                if (string.IsNullOrEmpty(tab.title)) tab.title = $"Tab {i + 1}";
-                _tabs[i] = new PlaceholderTab();
-                _tabs[i].Build(_screen, tab);
+                _tabs[i] = NewTab(i);
+                _tabs[i].Build(_screen, tab, $"Tab {i + 1}");
             }
             _state = new ConsoleState(TabTotal, IdleSeconds, AttractStepSeconds);
             return true;
@@ -196,6 +221,7 @@ namespace PsycheVR.Gameplay
             if (!_state.IsOn) return;
             int current = _state.CurrentTab;
             if (_shownTab != current) HideShown();
+            _footerOverridden = false;   // Show writes the new tab's own footer
             _tabs[current].Show();
             _shownTab = current;
             _screen.SetDots(current, TabTotal);
@@ -208,11 +234,16 @@ namespace PsycheVR.Gameplay
             _shownTab = -1;
         }
 
-        /// <summary>Stand-in until the real tabs land (TG-196): the frame with the title, banner and footer only.</summary>
-        private sealed class PlaceholderTab : MonitorTab
+        /// <summary>The tab class for screen position <paramref name="index"/>, in <see cref="MonitorContent.Tabs"/> order.</summary>
+        private static MonitorTab NewTab(int index)
         {
-            protected override void BuildPanels(Transform main, Transform top, Transform bottom) { }
-            protected override string Credits() => "";
+            switch (index)
+            {
+                case MarsFlybyIndex: return new MarsFlybyTab();
+                case DsnIndex: return new DsnTab();
+                case SolarPowerIndex: return new SolarPowerTab();
+                default: return new ThrusterTab();
+            }
         }
     }
 }
