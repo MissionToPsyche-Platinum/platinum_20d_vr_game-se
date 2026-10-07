@@ -5,6 +5,23 @@ const SESSION_HEADERS = [
 ];
 const MAX_CONTENT_CHARACTERS = 1000000;
 
+/** Run manually in the editor to check setup without writing data or logging secrets. */
+function checkUploadSetup() {
+    const config = PropertiesService.getScriptProperties().getProperties();
+    for (const key of ['UPLOAD_TOKEN', 'DRIVE_FOLDER_ID', 'SPREADSHEET_ID', 'SHEET_NAME']) {
+        if (!config[key] || !config[key].trim()) throw new Error('Missing Script Property: ' + key);
+    }
+    console.log('Required Script Properties are present.');
+    const folder = DriveApp.getFolderById(config.DRIVE_FOLDER_ID);
+    console.log('Folder accessible: ' + folder.getName());
+    const spreadsheet = SpreadsheetApp.openById(config.SPREADSHEET_ID);
+    console.log('Spreadsheet accessible: ' + spreadsheet.getName());
+    const sheet = spreadsheet.getSheetByName(config.SHEET_NAME);
+    if (!sheet) throw new Error('Configured Sheet tab not found. Check SHEET_NAME.');
+    console.log('Sheet tab accessible: ' + sheet.getName() + '; rows: ' + sheet.getLastRow());
+    console.log('Read checks passed. Write access and deployed execution still need verification.');
+}
+
 /** Accept one JSONL session. Only acknowledge after both storage writes succeed. */
 function doPost(e) {
     let lock;

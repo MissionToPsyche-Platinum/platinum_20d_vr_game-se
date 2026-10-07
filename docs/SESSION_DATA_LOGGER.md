@@ -332,16 +332,48 @@ Fill these in only after live deployment and verification:
 
 | Item | Status |
 | --- | --- |
-| ASU deployment owner | Pending |
+| ASU deployment owner | `etomasi@asu.edu` (user-reported; account permissions not independently verified) |
 | Apps Script project URL | Pending |
-| Deployed `/exec` URL and version | Pending |
+| Deployed `/exec` URL and version | [Replacement upload endpoint](https://script.google.com/macros/s/AKfycbzNr5RFUGgPyLQkNL5OhjhrYH3NOmT46XedWqTwtIqGdrF_CYNsp7FHkDagHINuBEeHEA/exec); version not yet confirmed |
 | Drive folder URL | Pending |
 | Index spreadsheet URL | Pending |
 | Token location | Script Properties > `UPLOAD_TOKEN`; value never recorded here |
 | Team recipients and roles | Pending confirmation |
-| Ten September 26 samples | Awaiting ZIP |
-| curl rejection/upload/repeat checks | Not run against Google |
-| Drive contents and Sheet summary checks | Not run against Google |
+| Ten September 26 samples | ZIP received; all 10 files pass local endpoint parsing (58 records; 2 Story and 8 Event sessions) |
+| curl rejection/upload/repeat checks | Passed on the replacement endpoint, evidenced by user-provided Terminal screenshot dated October 6, 2026, 10:12 PM Arizona time: missing/wrong token rejected, all ten samples acknowledged, repeat acknowledged. Retry option enabled but zero retries needed; this run should add exactly 11 data rows. |
+| Drive contents and Sheet summary checks | User confirms 10 JSON log files in Drive after repeated uploads. October 6, 2026, 10:55 PM screenshot shows 20 data rows; rows 11–21 match the successful run's ten samples plus repeat. Visible flavors, durations, end reasons, and event counts match the originals. Downloaded-file byte comparison and full untruncated field comparison remain pending. |
 | Team access check | Not performed |
 
 TG-282 remains incomplete until the live checks and sharing are verified.
+
+### Redirect troubleshooting observed during verification
+
+The editor setup check now confirms access to the configured folder, spreadsheet,
+and `Sessions` tab. On both deployments, some POST responses redirected from
+`script.googleusercontent.com` back to the script as a GET, producing an HTML
+`Script function not found: doGet` error. The replacement deployment acknowledged
+sample 3 in a single-sample test, but the full run encountered the redirect again.
+An HTTP response failure does not establish whether the underlying writes happened.
+
+The local verifier now includes safe redirect diagnostics and a `--diagnose
+--sample-number 3` option for a single upload. It also adds a random non-secret
+`verificationRequest` query parameter and `Cache-Control: no-cache` to avoid
+cached redirect reuse. Three tokenless probes and individual authenticated uploads
+succeeded, but a subsequent full run still hit the redirect failure. Unique URLs
+did not resolve the problem.
+
+Retries remain disabled by default. `--retry-response-errors 3` explicitly enables
+up to three additional attempts per request, with 2/4/8-second delays, only for
+the observed ContentService-to-script redirect followed by the missing-doGet error.
+Other failures stop immediately. Each upload still requires an actual `ok: true`
+response. This tolerates the response delivery problem; it does not fix Google’s
+redirect behavior. The full live run on October 6, 2026 at 10:12 PM Arizona time
+passed with the option enabled but zero retries needed. Retry logic is locally
+tested; live recovery through an actual retry has not yet been demonstrated.
+
+Retries may append additional rows because the previous POST may have succeeded.
+The verifier reports the upload retry count and expected row-count range (11
+through 11 plus upload retries). Count baseline rows before running and compare
+all new summaries afterward. Drive must still contain exactly ten distinct sample
+filenames. Keep retry rows as verification evidence; do not assume each row is a
+distinct session when analyzing the index.
