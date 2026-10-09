@@ -14,6 +14,11 @@ using UnityEditor;
 
 namespace PsycheVR.UI
 {
+    /// <summary>
+    /// The rig's pause menu. Since TG-269 the menu button and Escape do nothing in either mode
+    /// (<see cref="pauseButtonEnabled"/>, off): visitors kept opening it by accident. Quit Game lives in
+    /// the admin section, and in Event mode the admin section leaves Story Mode out.
+    /// </summary>
     [DisallowMultipleComponent]
     public class PauseMenuController : MonoBehaviour
     {
@@ -43,6 +48,10 @@ namespace PsycheVR.UI
         [SerializeField] private Color resumeButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
         [SerializeField] private Color quitButtonTint = new Color(0.18f, 0.22f, 0.27f, 1f);
         [SerializeField] private Color buttonTextTint = new Color(0.95f, 0.96f, 0.98f, 1f);
+
+        [Header("Input")]
+        [Tooltip("Menu button and Escape toggle the menu. Off since TG-269: a visitor kept opening it by accident, and nothing in either mode needs it.")]
+        [SerializeField] private bool pauseButtonEnabled;
 
         [Header("Admin")]
         [Tooltip("Seconds both grips and both thumbstick clicks must be held, with the menu open, to reveal the admin section. F8 in the editor.")]
@@ -75,6 +84,7 @@ namespace PsycheVR.UI
         private AdminCombo _adminCombo;
         private GameObject _adminSection;
         private Image _adminRing;
+        private GameObject _storyModeButton;
         private TextMeshProUGUI _storyModeLabel;
         private TextMeshProUGUI _eventModeLabel;
         private GameObject _debugTeleportButton;
@@ -101,7 +111,7 @@ namespace PsycheVR.UI
             EnsureAdminCombo();
             _adminCombo?.Enable();
 
-            if (_pauseToggleAction == null)
+            if (_pauseToggleAction == null || !pauseButtonEnabled)
                 return;
 
             _pauseToggleAction.performed += OnPauseTogglePerformed;
@@ -141,6 +151,9 @@ namespace PsycheVR.UI
             _adminCombo.Tick(Time.unscaledDeltaTime);
             UpdateAdminRing();
         }
+
+        /// <summary>The panel without the admin section: <see cref="panelSize"/> less the Quit row that moved into it (TG-270).</summary>
+        private Vector2 BasePanelSize => panelSize - new Vector2(0f, buttonSize.y + ContentSpacing);
 
         public void ToggleMenu()
         {
@@ -272,7 +285,7 @@ namespace PsycheVR.UI
             _canvasGroup.blocksRaycasts = false;
 
             RectTransform menuRect = _menuRoot.GetComponent<RectTransform>();
-            menuRect.sizeDelta = panelSize;
+            menuRect.sizeDelta = BasePanelSize;
 
             GameObject dimmer = CreateUiObject("Dimmer", _menuRoot.transform);
             StretchToFill(dimmer.GetComponent<RectTransform>());
@@ -324,7 +337,6 @@ namespace PsycheVR.UI
             BuildHeader(content.transform);
 
             CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
-            CreateButton("Quit Button", content.transform, "Quit Game", quitButtonTint, OnQuitPressed);
 
             BuildAdminSection(content.transform);
             BuildAdminRing(card.transform);
@@ -333,7 +345,8 @@ namespace PsycheVR.UI
         /// <summary>
         /// Staff-only controls, hidden until <see cref="AdminCombo"/> completes. Story Mode
         /// and Event Mode call <see cref="GameModeManager.SwitchTo"/>; pressing the current
-        /// mode restarts it. Debug Teleport is only shown in Story mode, and only where a
+        /// mode restarts it; Story Mode is left out in Event mode, so the kiosk never reaches
+        /// the unfinished story. Quit Game sits last (TG-270). Debug Teleport is only shown in Story mode, and only where a
         /// <see cref="BlinkTeleportRoute"/> exists (the rig prefab is shared with test
         /// scenes that have none). All buttons reuse resumeButtonTint: every button already
         /// uses the same neutral tint, and a new serialized colour would put another
@@ -375,10 +388,12 @@ namespace PsycheVR.UI
 
             Button storyButton = CreateButton("Story Mode Button", modeRow.transform, "Story Mode", resumeButtonTint, () => OnModePressed(GameMode.Story));
             Button eventButton = CreateButton("Event Mode Button", modeRow.transform, "Event Mode", resumeButtonTint, () => OnModePressed(GameMode.Event));
+            _storyModeButton = storyButton.gameObject;
             _storyModeLabel = storyButton.GetComponentInChildren<TextMeshProUGUI>();
             _eventModeLabel = eventButton.GetComponentInChildren<TextMeshProUGUI>();
 
             _debugTeleportButton = CreateButton("Debug Teleport Button", _adminSection.transform, "Debug Teleport", resumeButtonTint, OnTeleportPressed).gameObject;
+            CreateButton("Quit Button", _adminSection.transform, "Quit Game", quitButtonTint, OnQuitPressed);
 
             _adminSection.SetActive(false);
         }
@@ -437,10 +452,12 @@ namespace PsycheVR.UI
                 _eventModeLabel.text = "Event Mode" + (isStory ? string.Empty : CurrentModeSuffix);
             if (_debugTeleportButton != null)
                 _debugTeleportButton.SetActive(showTeleport);
+            if (_storyModeButton != null)
+                _storyModeButton.SetActive(isStory);
 
-            int rows = showTeleport ? 2 : 1;
+            int rows = showTeleport ? 3 : 2;   // modes, (teleport,) quit
             float extraHeight = AdminLabelHeight + rows * buttonSize.y + (rows + 1) * ContentSpacing;
-            _menuRoot.GetComponent<RectTransform>().sizeDelta = panelSize + new Vector2(0f, extraHeight);
+            _menuRoot.GetComponent<RectTransform>().sizeDelta = BasePanelSize + new Vector2(0f, extraHeight);
 
             _adminSection.SetActive(true);
             _adminRevealed = true;
@@ -462,7 +479,7 @@ namespace PsycheVR.UI
                 _adminRing.gameObject.SetActive(false);
 
             if (_menuRoot != null)
-                _menuRoot.GetComponent<RectTransform>().sizeDelta = panelSize;
+                _menuRoot.GetComponent<RectTransform>().sizeDelta = BasePanelSize;
         }
 
         /// <summary>
