@@ -5622,8 +5622,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 1931360734966200348}
   isSnapped: 0
-  objectDescription: One of two arrays of solar panels which power the propulsion
-    of the craft and its' instruments
+  objectDescription: One of two cross-shaped solar arrays, each with five panels.
+    Near Earth they make 21 kilowatts. At the asteroid they make only 2 to 3 kilowatts.
+    That power runs the instruments and the Hall-effect thrusters.
   objectTitle: Solar Panel
 --- !u!65 &5446770794603712594
 BoxCollider:
@@ -5844,8 +5845,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 5282241022073745881}
   isSnapped: 0
-  objectDescription: Houses all instruments necessary for observing and monitoring
-    the Psyche 16 asteroid
+  objectDescription: The main body of the spacecraft. It carries the xenon fuel tanks,
+    the battery, and the flight computer. The solar arrays, antenna, and science instruments
+    all attach to it.
   objectTitle: Bus
 --- !u!65 &3012179041697916546
 BoxCollider:
@@ -6065,9 +6067,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 2774318554406638358}
   isSnapped: 0
-  objectDescription: Supports communications between the craft and Earth via photons
-    using an experimental communication method known as Deep Space Optical Communication
-    (DSOC)
+  objectDescription: A 2-meter (6.5-foot) dish that talks to Earth by radio through
+    NASA's Deep Space Network. Scientists also track its signal to measure the asteroid's
+    gravity.
   objectTitle: Antenna
 --- !u!65 &398654285836707375
 BoxCollider:
@@ -6295,8 +6297,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 8923094216708055904}
   isSnapped: 0
-  objectDescription: One of two arrays of solar panels which power the propulsion
-    of the craft and its' instruments
+  objectDescription: One of two cross-shaped solar arrays, each with five panels.
+    Near Earth they make 21 kilowatts. At the asteroid they make only 2 to 3 kilowatts.
+    That power runs the instruments and the Hall-effect thrusters.
   objectTitle: Solar Panel
 --- !u!65 &234954794257271692
 BoxCollider:
