@@ -100,6 +100,15 @@ Check Device Name** to verify naming and serialization while preserving your set
 Run **Tools > Session Logs > Check Upload Storage** for offline checks of payloads,
 acknowledgments, receipts, and configuration validation.
 
+Event-mode session logs record `kiosk_first_input` when the visitor starts the
+clock, then either `kiosk_puzzle_completed` or `kiosk_clock_expired`, whichever
+ends the timed portion first. The `details` field contains `elapsedSeconds=N`,
+measured by the kiosk clock since first input (excluding armed time and pauses).
+The top-level `elapsedSeconds` remains time since the log file opened. Completion
+before first input records zero kiosk seconds. Repeated callbacks and completion
+after timeout do not add another outcome; Story mode emits none of these events.
+Run **Tools > Session Logs > Check Kiosk Outcomes** for the transition/logging checks.
+
 For detailed Quest deployment guidance, see the [Unity Meta Quest documentation](https://docs.unity3d.com/Manual/xr-meta-quest.html).
 
 ## Project Structure
