@@ -74,6 +74,26 @@ verification, build two APKs using the menu, confirm that their Android version
 codes increase, and compare each APK's first session log stamp with its build
 output. Direct **Build and Run** does not generate a fresh stamp.
 
+To enable session uploads (TG-285), create the ignored local file
+`Psyche VR Experience/UserSettings/SessionUpload.local.json` with `endpointUrl`
+(the HTTPS TG-280 endpoint) and `token`. **Tools > Build APK** copies it into an
+ignored Resources asset. **Tools > Session Logs > Refresh Local Upload Configuration**
+refreshes it for Editor testing. Missing or invalid configuration removes any stale
+asset and disables uploads with a warning; local logging continues.
+
+`SessionLogUploader.UploadPending()` starts one asynchronous upload pass and returns
+false when disabled or already uploading. Startup automatically attempts one pass.
+The admin menu can read `IsEnabled`, `IsUploading`, `PendingCount` (-1 if the log
+directory cannot be read), and `LastResult`. TG-269 supplies the menu button.
+Successful HTTP responses must contain the TG-280 acknowledgment `{"ok":true}`;
+rejections and network failures remain pending for the next pass or app launch.
+A `.sent` sidecar stores the acknowledged content hash, so newly appended events
+become pending again. Original logs remain on the headset. Uploads currently use
+the Unity device name; persisted operator naming is handled by TG-286.
+
+Run **Tools > Session Logs > Check Upload Storage** for offline checks of payloads,
+acknowledgments, receipts, and configuration validation.
+
 For detailed Quest deployment guidance, see the [Unity Meta Quest documentation](https://docs.unity3d.com/Manual/xr-meta-quest.html).
 
 ## Project Structure

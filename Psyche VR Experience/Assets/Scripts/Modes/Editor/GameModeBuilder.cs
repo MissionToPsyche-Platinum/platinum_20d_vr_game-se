@@ -95,6 +95,7 @@ namespace PsycheVR.Modes.Editor
                     return false;
 
                 SessionBuildPreparation.Prepare(mode);
+                SessionUploadPreparation.RefreshUploadConfig();
 
                 Debug.Log($"{LogPrefix} Building {mode} flavor -> {outputPath}");
 
