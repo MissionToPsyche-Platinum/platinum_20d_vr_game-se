@@ -110,6 +110,12 @@ namespace PsycheVR.Gameplay
             _screen.Footer.text = text;
         }
 
+        /// <summary>Plays <paramref name="clip"/> once on the console's speaker (the page-click source); ignored when either is missing.</summary>
+        public void PlaySound(AudioClip clip)
+        {
+            if (clickSource != null && clip != null) clickSource.PlayOneShot(clip);
+        }
+
         /// <summary>Turns the screen on (showing the current tab) or off (black).</summary>
         public void SetPower(bool on)
         {
@@ -210,7 +216,7 @@ namespace PsycheVR.Gameplay
 
         private void Turn(int direction)
         {
-            if (clickSource != null && content.pageClick != null) clickSource.PlayOneShot(content.pageClick);
+            PlaySound(content.pageClick);
             _screen.Slide(direction, ShowCurrent);
         }
 

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static PsycheVR.Gameplay.MonitorUi;
 
 namespace PsycheVR.Gameplay
 {
@@ -36,19 +37,15 @@ namespace PsycheVR.Gameplay
         /// </summary>
         public static PhotoPanel Create(RectTransform parent, MonitorContent content)
         {
-            var go = new GameObject("PhotoPanel", typeof(RectTransform));
-            var rt = (RectTransform)go.transform;
-            rt.SetParent(parent, false);
+            var rt = Child(parent, "PhotoPanel");
+            var go = rt.gameObject;
             Stretch(rt);
-            go.layer = parent.gameObject.layer;
             var panel = go.AddComponent<PhotoPanel>();
             panel.back = NewPhoto(rt, "PhotoBack");
             panel.front = NewPhoto(rt, "PhotoFront");
 
-            var strip = new GameObject("Caption", typeof(RectTransform));
-            strip.layer = go.layer;
-            var srt = (RectTransform)strip.transform;
-            srt.SetParent(rt, false);
+            var srt = Child(rt, "Caption");
+            var strip = srt.gameObject;
             srt.anchorMin = Vector2.zero; srt.anchorMax = new Vector2(1f, CaptionShare);
             srt.offsetMin = srt.offsetMax = Vector2.zero;
             var bg = strip.AddComponent<Image>();
@@ -126,17 +123,10 @@ namespace PsycheVR.Gameplay
             fitter.aspectRatio = r.height > 0f ? r.width / r.height : 1f;
         }
 
-        private static void SetAlpha(Image image, float a)
-        {
-            var c = image.color; c.a = a; image.color = c;
-        }
-
         private static Image NewPhoto(RectTransform parent, string name)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.layer = parent.gameObject.layer;
-            var rt = (RectTransform)go.transform;
-            rt.SetParent(parent, false);
+            var rt = Child(parent, name);
+            var go = rt.gameObject;
             Stretch(rt);
             var image = go.AddComponent<Image>();
             image.preserveAspect = true;
@@ -144,12 +134,6 @@ namespace PsycheVR.Gameplay
             var fitter = go.AddComponent<AspectRatioFitter>();
             fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             return image;
-        }
-
-        private static void Stretch(RectTransform rt)
-        {
-            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
         }
     }
 }

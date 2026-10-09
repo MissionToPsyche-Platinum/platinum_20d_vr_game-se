@@ -109,6 +109,7 @@ MonoBehaviour:
       label: thrusters fire at a time
     - value: "0.35\u20131.3 kg"
       label: of xenon a day
+  spacecraftIcon: {fileID: 21300000, guid: 0dea3dd17673683808a29b42fe8055d5, type: 3}
   pushLines:
   - Grab the mouse to feel Psyche's push.
   - That's it. That's the whole push.

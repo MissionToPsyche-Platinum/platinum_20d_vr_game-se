@@ -96,7 +96,7 @@ namespace PsycheVR.Gameplay
             Title = Text(header, "Title", content.titleFont, TitleSize, TextAlignmentOptions.TopLeft, MonitorPalette.White);
             Title.fontStyle = FontStyles.UpperCase;
             Stretch(Title.rectTransform, 0f, 0.45f, 0.7f, 1f);
-            _bannerMask = Child(header, "BannerMask");
+            _bannerMask = MonitorUi.Child(header, "BannerMask");
             _bannerMask.gameObject.AddComponent<RectMask2D>();
             // own canvas, so the scrolling banner re-batches without rebuilding the whole screen
             _bannerMask.gameObject.AddComponent<Canvas>().overrideSorting = false;
@@ -108,7 +108,7 @@ namespace PsycheVR.Gameplay
             bannerRect.anchorMin = bannerRect.anchorMax = bannerRect.pivot = new Vector2(0f, 0.5f);
             bannerRect.anchoredPosition = Vector2.zero;
 
-            var dots = Child(header, "Dots");
+            var dots = MonitorUi.Child(header, "Dots");
             Stretch(dots, 0.75f, 0.55f, 1f, 1f);
             var row = dots.gameObject.AddComponent<HorizontalLayoutGroup>();
             row.childAlignment = TextAnchor.MiddleRight; row.spacing = DotSize; row.childControlWidth = row.childControlHeight = false;
@@ -116,7 +116,7 @@ namespace PsycheVR.Gameplay
             _dots = new Image[DotCount];
             for (int i = 0; i < _dots.Length; i++)
             {
-                _dots[i] = Child(dots, $"Dot{i}").gameObject.AddComponent<Image>();
+                _dots[i] = MonitorUi.Child(dots, $"Dot{i}").gameObject.AddComponent<Image>();
                 _dots[i].rectTransform.sizeDelta = Vector2.one * DotSize;
             }
 
@@ -130,7 +130,7 @@ namespace PsycheVR.Gameplay
             Credits = Text(footer, "Credits", content.bodyFont, CreditSize, TextAlignmentOptions.MidlineRight, MonitorPalette.LightGrey);
             Stretch(Credits.rectTransform, 0.62f, 0f, 1f, 1f);
 
-            _attract = Child(header, "Attract");
+            _attract = MonitorUi.Child(header, "Attract");
             Stretch(_attract, 0f, 0f, 1f, 1f);
             _attract.gameObject.AddComponent<Image>().color = MonitorPalette.Mustard;
             _attractText = Text(_attract, "Prompt", content.titleFont, TitleSize, TextAlignmentOptions.Center, MonitorPalette.Black);
@@ -212,15 +212,6 @@ namespace PsycheVR.Gameplay
             rt.anchoredPosition = new Vector2(x, 0f);
         }
 
-        // ---- layout helpers (anchors are fractions of the parent) ----
-        private static RectTransform Child(Transform parent, string name)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            go.layer = parent.gameObject.layer;
-            return (RectTransform)go.transform;
-        }
-
         private static void Stretch(RectTransform rt, float xMin, float yMin, float xMax, float yMax)
         {
             rt.anchorMin = new Vector2(xMin, yMin); rt.anchorMax = new Vector2(xMax, yMax);
@@ -228,11 +219,11 @@ namespace PsycheVR.Gameplay
         }
 
         private static RectTransform Region(RectTransform parent, string name, float yMin, float yMax)
-        { var rt = Child(parent, name); Stretch(rt, 0f, yMin, 1f, yMax); return rt; }
+        { var rt = MonitorUi.Child(parent, name); Stretch(rt, 0f, yMin, 1f, yMax); return rt; }
 
         private static RectTransform Panel(RectTransform parent, string name, float xMin, float xMax, float yMin = 0f, float yMax = 1f)
         {
-            var rt = Child(parent, name);
+            var rt = MonitorUi.Child(parent, name);
             Stretch(rt, xMin, yMin, xMax, yMax);
             rt.gameObject.AddComponent<Image>().color = MonitorPalette.DarkPurple;
             rt.gameObject.AddComponent<RectMask2D>();
@@ -241,8 +232,8 @@ namespace PsycheVR.Gameplay
 
         private static Image Fill(RectTransform parent, string name, Color c)
         {
-            var rt = Child(parent, name);
-            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero;
+            var rt = MonitorUi.Child(parent, name);
+            MonitorUi.Stretch(rt);
             var img = rt.gameObject.AddComponent<Image>(); img.color = c; img.raycastTarget = false;
             return img;
         }
@@ -250,7 +241,7 @@ namespace PsycheVR.Gameplay
         /// <summary>A TMP label in the given font; public so tabs share the look.</summary>
         public static TMP_Text Text(Transform parent, string name, TMP_FontAsset font, float size, TextAlignmentOptions align, Color colour)
         {
-            var rt = Child(parent, name);
+            var rt = MonitorUi.Child(parent, name);
             var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
             if (font != null) t.font = font;
             t.fontSize = size; t.alignment = align; t.color = colour; t.raycastTarget = false;

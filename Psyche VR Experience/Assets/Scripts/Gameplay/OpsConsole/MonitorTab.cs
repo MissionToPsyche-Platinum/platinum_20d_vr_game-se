@@ -26,6 +26,7 @@ namespace PsycheVR.Gameplay
         private readonly List<GameObject> _roots = new List<GameObject>();
         private readonly List<PhotoPanel> _photoPanels = new List<PhotoPanel>();
         private readonly List<MonitorContent.Photo[]> _photoSets = new List<MonitorContent.Photo[]>();
+        private readonly List<string> _viewCredits = new List<string>();
         private string _title;
 
         // parsed once per snapshot asset and shared by every tab
@@ -70,15 +71,15 @@ namespace PsycheVR.Gameplay
         protected abstract void BuildPanels(Transform main, Transform top, Transform bottom);
 
         /// <summary>
-        /// Footer credit line: distinct non-empty credits of the recorded panels' photos, in order, joined
-        /// with " · ", then the snapshot's as-of date (omitted without a snapshot; no separator when
-        /// there are no credits).
+        /// Footer credit line: credits added with <see cref="AddCredit"/>, then the recorded panels' photo
+        /// credits, distinct and non-empty, in order, joined with " · ", then the snapshot's as-of date
+        /// (omitted without a snapshot; no separator when there are no credits).
         /// </summary>
         protected virtual string Credits()
         {
-            string line = string.Join(CreditSeparator, _photoSets.SelectMany(s => s)
+            string line = string.Join(CreditSeparator, _viewCredits.Concat(_photoSets.SelectMany(s => s)
                 .Where(p => p != null && p.sprite != null && !string.IsNullOrEmpty(p.credit))
-                .Select(p => p.credit).Distinct());
+                .Select(p => p.credit)).Distinct());
             var snapshot = Snapshot;
             if (snapshot == null) return line;
             string asOf = AsOfPrefix + snapshot.BuildDate.ToString(AsOfFormat, CultureInfo.InvariantCulture);
@@ -122,6 +123,12 @@ namespace PsycheVR.Gameplay
             return panel;
         }
 
+        /// <summary>Adds the credit of a non-photo view (e.g. its data source) to the credit line, ahead of the photo credits.</summary>
+        protected void AddCredit(string credit)
+        {
+            if (!string.IsNullOrEmpty(credit)) _viewCredits.Add(credit);
+        }
+
         /// <summary>A stat panel over <paramref name="parent"/> showing <paramref name="stats"/>.</summary>
         protected StatPanel Stats(Transform parent, MonitorContent.Stat[] stats)
         {
@@ -132,12 +139,9 @@ namespace PsycheVR.Gameplay
 
         private static GameObject NewRoot(RectTransform panel)
         {
-            var go = new GameObject("Tab", typeof(RectTransform));
-            var rt = (RectTransform)go.transform;
-            rt.SetParent(panel, false);
-            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero;
-            go.layer = panel.gameObject.layer;
-            return go;
+            var rt = MonitorUi.Child(panel, "Tab");
+            MonitorUi.Stretch(rt);
+            return rt.gameObject;
         }
     }
 }

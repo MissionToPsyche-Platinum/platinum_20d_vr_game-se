@@ -22,10 +22,8 @@ namespace PsycheVR.Gameplay
         /// <summary>Creates an empty stat panel stretched over <paramref name="parent"/>.</summary>
         public static StatPanel Create(RectTransform parent, MonitorContent content)
         {
-            var go = new GameObject("StatPanel", typeof(RectTransform));
-            var rt = (RectTransform)go.transform;
-            rt.SetParent(parent, false);
-            go.layer = parent.gameObject.layer;
+            var rt = MonitorUi.Child(parent, "StatPanel");
+            var go = rt.gameObject;
             rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.one * Pad; rt.offsetMax = -Vector2.one * Pad;
             var panel = go.AddComponent<StatPanel>();
@@ -34,17 +32,14 @@ namespace PsycheVR.Gameplay
             panel.labels = new TMP_Text[MaxStats];
             for (int i = 0; i < MaxStats; i++)
             {
-                var slot = new GameObject($"Stat{i}", typeof(RectTransform));
-                slot.layer = go.layer;
-                panel.slots[i] = (RectTransform)slot.transform;
-                panel.slots[i].SetParent(rt, false);
+                panel.slots[i] = MonitorUi.Child(rt, $"Stat{i}");
                 panel.values[i] = MonitorScreen.Text(panel.slots[i], "Value", content != null ? content.titleFont : null,
                     ValueSize, TextAlignmentOptions.Bottom, MonitorPalette.White);
                 Fit(panel.values[i].rectTransform, Split, 1f);
                 panel.labels[i] = MonitorScreen.Text(panel.slots[i], "Label", content != null ? content.bodyFont : null,
                     LabelSize, TextAlignmentOptions.Top, MonitorPalette.LightGrey);
                 Fit(panel.labels[i].rectTransform, 0f, Split);
-                slot.SetActive(false);
+                panel.slots[i].gameObject.SetActive(false);
             }
             return panel;
         }

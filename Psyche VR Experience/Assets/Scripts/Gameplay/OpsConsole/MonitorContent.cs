@@ -56,6 +56,10 @@ namespace PsycheVR.Gameplay
         public Tab solarPower = new Tab();
         public Tab thruster = new Tab();
 
+        [Header("Solar Power")]
+        [Tooltip("The spacecraft drifting along the power track.")]
+        public Sprite spacecraftIcon;
+
         [Header("Thruster push (mouse)")]
         [TextArea] public string[] pushLines;
 
