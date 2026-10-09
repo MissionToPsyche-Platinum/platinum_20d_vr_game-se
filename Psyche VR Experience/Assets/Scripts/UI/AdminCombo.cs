@@ -3,11 +3,11 @@ using System;
 namespace PsycheVR.UI
 {
     /// <summary>
-    /// The staff-only combo that unlocks the admin section of the pause menu: both grips
-    /// and both thumbstick clicks held together. Nobody clicks both sticks while gripping
-    /// by accident, and the hold length absorbs a brief fumble. F8 stands in for it in
-    /// the editor. A preset of <see cref="ControllerHoldCombo"/>; the pause menu ticks it
-    /// with unscaled time because the menu pauses the game.
+    /// The staff-only combo that opens the pause menu with its admin section showing: both grips
+    /// and both thumbstick clicks held together. F8 stands in for it in the editor. Since TG-269 the
+    /// pause menu builds it only in the editor (a Quest kiosk has no use for the admin menu). A preset of
+    /// <see cref="ControllerHoldCombo"/>; the pause menu ticks it with unscaled time because the menu
+    /// pauses the game.
     /// </summary>
     public sealed class AdminCombo : ControllerHoldCombo
     {

@@ -15,9 +15,12 @@ using UnityEditor;
 namespace PsycheVR.UI
 {
     /// <summary>
-    /// The rig's pause menu. Since TG-269 the menu button and Escape do nothing in either mode
-    /// (<see cref="pauseButtonEnabled"/>, off): visitors kept opening it by accident. Quit Game lives in
-    /// the admin section, and in Event mode the admin section leaves Story Mode out.
+    /// The rig's pause menu. Since TG-269 (2026-10-04) nothing a player does opens it: the menu button
+    /// and Escape do nothing in both modes (<see cref="pauseButtonEnabled"/>, off), and the admin combo
+    /// that opens it with the admin section showing (Story/Event, Debug Teleport, Quit Game) runs only in
+    /// the editor (F8): a Quest kiosk has no use for it, and the helper's room reset is its own combo
+    /// (<see cref="PsycheVR.Kiosk.KioskResetListener"/>). In Event mode the admin section leaves Story
+    /// Mode out. Story mode can still open on start (<see cref="showOnStart"/>).
     /// </summary>
     [DisallowMultipleComponent]
     public class PauseMenuController : MonoBehaviour
@@ -54,7 +57,7 @@ namespace PsycheVR.UI
         [SerializeField] private bool pauseButtonEnabled;
 
         [Header("Admin")]
-        [Tooltip("Seconds both grips and both thumbstick clicks must be held, with the menu open, to reveal the admin section. F8 in the editor.")]
+        [Tooltip("Seconds both grips and both thumbstick clicks (F8) must be held to open the menu with the admin section. Editor only.")]
         [SerializeField] private float adminHoldSeconds = 4f;
         [Tooltip("Seconds into the hold before the progress ring appears. A brief accidental press shows nothing.")]
         [SerializeField] private float adminIndicatorDelaySeconds = 1f;
@@ -67,14 +70,7 @@ namespace PsycheVR.UI
         private const float ContentSpacing = 14f;
         private const float AdminLabelHeight = 22f;
         private const float AdminLabelFontSize = 15f;
-        private const float AdminRingSize = 34f;
-        private const float AdminRingAlpha = 0.7f;
-        private static readonly Vector2 AdminRingOffset = new Vector2(-26f, -22f);
-        private const int RingTextureSize = 64;
-        private const float RingInnerRadiusFraction = 0.36f;
         private const string CurrentModeSuffix = " (current)";
-
-        private static Sprite _ringSprite;
 
         private GameObject _menuRoot;
         private CanvasGroup _canvasGroup;
@@ -83,7 +79,7 @@ namespace PsycheVR.UI
 
         private AdminCombo _adminCombo;
         private GameObject _adminSection;
-        private Image _adminRing;
+        private HoldRingHud _adminRing;
         private GameObject _storyModeButton;
         private TextMeshProUGUI _storyModeLabel;
         private TextMeshProUGUI _eventModeLabel;
@@ -121,6 +117,8 @@ namespace PsycheVR.UI
         private void OnDisable()
         {
             _adminCombo?.Disable();
+            if (_adminRing != null)
+                _adminRing.Report(this, false, 0f);
 
             if (_pauseToggleAction == null)
                 return;
@@ -140,12 +138,12 @@ namespace PsycheVR.UI
         }
 
         /// <summary>
-        /// Advances the admin combo only while the menu is open. Unscaled time, because
-        /// the menu holds the time scale at zero.
+        /// Advances the admin combo (editor only) whether or not the menu shows: it opens the menu. Unscaled
+        /// time, because the menu holds the time scale at zero.
         /// </summary>
         private void Update()
         {
-            if (_adminCombo == null || _adminRevealed || !IsMenuVisible)
+            if (_adminCombo == null || _adminRevealed)
                 return;
 
             _adminCombo.Tick(Time.unscaledDeltaTime);
@@ -338,8 +336,7 @@ namespace PsycheVR.UI
 
             CreateButton("Resume Button", content.transform, "Resume", resumeButtonTint, OnResumePressed);
 
-            BuildAdminSection(content.transform);
-            BuildAdminRing(card.transform);
+            BuildAdminSection(content.transform);   // Quit Game lives there since TG-270
         }
 
         /// <summary>
@@ -398,50 +395,22 @@ namespace PsycheVR.UI
             _adminSection.SetActive(false);
         }
 
-        /// <summary>
-        /// Small radial ring in the card's top-right corner. Hidden until the combo has
-        /// been held past the indicator delay, fills as the hold completes.
-        /// </summary>
-        private void BuildAdminRing(Transform parent)
-        {
-            GameObject ring = CreateUiObject("Admin Progress Ring", parent);
-            RectTransform rect = ring.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.one;
-            rect.anchorMax = Vector2.one;
-            rect.pivot = Vector2.one;
-            rect.sizeDelta = new Vector2(AdminRingSize, AdminRingSize);
-            rect.anchoredPosition = AdminRingOffset;
-
-            _adminRing = ring.AddComponent<Image>();
-            _adminRing.sprite = GetRingSprite();
-            _adminRing.type = Image.Type.Filled;
-            _adminRing.fillMethod = Image.FillMethod.Radial360;
-            _adminRing.fillOrigin = (int)Image.Origin360.Top;
-            _adminRing.fillClockwise = true;
-            _adminRing.fillAmount = 0f;
-            _adminRing.raycastTarget = false;
-            _adminRing.color = new Color(outlineTint.r, outlineTint.g, outlineTint.b, AdminRingAlpha);
-
-            ring.SetActive(false);
-        }
-
+        /// <summary>The shared mid-view ring (<see cref="HoldRingHud"/>), shown past the combo's indicator delay.</summary>
         private void UpdateAdminRing()
         {
             if (_adminRing == null)
-                return;
-
-            bool visible = _adminCombo != null && _adminCombo.IndicatorVisible;
-            if (_adminRing.gameObject.activeSelf != visible)
-                _adminRing.gameObject.SetActive(visible);
-
-            if (visible)
-                _adminRing.fillAmount = _adminCombo.Progress;
+                _adminRing = HoldRingHud.For(cameraTransform);
+            if (_adminRing != null)
+                _adminRing.Report(this, _adminCombo != null && _adminCombo.IndicatorVisible, _adminCombo != null ? _adminCombo.Progress : 0f);
         }
 
         private void RevealAdminSection()
         {
             if (_adminSection == null || _adminRevealed)
                 return;
+
+            if (!IsMenuVisible)
+                SetMenuVisible(true);   // the combo opens the menu (TG-272), admin section showing
 
             bool isStory = GameModeManager.IsStory;
             bool showTeleport = isStory && FindFirstObjectByType<BlinkTeleportRoute>() != null;
@@ -463,7 +432,7 @@ namespace PsycheVR.UI
             _adminRevealed = true;
 
             if (_adminRing != null)
-                _adminRing.gameObject.SetActive(false);
+                _adminRing.Report(this, false, 0f);
 
             Debug.Log($"PauseMenuController: admin section revealed in {GameModeManager.ActiveMode} mode.", this);
         }
@@ -475,52 +444,11 @@ namespace PsycheVR.UI
             if (_adminSection != null && _adminSection.activeSelf)
                 _adminSection.SetActive(false);
 
-            if (_adminRing != null && _adminRing.gameObject.activeSelf)
-                _adminRing.gameObject.SetActive(false);
+            if (_adminRing != null)
+                _adminRing.Report(this, false, 0f);
 
             if (_menuRoot != null)
                 _menuRoot.GetComponent<RectTransform>().sizeDelta = BasePanelSize;
-        }
-
-        /// <summary>
-        /// Procedural ring so the menu needs no extra sprite asset on the shared rig prefab.
-        /// </summary>
-        private static Sprite GetRingSprite()
-        {
-            if (_ringSprite != null)
-                return _ringSprite;
-
-            var texture = new Texture2D(RingTextureSize, RingTextureSize, TextureFormat.RGBA32, false)
-            {
-                name = "Admin Ring",
-                wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-
-            float center = (RingTextureSize - 1) * 0.5f;
-            float outer = RingTextureSize * 0.5f - 1f;
-            float inner = RingTextureSize * RingInnerRadiusFraction;
-            var pixels = new Color32[RingTextureSize * RingTextureSize];
-
-            for (int y = 0; y < RingTextureSize; y++)
-            {
-                for (int x = 0; x < RingTextureSize; x++)
-                {
-                    float distance = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                    // One-pixel soft edge on both sides of the band.
-                    float coverage = Mathf.Clamp01(outer - distance) * Mathf.Clamp01(distance - inner);
-                    pixels[y * RingTextureSize + x] = new Color32(255, 255, 255, (byte)(coverage * 255f));
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply(false, true);
-
-            _ringSprite = Sprite.Create(texture, new Rect(0f, 0f, RingTextureSize, RingTextureSize), new Vector2(0.5f, 0.5f), 100f);
-            _ringSprite.name = "Admin Ring";
-            _ringSprite.hideFlags = HideFlags.HideAndDontSave;
-            return _ringSprite;
         }
 
         private void BuildHeader(Transform parent)
@@ -578,7 +506,8 @@ namespace PsycheVR.UI
 
         private void EnsureAdminCombo()
         {
-            if (_adminCombo != null)
+            // a Quest kiosk has no use for the admin menu (TG-269): it exists only in the editor
+            if (_adminCombo != null || !Application.isEditor)
                 return;
 
             _adminCombo = new AdminCombo(adminHoldSeconds, adminIndicatorDelaySeconds);
