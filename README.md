@@ -59,6 +59,21 @@ Learn more about the real mission: [NASA Psyche Mission](https://science.nasa.go
    adb install build.apk
    ```
 
+For stamped release APKs, use **Tools > Build APK > Event / Story / Both**. Each
+APK embeds its Git short hash, UTC build time, flavor, and incremented Android
+version code in `Assets/Resources/SessionBuildInfo.json`. The generated asset is
+ignored by Git; `session_start` (and subsequent log records) includes `buildStamp`.
+Editor sessions use `editor-unbuilt`. Builds require Git and a valid checkout;
+failed builds may consume a version code. Retain the increased Android version
+code in `ProjectSettings/ProjectSettings.asset` when sharing build state.
+
+Run **Tools > Session Logs > Check Build Stamps** in Edit mode to verify both
+flavors' generated Resources assets, successive version codes, and JSONL stamps.
+The check restores the previous asset and version code. For final device
+verification, build two APKs using the menu, confirm that their Android version
+codes increase, and compare each APK's first session log stamp with its build
+output. Direct **Build and Run** does not generate a fresh stamp.
+
 For detailed Quest deployment guidance, see the [Unity Meta Quest documentation](https://docs.unity3d.com/Manual/xr-meta-quest.html).
 
 ## Project Structure

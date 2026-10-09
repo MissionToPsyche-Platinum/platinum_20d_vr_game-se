@@ -85,7 +85,8 @@ namespace PsycheVR.Data
                 sessionMode = GameModeManager.ActiveMode;
                 session = new SessionLogWriter(
                     Path.Combine(Application.persistentDataPath, DirectoryName),
-                    sessionMode.ToString(), scene, Application.version, Application.platform.ToString());
+                    sessionMode.ToString(), scene, Application.version, Application.platform.ToString(),
+                    SessionBuildInfo.CurrentStamp);
                 Debug.Log($"{LogPrefix} Saving session to {session.FilePath}", this);
             }
             catch (Exception error) when (IsStorageError(error))

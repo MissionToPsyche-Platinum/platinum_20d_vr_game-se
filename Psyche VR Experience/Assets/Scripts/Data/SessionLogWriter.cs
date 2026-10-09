@@ -17,6 +17,7 @@ namespace PsycheVR.Data
         private readonly string mode;
         private readonly string applicationVersion;
         private readonly string platform;
+        private readonly string buildStamp;
         private readonly Stopwatch elapsed = Stopwatch.StartNew();
         private StreamWriter writer;
         private int sequence;
@@ -29,11 +30,12 @@ namespace PsycheVR.Data
 
         /// <summary>Opens a new session file and immediately records session_start.</summary>
         public SessionLogWriter(string directory, string mode, string scene,
-            string applicationVersion, string platform)
+            string applicationVersion, string platform, string buildStamp = "")
         {
             this.mode = mode;
             this.applicationVersion = applicationVersion;
             this.platform = platform;
+            this.buildStamp = buildStamp;
             SessionId = Guid.NewGuid().ToString("N");
 
             Directory.CreateDirectory(directory);
@@ -77,7 +79,8 @@ namespace PsycheVR.Data
                 scene = scene ?? string.Empty,
                 details = details ?? string.Empty,
                 applicationVersion = applicationVersion,
-                platform = platform
+                platform = platform,
+                buildStamp = buildStamp
             };
 
             writer.WriteLine(JsonUtility.ToJson(entry));
@@ -123,6 +126,7 @@ namespace PsycheVR.Data
             public string details;
             public string applicationVersion;
             public string platform;
+            public string buildStamp;
         }
     }
 }
