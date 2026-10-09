@@ -97,7 +97,7 @@ namespace PsycheVR.Data
                         string content = SessionUploadStore.Read(path);
                         hash = SessionUploadStore.Hash(content);
                         if (!SessionUploadStore.IsSent(path, hash))
-                            body = JsonUtility.ToJson(SessionUploadStore.Payload(path, content, config.token, string.IsNullOrWhiteSpace(SystemInfo.deviceName) ? "Unnamed device" : SystemInfo.deviceName));
+                            body = JsonUtility.ToJson(SessionUploadStore.Payload(path, content, config.token, SessionDeviceName.Current));
                     }
                     catch (Exception error) when (IsFileError(error) || error is ArgumentException)
                     { failed++; }

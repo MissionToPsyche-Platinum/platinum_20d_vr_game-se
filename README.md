@@ -88,8 +88,14 @@ directory cannot be read), and `LastResult`. TG-269 supplies the menu button.
 Successful HTTP responses must contain the TG-280 acknowledgment `{"ok":true}`;
 rejections and network failures remain pending for the next pass or app launch.
 A `.sent` sidecar stores the acknowledged content hash, so newly appended events
-become pending again. Original logs remain on the headset. Uploads currently use
-the Unity device name; persisted operator naming is handled by TG-286.
+become pending again. Original logs remain on the headset. Uploads use `SessionDeviceName.Current`, defaulting to Unity's device name.
+The TG-269 menu can call `SessionDeviceName.Set(name)` to save an operator-assigned
+name on this headset. Names are trimmed and limited to 256 characters; longer
+values throw `ArgumentException` without changing the saved name. Null or blank
+resets to the Unity default. `PlayerPrefs.Save()` persists each change across app
+restarts. Each `session_start` captures the name at session creation; uploads use
+the current name without rewriting historical logs. Run **Tools > Session Logs >
+Check Device Name** to verify naming and serialization while preserving your setting.
 
 Run **Tools > Session Logs > Check Upload Storage** for offline checks of payloads,
 acknowledgments, receipts, and configuration validation.

@@ -89,7 +89,7 @@ namespace PsycheVR.Data
                 session = new SessionLogWriter(
                     LogDirectory,
                     sessionMode.ToString(), scene, Application.version, Application.platform.ToString(),
-                    SessionBuildInfo.CurrentStamp);
+                    SessionBuildInfo.CurrentStamp, SessionDeviceName.Current);
                 Debug.Log($"{LogPrefix} Saving session to {session.FilePath}", this);
             }
             catch (Exception error) when (IsStorageError(error))
