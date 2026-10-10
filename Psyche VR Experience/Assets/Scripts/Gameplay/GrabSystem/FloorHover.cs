@@ -206,7 +206,9 @@ namespace PsycheVR.Gameplay
                     case Phase.Hovering:
                         float since = Time.time - hover.PhaseStart;
                         pos.y = hover.TopY + grabSettings.HoverBobAmplitude * Mathf.Sin(2f * Mathf.PI * grabSettings.HoverBobFrequency * since);
-                        if (Time.time - hover.LastTriggered > grabSettings.HoverLingerSeconds)
+                        // linger counts from the later of the hand's last trigger and reaching the top, so a
+                        // quick point still gets the full linger at hover height, not one spent rising
+                        if (Time.time - Mathf.Max(hover.LastTriggered, hover.PhaseStart) > grabSettings.HoverLingerSeconds)
                             SetPhase(hover, Phase.Settling);
                         break;
 

@@ -171,8 +171,8 @@ namespace PsycheVR.Gameplay
         [Tooltip("Seconds the rise (and the settle) takes.")]
         [SerializeField, Range(0.1f, 3f)] private float hoverRiseSeconds = 0.6f;
 
-        [Tooltip("Seconds an object keeps hovering after the hand points away.")]
-        [SerializeField, Range(0f, 10f)] private float hoverLingerSeconds = 0f;
+        [Tooltip("Seconds an object keeps hovering at full height after the hand points away (counted from reaching the top if later).")]
+        [SerializeField, Range(0f, 10f)] private float hoverLingerSeconds = 1.5f;
 
         [Tooltip("Bob amplitude (m) while hovering.")]
         [SerializeField, Range(0f, 0.1f)] private float hoverBobAmplitude = 0.02f;

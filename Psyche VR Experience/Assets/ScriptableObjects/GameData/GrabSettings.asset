@@ -41,7 +41,7 @@ MonoBehaviour:
   hoverHandRayDownTilt: 10
   hoverHeight: 0.5
   hoverRiseSeconds: 0.6
-  hoverLingerSeconds: 0
+  hoverLingerSeconds: 1.5
   hoverBobAmplitude: 0.02
   hoverBobFrequency: 0.5
   drawerFriction: 0.6
