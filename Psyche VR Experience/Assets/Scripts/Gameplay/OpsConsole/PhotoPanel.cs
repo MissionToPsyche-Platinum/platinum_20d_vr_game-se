@@ -85,6 +85,26 @@ namespace PsycheVR.Gameplay
             back.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// Maps a point on the photo in front, in normalised image coordinates (0..1, origin bottom-left),
+        /// to this panel's local coordinates, allowing for the cover crop (the photo is scaled to fill the
+        /// panel and centred, so the overflowing sides are cut). False when no photo shows.
+        /// </summary>
+        public bool TryImageToLocal(Vector2 normalised, out Vector2 local)
+        {
+            local = Vector2.zero;
+            if (front == null || front.sprite == null) return false;
+            Rect panel = ((RectTransform)transform).rect;
+            Rect image = front.sprite.rect;
+            if (panel.width <= 0f || panel.height <= 0f || image.height <= 0f) return false;
+            float aspect = image.width / image.height;
+            Vector2 size = panel.width / panel.height > aspect
+                ? new Vector2(panel.width, panel.width / aspect)
+                : new Vector2(panel.height * aspect, panel.height);
+            local = panel.center + Vector2.Scale(normalised - Vector2.one * 0.5f, size);
+            return true;
+        }
+
         private void Update()
         {
             if (!_playing || _photos.Length < 2) return;

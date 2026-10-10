@@ -114,4 +114,10 @@ MonoBehaviour:
   - Grab the mouse to feel Psyche's push.
   - That's it. That's the whole push.
   - 'Psyche keeps it up for weeks at a time: enough to cross the solar system.'
+  pingLinkStart: {x: 0.28186274, y: 0.3422222}
+  pingLinkEnd: {x: 0.6887255, y: 0.62666667}
+  pingSentLine: Ping sent. Waiting for Psyche to answer.
+  pingResultFormat: 'Round trip: {0} min. You waited {1} seconds. NASA waits the
+    full {0}.'
+  pingArrivalFormat: Signal arrives at Psyche at {0}.
   attractPrompt: Slap ENTER

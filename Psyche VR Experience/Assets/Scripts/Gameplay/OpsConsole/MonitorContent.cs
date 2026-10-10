@@ -63,6 +63,18 @@ namespace PsycheVR.Gameplay
         [Header("Thruster push (mouse)")]
         [TextArea] public string[] pushLines;
 
+        [Header("Ping (DSN tab)")]
+        [Tooltip("Dish end of the X-band link on the DSN main illustration, normalised image coordinates (0..1, origin bottom-left).")]
+        public Vector2 pingLinkStart = new Vector2(0.28f, 0.34f);
+        [Tooltip("Spacecraft end of the X-band link, normalised image coordinates.")]
+        public Vector2 pingLinkEnd = new Vector2(0.69f, 0.63f);
+        [Tooltip("Footer while the ping is in flight.")]
+        public string pingSentLine = "Ping sent. Waiting for Psyche to answer.";
+        [Tooltip("Footer when the reply lands: {0} = real round trip in whole minutes, {1} = seconds the visitor waited.")]
+        public string pingResultFormat = "Round trip: {0} min. You waited {1} seconds. NASA waits the full {0}.";
+        [Tooltip("Second footer line when the reply lands: {0} = local clock time a signal sent now reaches Psyche.")]
+        public string pingArrivalFormat = "Signal arrives at Psyche at {0}.";
+
         [Header("Kiosk")]
         public string attractPrompt = "Slap ENTER";
 

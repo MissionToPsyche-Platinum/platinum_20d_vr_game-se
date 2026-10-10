@@ -1,3 +1,4 @@
+using System.Globalization;
 using PsycheVR.OpsConsole.Core;
 using UnityEngine;
 using UnityEngine.Events;
@@ -16,6 +17,11 @@ namespace PsycheVR.Gameplay
     /// turn on their own every <see cref="AttractStepSeconds"/> under the content's attract prompt.
     /// Tab animations and the idle clock follow scaled time and freeze while the game is paused;
     /// page slides and photo fades use unscaled time.
+    ///
+    /// The desk's PING button calls <see cref="SendPing"/> (TG-227): the screen goes to the Deep Space
+    /// Network tab, the keyboard keys and the PING button go dead (disabled, so no sink and no buzz) and
+    /// a compressed round trip to Psyche plays over the X-band link illustration; when the reply lands the
+    /// footer gives the real numbers and everything unlocks. Power off cancels a ping.
     /// </summary>
     public class OpsConsole : MonoBehaviour
     {
@@ -37,6 +43,12 @@ namespace PsycheVR.Gameplay
         [SerializeField] private AudioSource clickSource;
 
         [SerializeField] private bool startOn = true;
+
+        [Tooltip("The keyboard's slap keys, disabled while a ping is in flight.")]
+        [SerializeField] private SlapKey[] keyboardKeys = new SlapKey[0];
+
+        [Tooltip("The desk's PING button, disabled while its ping is in flight.")]
+        [SerializeField] private SlapKey pingKey;
 
         [Tooltip("Fires with the new tab index (0-based) whenever the tab changes or the screen turns on.")]
         [SerializeField] private UnityEvent<int> onTabShown = new UnityEvent<int>();
@@ -66,6 +78,7 @@ namespace PsycheVR.Gameplay
         private bool _addedScreen;   // MonitorScreen was added by EnsureBuilt (not authored on the prefab)
         private bool _footerOverridden;
         private string _tabFooter;   // the tab's own footer, restored when the override ends
+        private System.DateTime _pingSentAt;
 
         private void Awake()
         {
@@ -83,6 +96,30 @@ namespace PsycheVR.Gameplay
         public void PreviousTab()
         {
             if (_state != null && _state.Previous()) Turn(-1);
+        }
+
+        /// <summary>
+        /// Sends a ping to Psyche: shows the Deep Space Network tab (sliding to it if needed), locks the
+        /// keys and runs the round trip. Ignored while off, while a ping is in flight, or without the
+        /// snapshot's light time.
+        /// </summary>
+        public void SendPing()
+        {
+            if (_state == null || !_state.IsOn || _state.PingInFlight) return;
+            if (!(_tabs[DsnIndex] is DsnTab dsn) || !dsn.CanPing) return;
+            if (!_state.StartPing(DsnIndex)) return;
+            _pingSentAt = System.DateTime.Now;
+            SetKeysLocked(true);
+            // a slide in progress still has a ShowCurrent pending: route through a new slide so the
+            // ping starts after the DSN tab is shown, never before
+            int direction = PingRoute.SlideDirection(_shownTab, DsnIndex, _screen.IsSliding);
+            if (direction == 0)
+            {
+                BeginPing();
+                return;
+            }
+            PlaySound(content.pageClick);
+            _screen.Slide(direction, () => { ShowCurrent(); BeginPing(); });
         }
 
         /// <summary>Turns the screen off if on, on if off.</summary>
@@ -121,6 +158,7 @@ namespace PsycheVR.Gameplay
         {
             if (_state == null) return;
             SetFooterOverride(null);
+            if (_state.PingInFlight) EndPing();   // SetPower below clears the state's ping
             _state.SetPower(on);
             _screen.SetBlack(!on);
             _screen.HideAttract();
@@ -138,6 +176,7 @@ namespace PsycheVR.Gameplay
         {
             if (!EnsureBuilt()) return;
             if (!Application.isPlaying) MarkDontSave();
+            if (_state.PingInFlight) EndPing();
             _state.SetPower(true);
             _screen.SetBlack(false);
             _screen.HideAttract();
@@ -204,6 +243,56 @@ namespace PsycheVR.Gameplay
                 t.gameObject.hideFlags |= HideFlags.DontSave;
                 foreach (var c in t.GetComponents<Component>()) c.hideFlags |= HideFlags.DontSave;
             }
+        }
+
+        /// <summary>A console disabled mid-ping gives everything back: view stopped, keys on, paging free, tab footer.</summary>
+        private void OnDisable()
+        {
+            if (_state == null || !_state.PingInFlight) return;
+            EndPing();
+            _state.CompletePing();
+            SetFooterOverride(null);
+        }
+
+        /// <summary>Starts the ping view once the DSN tab shows; a slide that lands after power off starts nothing.</summary>
+        private void BeginPing()
+        {
+            if (!_state.PingInFlight || _shownTab != DsnIndex) return;
+            if (((DsnTab)_tabs[DsnIndex]).BeginPing(OnPingLanded) == null)
+            {
+                // no light time after all: give the console back
+                _state.CompletePing();
+                SetKeysLocked(false);
+                return;
+            }
+            SetFooterOverride(content.pingSentLine);
+        }
+
+        private void OnPingLanded()
+        {
+            var timeline = ((DsnTab)_tabs[DsnIndex]).Ping.Timeline;
+            _state.CompletePing();
+            SetKeysLocked(false);
+            if (timeline == null) return;
+            string result = string.Format(CultureInfo.InvariantCulture, content.pingResultFormat,
+                timeline.RoundTripMinutes, timeline.WaitedSeconds);
+            string arrival = string.Format(CultureInfo.InvariantCulture, content.pingArrivalFormat,
+                PingTimeline.ArrivalClock(_pingSentAt, timeline.RealRoundTripSeconds * 0.5));
+            SetFooterOverride(result + "\n" + arrival);
+        }
+
+        /// <summary>Stops the ping view and unlocks the keys (the caller clears the state's ping).</summary>
+        private void EndPing()
+        {
+            ((DsnTab)_tabs[DsnIndex]).CancelPing();
+            SetKeysLocked(false);
+        }
+
+        private void SetKeysLocked(bool locked)
+        {
+            foreach (var key in keyboardKeys)
+                if (key != null) key.enabled = !locked;
+            if (pingKey != null) pingKey.enabled = !locked;
         }
 
         private bool Fail(string message)

@@ -14,8 +14,8 @@ namespace PsycheVR.Gameplay
     /// that covers the cap and reaches <see cref="reach"/> out in front of it, so the cap needs no
     /// collider of its own and never joins a grabbable's collider set. A slap is a hand within
     /// <see cref="contactDistance"/> of the cap face moving into it at <see cref="minSlapSpeed"/>
-    /// or faster. After a press the key re-arms only once every hand has left the box, so a hand
-    /// resting on it does not fire it again.
+    /// or faster. After a press, and after the component is re-enabled, the key arms only once every
+    /// hand has left the box, so a hand resting on it does not fire it again.
     ///
     /// While <see cref="blockWhileHeld"/> is held, slaps are ignored.
     ///
@@ -120,7 +120,9 @@ namespace PsycheVR.Gameplay
         {
             s_Keys.Remove(this);
             _lastDepth.Clear();
-            _armed = true;
+            // re-enabled keys arm only after a frame with no hand in the box, so a hand already resting
+            // on the key (e.g. waiting out a ping) does not fire it
+            _armed = false;
             _anim = -1f;
             if (cap != null) cap.localPosition = _restLocal;
         }

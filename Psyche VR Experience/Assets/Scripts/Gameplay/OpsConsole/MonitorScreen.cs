@@ -182,6 +182,9 @@ namespace PsycheVR.Gameplay
         /// <summary>Hides the kiosk banner.</summary>
         public void HideAttract() { if (Built) _attract.gameObject.SetActive(false); }
 
+        /// <summary>True while a page slide is in progress (its swap may still be pending).</summary>
+        public bool IsSliding => _slide != null;
+
         /// <summary>Slides the body out in <paramref name="direction"/> (+1 forward), runs <paramref name="swap"/>, slides back in.</summary>
         public void Slide(int direction, Action swap)
         {
