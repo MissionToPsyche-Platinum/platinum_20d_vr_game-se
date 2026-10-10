@@ -31,6 +31,8 @@ namespace PsycheVR.Data
         /// <summary>Current log file path, or null when logging is unavailable.</summary>
         public static string CurrentLogPath => instance != null ? instance.session?.FilePath : null;
 
+        public static string LogDirectory => Path.Combine(Application.persistentDataPath, DirectoryName);
+
         // GameModeManager loads its config BeforeSceneLoad. Starting after the first
         // scene guarantees that the first record contains the configured mode.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -43,6 +45,7 @@ namespace PsycheVR.Data
             }
 
             instance.BeginSession(SceneManager.GetActiveScene().name);
+            SessionLogUploader.EnsureCreated();
         }
 
         private void Awake()
@@ -84,8 +87,9 @@ namespace PsycheVR.Data
             {
                 sessionMode = GameModeManager.ActiveMode;
                 session = new SessionLogWriter(
-                    Path.Combine(Application.persistentDataPath, DirectoryName),
-                    sessionMode.ToString(), scene, Application.version, Application.platform.ToString());
+                    LogDirectory,
+                    sessionMode.ToString(), scene, Application.version, Application.platform.ToString(),
+                    SessionBuildInfo.CurrentStamp, SessionDeviceName.Current);
                 Debug.Log($"{LogPrefix} Saving session to {session.FilePath}", this);
             }
             catch (Exception error) when (IsStorageError(error))

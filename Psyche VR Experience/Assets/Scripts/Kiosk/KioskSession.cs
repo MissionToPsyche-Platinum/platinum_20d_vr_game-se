@@ -1,7 +1,10 @@
 using System.Collections;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.Video;
 using PsycheVR.UI;
+using PsycheVR.Data;
+using PsycheVR.Modes;
 
 namespace PsycheVR.Kiosk
 {
@@ -186,14 +189,21 @@ namespace PsycheVR.Kiosk
 
             CurrentPhase = Phase.Running;
             _firstInput?.Disable();
+            RecordOutcome("kiosk_first_input");
             Debug.Log($"{LogPrefix} First input; clock running.", this);
         }
 
         private void TickClock(float deltaTime)
         {
+            if (CurrentPhase != Phase.Running || deltaTime <= 0f)
+                return;
+
             _elapsedSeconds += deltaTime;
             if (_elapsedSeconds >= sessionSeconds)
+            {
+                RecordOutcome("kiosk_clock_expired");
                 BeginEnding("clock expired");
+            }
         }
 
         private void HandlePuzzleCompleted()
@@ -201,7 +211,15 @@ namespace PsycheVR.Kiosk
             if (CurrentPhase == Phase.Ending || CurrentPhase == Phase.FreePlay)
                 return;
 
+            RecordOutcome("kiosk_puzzle_completed");
             BeginEnding("puzzle complete");
+        }
+
+        private void RecordOutcome(string eventName)
+        {
+            if (GameModeManager.ActiveMode == GameMode.Event)
+                SessionDataLogger.LogEvent(eventName,
+                    "elapsedSeconds=" + _elapsedSeconds.ToString("0.###", CultureInfo.InvariantCulture));
         }
 
         /// <summary>
