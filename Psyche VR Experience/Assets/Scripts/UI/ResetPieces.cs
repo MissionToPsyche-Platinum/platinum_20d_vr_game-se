@@ -34,8 +34,12 @@ public class ResetPieces : MonoBehaviour
         }
     }
 
-    private void OnClicked(SelectEnterEventArgs args)
+    private void OnClicked(SelectEnterEventArgs args) => Press();
+
+    /// <summary>Sends every unsnapped piece home; called by a select or, on the event board, by a slap (SlapKey).</summary>
+    public void Press()
     {
+        if (pieces == null) return;
         foreach (SnappableObject piece in pieces)
         {
             if (piece != null && !piece.isSnapped)
