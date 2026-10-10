@@ -25,6 +25,10 @@ namespace PsycheVR.Gameplay
     ///
     /// Each press sends a haptic pulse to the hand that slapped (the hand whose grab centre is
     /// nearest the collider that hit).
+    ///
+    /// Reach, margins and travel are metres in the world whatever the cap's scale, including a cap under
+    /// a non-uniformly scaled parent (the message board's buttons), as long as the cap is not rotated
+    /// against that scale.
     /// </summary>
     public class SlapKey : MonoBehaviour
     {
@@ -136,9 +140,13 @@ namespace PsycheVR.Gameplay
                 return;
             }
 
-            float scale = Mathf.Max(_zone.lossyScale.x, 1e-5f);
-            float reachLocal = reach / scale;
-            Vector3 extents = _capBounds.extents + Abs(_dir) * (reachLocal * 0.5f) + Vector3.one * (sideMargin / scale);
+            // metres to cap-local units: along the press direction, and per axis for the side margin
+            Vector3 lossy = _zone.lossyScale;
+            float reachLocal = reach / Mathf.Max(_zone.TransformVector(_dir).magnitude, 1e-5f);
+            Vector3 margin = new Vector3(sideMargin / Mathf.Max(Mathf.Abs(lossy.x), 1e-5f),
+                                         sideMargin / Mathf.Max(Mathf.Abs(lossy.y), 1e-5f),
+                                         sideMargin / Mathf.Max(Mathf.Abs(lossy.z), 1e-5f));
+            Vector3 extents = _capBounds.extents + Abs(_dir) * (reachLocal * 0.5f) + margin;
             Vector3 centreLocal = _capBounds.center - _dir * (reachLocal * 0.5f);
             Vector3 centre = _zone.TransformPoint(centreLocal);
             Vector3 half = Vector3.Scale(extents, _zone.lossyScale);
@@ -226,10 +234,11 @@ namespace PsycheVR.Gameplay
                 if (t >= 1f) { amount = 0f; _anim = -1f; }
                 else amount = 1f - t * t * (3f - 2f * t);
             }
-            // _dir is in cap space; move in parent space by the matching vector.
-            Vector3 dirParent = cap.localRotation * Vector3.Scale(_dir, cap.localScale).normalized;
-            float parentScale = cap.parent != null ? Mathf.Max(cap.parent.lossyScale.x, 1e-5f) : 1f;
-            cap.localPosition = _restLocal + dirParent * (travel * amount / parentScale);
+            // _dir is in cap space; move in parent space by the matching vector, sized so the world
+            // distance is travel whatever the parent's (possibly non-uniform) scale
+            Vector3 dirParent = cap.localRotation * Vector3.Scale(_dir, cap.localScale);
+            float worldLength = cap.parent != null ? cap.parent.TransformVector(dirParent).magnitude : dirParent.magnitude;
+            cap.localPosition = _restLocal + dirParent * (travel * amount / Mathf.Max(worldLength, 1e-9f));
         }
 
         private static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));

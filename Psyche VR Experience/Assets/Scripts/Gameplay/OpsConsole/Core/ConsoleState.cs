@@ -4,7 +4,8 @@ namespace PsycheVR.OpsConsole.Core
 {
     /// <summary>
     /// The mission ops monitor's state, free of Unity objects: which tab shows, power, the ping lock
-    /// and the idle "attract" cycle. Paging is refused while the screen is off or a ping is in flight.
+    /// and the idle "attract" cycle. Paging is refused while the screen is off; a ping in flight does not
+    /// hold the screen (it finishes in the background).
     /// Any accepted input restarts the idle clock and ends attract mode. Time comes in through
     /// <see cref="Tick"/>, so tests drive it directly.
     /// </summary>
@@ -52,13 +53,13 @@ namespace PsycheVR.OpsConsole.Core
         /// <summary>True while the idle attract cycle is turning pages on its own.</summary>
         public bool IsAttracting { get; private set; }
 
-        /// <summary>True when paging is allowed right now.</summary>
-        public bool CanPage => IsOn && !PingInFlight;
+        /// <summary>True when paging is allowed right now (whenever the screen is on).</summary>
+        public bool CanPage => IsOn;
 
-        /// <summary>Next tab, wrapping. Returns false (no change) while off or pinging.</summary>
+        /// <summary>Next tab, wrapping. Returns false (no change) while off.</summary>
         public bool Next() => Step(+1);
 
-        /// <summary>Previous tab, wrapping. Returns false (no change) while off or pinging.</summary>
+        /// <summary>Previous tab, wrapping. Returns false (no change) while off.</summary>
         public bool Previous() => Step(-1);
 
         /// <summary>Power on keeps the current tab; power off cancels a ping and attract mode.</summary>
@@ -82,7 +83,7 @@ namespace PsycheVR.OpsConsole.Core
             return true;
         }
 
-        /// <summary>The reply has landed: paging works again.</summary>
+        /// <summary>The reply has landed: a new ping may start.</summary>
         public void CompletePing()
         {
             PingInFlight = false;

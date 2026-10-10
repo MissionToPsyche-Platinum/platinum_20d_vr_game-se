@@ -68,14 +68,9 @@ namespace PsycheVR.Gameplay
             var caption = MonitorScreen.Text(rt, "Caption", bodyFont, LabelSize, TextAlignmentOptions.TopLeft, MonitorPalette.LightGrey);
             caption.text = "Solar array power";
             Band(caption.rectTransform, CaptionYMin, 1f);
-            view.readout = MonitorScreen.Text(rt, "Readout", titleFont, ReadoutSize, TextAlignmentOptions.TopLeft, MonitorPalette.White);
-            view.readout.textWrappingMode = TextWrappingModes.NoWrap;
-            Band(view.readout.rectTransform, ReadoutYMin, ReadoutYMax);
 
             // the track: a zero-height strip at TrackY, inset so the end labels fit; children sit on it by AU
-            var strip = Child(rt, "Track");
-            strip.anchorMin = new Vector2(0f, TrackY); strip.anchorMax = new Vector2(1f, TrackY);
-            strip.offsetMin = new Vector2(SideMargin, 0f); strip.offsetMax = new Vector2(-SideMargin, 0f);
+            var strip = TrackStrip(rt, "Track");
             // the asteroid's orbit: a Mustard frame around a full Purple fill
             var outline = Child(strip, "PsycheZone").gameObject.AddComponent<Image>();
             outline.color = MonitorPalette.Mustard; outline.raycastTarget = false;
@@ -87,40 +82,13 @@ namespace PsycheVR.Gameplay
             var bfr = band.rectTransform;
             bfr.anchorMin = Vector2.zero; bfr.anchorMax = Vector2.one;
             bfr.offsetMin = Vector2.one * BandOutline; bfr.offsetMax = -Vector2.one * BandOutline;
-            var lineObject = Child(strip, "TrackLine").gameObject;
-            lineObject.AddComponent<CanvasRenderer>();
-            view.track = lineObject.AddComponent<UIPolyline>();
-            view.track.color = MonitorPalette.Grey; view.track.raycastTarget = false;
-            view.track.Thickness = TrackThickness;
-            var lrt = view.track.rectTransform;
-            lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one; lrt.offsetMin = lrt.offsetMax = Vector2.zero;
+            view.track = Line(strip, "TrackLine", MonitorPalette.Grey, TrackThickness);
             view.LayoutTrack();
 
             Mark(strip, bodyFont, 0f, "Sun", MonitorPalette.Mustard, SunTickHeight * 0.5f);
             Mark(strip, bodyFont, EarthAu, "Earth", MonitorPalette.Grey, TickHeight * 0.5f);
             Mark(strip, bodyFont, MarsAu, "Mars", MonitorPalette.Grey, TickHeight * 0.5f);
             Mark(strip, bodyFont, (ZoneMinAu + ZoneMaxAu) * 0.5f, "Asteroid Psyche", null, BandHeight * 0.5f);
-
-            // the spacecraft: a holder moved along the track, with the glow behind the icon
-            var sprite = content != null ? content.spacecraftIcon : null;
-            float aspect = sprite != null && sprite.rect.width > 0f ? sprite.rect.height / sprite.rect.width : 1f;
-            view.spacecraft = Child(strip, "Spacecraft");
-            view.spacecraft.pivot = new Vector2(0.5f, 0f);
-            view.spacecraft.sizeDelta = new Vector2(SpacecraftWidth, SpacecraftWidth * aspect);
-            view.spacecraft.anchoredPosition = new Vector2(0f, SpacecraftGap);
-            var glow = Child(view.spacecraft, "Glow").gameObject.AddComponent<Image>();
-            glow.sprite = MonitorSprites.Glow();
-            glow.color = new Color(MonitorPalette.Mustard.r, MonitorPalette.Mustard.g, MonitorPalette.Mustard.b, GlowAlpha);
-            glow.raycastTarget = false;
-            glow.rectTransform.sizeDelta = Vector2.one * SpacecraftWidth * GlowScale;
-            glow.enabled = sprite != null;
-            var icon = Child(view.spacecraft, "Icon").gameObject.AddComponent<Image>();
-            icon.raycastTarget = false; icon.preserveAspect = true;
-            icon.color = Color.white; icon.material = null;   // untinted, default UI material
-            icon.sprite = sprite;
-            icon.enabled = sprite != null;
-            var iconRect = icon.rectTransform;
-            iconRect.anchorMin = Vector2.zero; iconRect.anchorMax = Vector2.one; iconRect.offsetMin = iconRect.offsetMax = Vector2.zero;
 
             var barLabel = MonitorScreen.Text(rt, "ThrusterLabel", bodyFont, LabelSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.LightGrey);
             barLabel.text = "Thruster";
@@ -137,13 +105,43 @@ namespace PsycheVR.Gameplay
             var irt = inner.rectTransform;
             irt.anchorMin = Vector2.zero; irt.anchorMax = Vector2.one;
             irt.offsetMin = Vector2.one * BarFrame; irt.offsetMax = -Vector2.one * BarFrame;
-            var fill = Child(irt, "Fill").gameObject.AddComponent<Image>();
+
+            // the moving parts: own canvas (inherits sorting, still clipped by the panel's mask), so the
+            // per-frame drift does not rebuild the whole monitor; last, so it draws over the static parts
+            var animated = Child(rt, "Animated");
+            Stretch(animated);
+            animated.gameObject.AddComponent<Canvas>().overrideSorting = false;
+
+            view.readout = MonitorScreen.Text(animated, "Readout", titleFont, ReadoutSize, TextAlignmentOptions.TopLeft, MonitorPalette.White);
+            view.readout.textWrappingMode = TextWrappingModes.NoWrap;
+            Band(view.readout.rectTransform, ReadoutYMin, ReadoutYMax);
+
+            // the spacecraft: a holder moved along a copy of the track strip, with the glow behind the icon
+            var sprite = content != null ? content.spacecraftIcon : null;
+            float aspect = sprite != null && sprite.rect.width > 0f ? sprite.rect.height / sprite.rect.width : 1f;
+            view.spacecraft = Child(TrackStrip(animated, "SpacecraftTrack"), "Spacecraft");
+            view.spacecraft.pivot = new Vector2(0.5f, 0f);
+            view.spacecraft.sizeDelta = new Vector2(SpacecraftWidth, SpacecraftWidth * aspect);
+            view.spacecraft.anchoredPosition = new Vector2(0f, SpacecraftGap);
+            var glow = Halo(view.spacecraft, "Glow", WithAlpha(MonitorPalette.Mustard, GlowAlpha), SpacecraftWidth * GlowScale).GetComponent<Image>();
+            glow.enabled = sprite != null;
+            var icon = Child(view.spacecraft, "Icon").gameObject.AddComponent<Image>();
+            icon.raycastTarget = false; icon.preserveAspect = true;
+            icon.color = Color.white; icon.material = null;   // untinted, default UI material
+            icon.sprite = sprite;
+            icon.enabled = sprite != null;
+            Stretch(icon.rectTransform);
+
+            // the bar fill, over the bar's inside (same rect as Inside above)
+            var fillArea = Child(animated, "ThrusterFillArea");
+            fillArea.anchorMin = new Vector2(0f, BarYMin); fillArea.anchorMax = new Vector2(1f, BarYMax);
+            fillArea.offsetMin = new Vector2(BarLabelWidth + BarFrame, BarFrame); fillArea.offsetMax = -Vector2.one * BarFrame;
+            var fill = Child(fillArea, "Fill").gameObject.AddComponent<Image>();
             fill.color = MonitorPalette.Gold; fill.raycastTarget = false;
             view.barFill = fill.rectTransform;
-            view.barFill.anchorMin = Vector2.zero; view.barFill.anchorMax = Vector2.one;
-            view.barFill.offsetMin = view.barFill.offsetMax = Vector2.zero;
+            Stretch(view.barFill);
 
-            view.line = MonitorScreen.Text(rt, "ThrusterLine", bodyFont, LineSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.White);
+            view.line = MonitorScreen.Text(animated, "ThrusterLine", bodyFont, LineSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.White);
             Band(view.line.rectTransform, 0f, LineYMax);
 
             view.Restart();
@@ -225,6 +223,15 @@ namespace PsycheVR.Gameplay
             rt.pivot = new Vector2(0.5f, 1f);
             rt.sizeDelta = new Vector2(TickLabelWidth, TickLabelHeight);
             rt.anchoredPosition = new Vector2(0f, -(labelDrop + TickLabelGap));
+        }
+
+        // a zero-height strip at TrackY across the view, inset by SideMargin; children sit on it by AU
+        private static RectTransform TrackStrip(RectTransform parent, string name)
+        {
+            var strip = Child(parent, name);
+            strip.anchorMin = new Vector2(0f, TrackY); strip.anchorMax = new Vector2(1f, TrackY);
+            strip.offsetMin = new Vector2(SideMargin, 0f); strip.offsetMax = new Vector2(-SideMargin, 0f);
+            return strip;
         }
 
         private static void Band(RectTransform rt, float yMin, float yMax)

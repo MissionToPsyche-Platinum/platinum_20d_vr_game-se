@@ -39,22 +39,23 @@ namespace PsycheVR.Gameplay
         public PingView Ping => _ping;
 
         /// <summary>
-        /// Shows the tab with Earth's turn restarted (Madrid facing Psyche). A running ping keeps going (a
-        /// slide that lands on this tab must not cut it off); a finished one is cleared.
+        /// Shows the tab with Earth's turn restarted (Madrid facing Psyche). The ping is left as it is: the
+        /// console decides whether a finished one stays up (<see cref="ClearFinishedPing"/>).
         /// </summary>
         public override void Show()
         {
             base.Show();
             Screen.Footer.text = _footer;
             _complexes.Restart();
-            if (!_ping.Running) _ping.Stop();
         }
 
-        /// <summary>Cancels any ping and hides the tab.</summary>
-        public override void Hide()
+        /// <summary>Advances a ping while the tab is hidden: hiding never stops a ping in flight.</summary>
+        public void TickPing(float dt) => _ping.Tick(dt);
+
+        /// <summary>Clears a ping whose reply has already landed; a running one stays.</summary>
+        public void ClearFinishedPing()
         {
-            _ping.Stop();
-            base.Hide();
+            if (!_ping.Running) _ping.Stop();
         }
 
         /// <inheritdoc/>

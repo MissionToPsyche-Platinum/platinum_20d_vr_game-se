@@ -103,10 +103,19 @@ namespace PsycheVR.OpsConsole.Core
         /// <summary><paramref name="seconds"/> as minutes and whole seconds, "m:ss" (rounded down).</summary>
         public static string Clock(double seconds)
         {
-            long whole = (long)Math.Floor(Math.Max(seconds, 0.0));
-            long minutes = whole / (long)SecondsPerMinute;
-            long rest = whole % (long)SecondsPerMinute;
+            ClockParts(seconds, out long minutes, out int rest);
             return minutes.ToString(CultureInfo.InvariantCulture) + ":" + rest.ToString("00", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// The parts of <see cref="Clock"/> without building a string: whole minutes and the remaining whole
+        /// seconds (0..59) of <paramref name="seconds"/>, rounded down; negative counts as 0.
+        /// </summary>
+        public static void ClockParts(double seconds, out long minutes, out int rest)
+        {
+            long whole = (long)Math.Floor(Math.Max(seconds, 0.0));
+            minutes = whole / (long)SecondsPerMinute;
+            rest = (int)(whole % (long)SecondsPerMinute);
         }
 
         /// <summary>

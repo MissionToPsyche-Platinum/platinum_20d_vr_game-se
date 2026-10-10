@@ -30,6 +30,7 @@ namespace PsycheVR.Gameplay
         private const int BlinkCount = 3;             // on/off cycles while at the spacecraft
 
         private const string LabelText = "REAL SIGNAL TIME";
+        private const string CounterFormat = "{0}:{1:00}";   // TMP SetText: {1:00} = two digits, zero padded
         private static readonly string[] StatusText =
             { "Ping going out to Psyche", "Psyche answers", "Reply coming home", "Reply received" };
 
@@ -156,7 +157,8 @@ namespace PsycheVR.Gameplay
             if (second != _shownSecond)
             {
                 _shownSecond = second;
-                counter.text = PingTimeline.Clock(second);
+                PingTimeline.ClockParts(second, out long minutes, out int rest);
+                counter.SetText(CounterFormat, minutes, rest);   // "m:ss" without allocating
             }
             if (phase != _shownPhase)
             {

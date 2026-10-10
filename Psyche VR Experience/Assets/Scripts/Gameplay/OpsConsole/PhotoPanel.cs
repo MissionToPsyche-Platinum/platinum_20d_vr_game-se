@@ -6,7 +6,8 @@ using static PsycheVR.Gameplay.MonitorUi;
 namespace PsycheVR.Gameplay
 {
     /// <summary>
-    /// A photo filling one monitor panel (cropped to cover it) with a caption strip along the bottom.
+    /// A photo filling one monitor panel (cropped to cover it) with a caption strip along the bottom: laid
+    /// over the photo, or (the small panels) a strip of its own under it, the photo cropped to the rest.
     /// With more than one photo it cross-fades to the next every few seconds, on unscaled time and only
     /// while the panel is active and playing, so a hidden tab never advances. Photos without a sprite
     /// are skipped; with none left the panel hides itself.
@@ -15,11 +16,14 @@ namespace PsycheVR.Gameplay
     {
         private const float CaptionShare = 0.18f;
         private const float CaptionAlpha = 0.95f;   // blended in linear space: 0.95 still reads as a dark strip over white
-        private const float CaptionSize = 7f;          // mm
+        private const float CaptionSize = 7f;          // mm, the small right-hand panels
+        private const float MainCaptionSize = 10f;     // mm, the big main panel: 7 read as tiny there
         private const float CaptionPad = 3f;           // mm
         private const float FadeSeconds = 0.8f;
         private const float DefaultSecondsEach = 6f;
 
+        [SerializeField] private RectTransform photoArea;
+        [SerializeField] private bool captionBelow;
         [SerializeField] private Image front;
         [SerializeField] private Image back;
         [SerializeField] private GameObject captionStrip;
@@ -33,26 +37,33 @@ namespace PsycheVR.Gameplay
 
         /// <summary>
         /// Creates a photo panel stretched over <paramref name="parent"/>. The caption uses the content's
-        /// body font; <paramref name="content"/> may be null (default font).
+        /// body font; <paramref name="content"/> may be null (default font). With
+        /// <paramref name="captionBelow"/> the caption gets an opaque strip of its own under the photo
+        /// instead of lying over its bottom edge, so no sliver of photo can show beneath the text.
         /// </summary>
-        public static PhotoPanel Create(RectTransform parent, MonitorContent content)
+        public static PhotoPanel Create(RectTransform parent, MonitorContent content, bool captionBelow = false)
         {
             var rt = Child(parent, "PhotoPanel");
             var go = rt.gameObject;
             Stretch(rt);
             var panel = go.AddComponent<PhotoPanel>();
-            panel.back = NewPhoto(rt, "PhotoBack");
-            panel.front = NewPhoto(rt, "PhotoFront");
+            panel.captionBelow = captionBelow;
+            // the photos crop to their own area: the whole panel, or above the caption strip when it sits below
+            panel.photoArea = Child(rt, "PhotoArea");
+            Stretch(panel.photoArea);
+            panel.photoArea.gameObject.AddComponent<RectMask2D>();
+            panel.back = NewPhoto(panel.photoArea, "PhotoBack");
+            panel.front = NewPhoto(panel.photoArea, "PhotoFront");
 
             var srt = Child(rt, "Caption");
             var strip = srt.gameObject;
             srt.anchorMin = Vector2.zero; srt.anchorMax = new Vector2(1f, CaptionShare);
             srt.offsetMin = srt.offsetMax = Vector2.zero;
             var bg = strip.AddComponent<Image>();
-            bg.color = new Color(0f, 0f, 0f, CaptionAlpha); bg.raycastTarget = false;
+            bg.color = captionBelow ? MonitorPalette.DarkPurple : new Color(0f, 0f, 0f, CaptionAlpha); bg.raycastTarget = false;
             panel.captionStrip = strip;
             panel.caption = MonitorScreen.Text(srt, "CaptionText", content != null ? content.bodyFont : null,
-                CaptionSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.White);
+                captionBelow ? CaptionSize : MainCaptionSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.White);
             var crt = panel.caption.rectTransform;
             crt.anchorMin = Vector2.zero; crt.anchorMax = Vector2.one;
             crt.offsetMin = Vector2.one * CaptionPad; crt.offsetMax = -Vector2.one * CaptionPad;
@@ -94,14 +105,16 @@ namespace PsycheVR.Gameplay
         {
             local = Vector2.zero;
             if (front == null || front.sprite == null) return false;
-            Rect panel = ((RectTransform)transform).rect;
+            var area = photoArea != null ? photoArea : (RectTransform)transform;
+            Rect panel = area.rect;
             Rect image = front.sprite.rect;
             if (panel.width <= 0f || panel.height <= 0f || image.height <= 0f) return false;
             float aspect = image.width / image.height;
             Vector2 size = panel.width / panel.height > aspect
                 ? new Vector2(panel.width, panel.width / aspect)
                 : new Vector2(panel.height * aspect, panel.height);
-            local = panel.center + Vector2.Scale(normalised - Vector2.one * 0.5f, size);
+            Vector2 onArea = panel.center + Vector2.Scale(normalised - Vector2.one * 0.5f, size);
+            local = transform.InverseTransformPoint(area.TransformPoint(onArea));   // area space to this panel's space
             return true;
         }
 
@@ -132,6 +145,7 @@ namespace PsycheVR.Gameplay
         {
             bool has = !string.IsNullOrEmpty(photo.caption);
             captionStrip.SetActive(has);
+            if (captionBelow) photoArea.anchorMin = new Vector2(0f, has ? CaptionShare : 0f);   // no caption: the photo fills the panel
             caption.text = has ? photo.caption : "";
         }
 

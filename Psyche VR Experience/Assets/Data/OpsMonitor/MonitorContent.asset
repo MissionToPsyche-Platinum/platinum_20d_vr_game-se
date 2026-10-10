@@ -54,13 +54,12 @@ MonoBehaviour:
       label: fuel for the boost
   deepSpaceNetwork:
     title: Deep Space Network
-    banner: "Goldstone, California \xB7 Madrid, Spain \xB7 Canberra, Australia: three
-      Deep Space Communications Complexes about 120\xB0 apart, so as Earth turns,
-      one always faces Psyche."
+    banner: "Goldstone \xB7 Madrid \xB7 Canberra: three Deep Space Communications
+      Complexes about 120\xB0 apart, so as Earth turns, one always faces Psyche."
     footer: A radio signal to Psyche and back takes {RT} minutes.
     mainPhotos:
     - sprite: {fileID: 21300000, guid: 066707e2a9ec61cbf9079c5e316c9a27, type: 3}
-      caption: Big dishes on Earth talk to Psyche's 2 m antenna by radio.
+      caption: Big dishes on Earth talk to Psyche's 2-meter antenna by radio.
       credit: NASA/JPL-Caltech
     topPhotos:
     - sprite: {fileID: 21300000, guid: 0a266388c51b143928584b30bcbebc62, type: 3}
@@ -74,7 +73,8 @@ MonoBehaviour:
   solarPower:
     title: Solar Power
     banner: 
-    footer: 'At the asteroid, about 2.3 kW: a little more than a hair dryer.'
+    footer: 'Near Earth the arrays make 21 kW. At the asteroid, only about 2.3 kW:
+      about a hair dryer''s worth.'
     mainPhotos: []
     topPhotos:
     - sprite: {fileID: 21300000, guid: 4d34f29bcbc02692487760a4dbcb4687, type: 3}
@@ -92,7 +92,7 @@ MonoBehaviour:
   thruster:
     title: Thruster
     banner: 
-    footer: Grab the mouse to feel Psyche's push.
+    footer: 'Psyche keeps it up for weeks at a time: enough to cross the solar system.'
     mainPhotos:
     - sprite: {fileID: 21300000, guid: af5d023a8c5c3fe0da11e831baac50c1, type: 3}
       caption: 'A Hall-effect thruster firing: the blue glow is xenon.'
@@ -110,10 +110,9 @@ MonoBehaviour:
     - value: "0.35\u20131.3 kg"
       label: of xenon a day
   spacecraftIcon: {fileID: 21300000, guid: 0dea3dd17673683808a29b42fe8055d5, type: 3}
-  pushLines:
-  - Grab the mouse to feel Psyche's push.
-  - That's it. That's the whole push.
-  - 'Psyche keeps it up for weeks at a time: enough to cross the solar system.'
+  spacecraftIconCredit: NASA/JPL-Caltech
+  pushPrompt: Grab the mouse to feel Psyche's push.
+  pushRumbleLine: Rumble now simulating AA Thruster strength
   pingLinkStart: {x: 0.28186274, y: 0.3422222}
   pingLinkEnd: {x: 0.6887255, y: 0.62666667}
   pingSentLine: Ping sent. Waiting for Psyche to answer.

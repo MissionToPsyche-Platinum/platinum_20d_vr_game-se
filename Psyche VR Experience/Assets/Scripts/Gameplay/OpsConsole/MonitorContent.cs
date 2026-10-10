@@ -59,9 +59,14 @@ namespace PsycheVR.Gameplay
         [Header("Solar Power")]
         [Tooltip("The spacecraft drifting along the power track.")]
         public Sprite spacecraftIcon;
+        [Tooltip("Credit for the spacecraft icon; shown in the Solar Power tab's footer credits.")]
+        public string spacecraftIconCredit;
 
         [Header("Thruster push (mouse)")]
-        [TextArea] public string[] pushLines;
+        [Tooltip("Header pop-up bar on the Thruster tab until the visitor first grabs the mouse.")]
+        [TextArea] public string pushPrompt;
+        [Tooltip("Header pop-up bar while the mouse rumbles.")]
+        [TextArea] public string pushRumbleLine;
 
         [Header("Ping (DSN tab)")]
         [Tooltip("Dish end of the X-band link on the DSN main illustration, normalised image coordinates (0..1, origin bottom-left).")]

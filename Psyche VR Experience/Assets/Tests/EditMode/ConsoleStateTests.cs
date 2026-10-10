@@ -4,7 +4,7 @@ using PsycheVR.OpsConsole.Core;
 
 namespace PsycheVR.OpsConsole.Tests
 {
-    /// <summary>Behaviour of <see cref="ConsoleState"/>: paging, power, the ping lock and attract mode.</summary>
+    /// <summary>Behaviour of <see cref="ConsoleState"/>: paging, power, the ping and attract mode.</summary>
     public class ConsoleStateTests
     {
         private const int TabCount = 4;
@@ -62,12 +62,14 @@ namespace PsycheVR.OpsConsole.Tests
         }
 
         [Test]
-        public void PagingIgnoredDuringPing()
+        public void PagingAllowedDuringPing()
         {
             var s = Make();
             Assert.IsTrue(s.StartPing(DsnTab));
-            Assert.IsFalse(s.Next());
             Assert.AreEqual(DsnTab, s.CurrentTab);
+            Assert.IsTrue(s.Next());
+            Assert.AreEqual(DsnTab + 1, s.CurrentTab);
+            Assert.IsTrue(s.PingInFlight);   // the ping keeps going in the background
         }
 
         [Test]
@@ -88,12 +90,13 @@ namespace PsycheVR.OpsConsole.Tests
         }
 
         [Test]
-        public void PingCompleteUnlocks()
+        public void PingCompleteAllowsAnotherPing()
         {
             var s = Make();
             s.StartPing(DsnTab);
             s.CompletePing();
-            Assert.IsTrue(s.Next());
+            Assert.IsFalse(s.PingInFlight);
+            Assert.IsTrue(s.StartPing(DsnTab));
         }
 
         [Test]

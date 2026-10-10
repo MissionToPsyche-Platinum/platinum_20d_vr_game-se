@@ -6,18 +6,20 @@ namespace PsycheVR.Gameplay
 {
     /// <summary>
     /// "Feel Psyche's push": while the visitor holds the ops console's mouse and the monitor shows
-    /// the Thruster tab, the holding controller gets a soft, steady buzz for up to
-    /// <see cref="MaxSeconds"/>, and the footer steps through the content's push lines (one at the
-    /// grab, the next after <see cref="SecondLineSeconds"/>, the last at <see cref="ThirdLineSeconds"/>).
+    /// the Thruster tab, the holding controller gets a soft, steady buzz for <see cref="MaxSeconds"/>,
+    /// with the content's rumble line on the monitor's header pop-up bar for as long as it lasts.
+    ///
+    /// Until a visitor's first grab, the Thruster tab carries the content's prompt ("grab the mouse")
+    /// on that pop-up; after it, the prompt never shows again (a kiosk reset reloads the scene, so the
+    /// next visitor sees it). The footer keeps the tab's own closing line throughout.
     ///
     /// The pulse is subtle on purpose. Psyche's Hall-effect thruster pushes with about 250 mN, the
     /// weight of an AA battery on your palm, but it keeps that up for weeks. A strong rumble would
-    /// tell the wrong story; a faint, constant one is the point, and the footer says so.
+    /// tell the wrong story; a faint, constant one is the point.
     ///
-    /// It starts when the mouse is grabbed with the console on and on the Thruster tab, or when the
-    /// tab turns to Thruster while the mouse is held. It stops (and the footer returns to the tab's
-    /// own) on release, when the tab changes away, or when the console powers off. Timing follows
-    /// scaled time, so it freezes while the game is paused.
+    /// The push starts when the mouse is grabbed with the console on and on the Thruster tab, or when
+    /// the tab turns to Thruster while the mouse is held. It stops on release, when the tab changes
+    /// away, or when the console powers off. Timing follows scaled time, so it freezes while paused.
     /// </summary>
     public class ThrusterPushHaptic : MonoBehaviour
     {
@@ -26,12 +28,8 @@ namespace PsycheVR.Gameplay
         private const float PulseSeconds = 0.15f;      // overlaps the resend so the buzz never gaps
         private const float ResendSeconds = 0.1f;
         private const float MaxSeconds = 6f;
-        private const float FirstLineSeconds = 0f;
-        private const float SecondLineSeconds = 3f;
-        private const float ThirdLineSeconds = 6f;
-        private static readonly float[] LineSeconds = { FirstLineSeconds, SecondLineSeconds, ThirdLineSeconds };
 
-        [Tooltip("The monitor's console: its tab, power and footer.")]
+        [Tooltip("The monitor's console: its tab, power and pop-up.")]
         [SerializeField] private OpsConsole console;
 
         [Tooltip("The grabbable mouse.")]
@@ -41,7 +39,8 @@ namespace PsycheVR.Gameplay
         private bool _running;
         private float _elapsed;
         private float _nextPulse;
-        private int _linesShown;
+        private bool _rumbleShown;     // the rumble line is on the pop-up
+        private bool _promptRetired;   // this visitor has grabbed the mouse once
 
         private void OnEnable()
         {
@@ -71,7 +70,7 @@ namespace PsycheVR.Gameplay
         private void OnGrabbed(SelectEnterEventArgs args)
         {
             _holder = args.interactorObject as XRBaseInputInteractor;
-            // single select: a hand-to-hand handoff releases first, so the push restarts from 0 s at line 1
+            // single select: a hand-to-hand handoff releases first, so the push restarts from 0 s
             if (!_running) TryStart();
         }
 
@@ -84,22 +83,26 @@ namespace PsycheVR.Gameplay
 
         private void OnTabShown(int tab)
         {
-            if (tab == ThrusterTabIndex) { if (!_running) TryStart(); }
-            else Stop();
+            if (tab != ThrusterTabIndex) { Stop(); console.HidePopup(); return; }
+            if (!_running) TryStart();
+            if (!_running && !_promptRetired && console.Content != null) console.ShowPopup(console.Content.pushPrompt);
         }
 
         private void OnPowerChanged(bool on)
         {
-            if (!on) Stop();
+            if (!on) { Stop(); console.HidePopup(); }
         }
 
         private void TryStart()
         {
             if (_holder == null || !console.IsOn || console.CurrentTab != ThrusterTabIndex) return;
             _running = true;
+            _promptRetired = true;
             _elapsed = 0f;
             _nextPulse = 0f;
-            _linesShown = 0;
+            _rumbleShown = console.Content != null && !string.IsNullOrEmpty(console.Content.pushRumbleLine);
+            if (_rumbleShown) console.ShowPopup(console.Content.pushRumbleLine);
+            else console.HidePopup();   // the prompt goes either way
             Step();
         }
 
@@ -107,7 +110,7 @@ namespace PsycheVR.Gameplay
         {
             if (!_running) return;
             _running = false;
-            console.SetFooterOverride(null);
+            HideRumble();
         }
 
         private void Update()
@@ -117,20 +120,20 @@ namespace PsycheVR.Gameplay
             Step();
         }
 
-        /// <summary>Shows any line now due and sends a pulse when one is due, until the push ends.</summary>
+        /// <summary>Sends a pulse when one is due; at the end of the push the rumble line goes.</summary>
         private void Step()
         {
-            var lines = console.Content != null ? console.Content.pushLines : null;
-            while (lines != null && _linesShown < LineSeconds.Length && _linesShown < lines.Length
-                   && _elapsed >= LineSeconds[_linesShown])
-            {
-                console.SetFooterOverride(lines[_linesShown]);
-                _linesShown++;
-            }
-
-            if (_elapsed >= MaxSeconds || _holder == null || _elapsed < _nextPulse) return;
+            if (_elapsed >= MaxSeconds) { HideRumble(); return; }
+            if (_holder == null || _elapsed < _nextPulse) return;
             _holder.SendHapticImpulse(Amplitude, PulseSeconds);
             _nextPulse += ResendSeconds;
+        }
+
+        private void HideRumble()
+        {
+            if (!_rumbleShown) return;
+            _rumbleShown = false;
+            console.HidePopup();
         }
     }
 }

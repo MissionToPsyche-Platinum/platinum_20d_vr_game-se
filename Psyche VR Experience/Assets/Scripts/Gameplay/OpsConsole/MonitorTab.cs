@@ -19,7 +19,7 @@ namespace PsycheVR.Gameplay
         /// <summary>This tab's content.</summary>
         protected MonitorContent.Tab Data;
         private const string CreditSeparator = " · ";
-        private const string AsOfSeparator = "  ·  ";
+        private const string AsOfSeparator = "\n";   // the as-of date on its own line under the credits (both right-aligned)
         private const string AsOfPrefix = "as of ";
         private const string AsOfFormat = "MMM d, yyyy";
 
@@ -50,7 +50,7 @@ namespace PsycheVR.Gameplay
         public virtual void Show()
         {
             foreach (var r in _roots) r.SetActive(true);
-            Screen.Title.text = _title.ToUpperInvariant();
+            Screen.Title.text = _title;   // the title style is FontStyles.UpperCase
             Screen.Banner.text = Data.banner ?? "";
             Screen.Footer.text = Data.footer ?? "";
             Screen.Credits.text = Credits();
@@ -72,8 +72,8 @@ namespace PsycheVR.Gameplay
 
         /// <summary>
         /// Footer credit line: credits added with <see cref="AddCredit"/>, then the recorded panels' photo
-        /// credits, distinct and non-empty, in order, joined with " · ", then the snapshot's as-of date
-        /// (omitted without a snapshot; no separator when there are no credits).
+        /// credits, distinct and non-empty, in order, joined with " · ", then the snapshot's as-of date on
+        /// a second line (omitted without a snapshot; one line when there are no credits).
         /// </summary>
         protected virtual string Credits()
         {
@@ -116,7 +116,10 @@ namespace PsycheVR.Gameplay
         /// </summary>
         protected PhotoPanel Photos(Transform parent, MonitorContent.Photo[] photos, float secondsEach = 0f)
         {
-            var panel = PhotoPanel.Create((RectTransform)parent, Screen.Content);
+            // the right-hand stack's photos are small, so a caption over their bottom edge hid too much of
+            // them and left a sliver of photo under the strip: theirs sits in its own strip below
+            bool small = parent.parent != Screen.Main;
+            var panel = PhotoPanel.Create((RectTransform)parent, Screen.Content, captionBelow: small);
             panel.Set(photos, secondsEach);
             _photoPanels.Add(panel);
             _photoSets.Add(photos ?? new MonitorContent.Photo[0]);

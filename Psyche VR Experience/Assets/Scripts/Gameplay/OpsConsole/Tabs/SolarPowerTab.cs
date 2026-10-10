@@ -15,6 +15,7 @@ namespace PsycheVR.Gameplay
         protected override void BuildPanels(Transform main, Transform top, Transform bottom)
         {
             _drift = PowerDriftView.Create((RectTransform)main, Screen.Content);
+            if (Screen.Content.spacecraftIcon != null) AddCredit(Screen.Content.spacecraftIconCredit);
             Photos(top, Data.topPhotos);
             Photos(bottom, Data.bottomPhotos);
         }

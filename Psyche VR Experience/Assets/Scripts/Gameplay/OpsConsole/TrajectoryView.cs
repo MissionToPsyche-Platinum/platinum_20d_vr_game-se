@@ -13,9 +13,10 @@ namespace PsycheVR.Gameplay
     /// Mars Flyby main panel: Psyche's route to scale from the build-date JPL Horizons snapshot. Faint
     /// orbits of Earth, Mars and the asteroid around the Sun; the spacecraft's path drawn over 10 s from
     /// launch (2023-10-14) to arrival (2029-08-01; after the snapshot's last spacecraft sample it follows
-    /// the asteroid); a Mustard ring flash and "+1,000 mph" as the timeline passes the Mars flyby; the
-    /// trail solid up to the build date and dashed after; "Psyche is here today" at the build-date position
-    /// during a 3 s hold, then it starts again. Advances only through <see cref="Tick"/>, which the tab
+    /// the asteroid); a Mustard ring flash and the flyby speed boost (the content's Mars Flyby stat) as the timeline passes the Mars flyby; the
+    /// trail solid up to the build date and dashed after; "Location as of" the build date at the build-date
+    /// position during a 3 s hold (a snapshot, not a live position), then it starts again. Each dot carries
+    /// its name beside it. Advances only through <see cref="Tick"/>, which the tab
     /// calls while shown. Everything that moves sits under its own nested canvas, so the per-frame redraw
     /// does not rebuild the rest of the monitor.
     /// </summary>
@@ -41,14 +42,15 @@ namespace PsycheVR.Gameplay
         private const float SunGlowSize = 16f, LegendSunGlow = 8f;
         private const float FlashStartSize = 6f, FlashEndSize = 30f, FlashLabelSize = 10f, FlashLabelFade = 0.7f;
         private const float FlashLabelWidth = 50f, FlashLabelHeight = 12f, FlashLabelGap = 2f;
-        private const float TagRingSize = 8f, TagSize = 7f, TagWidth = 60f, TagHeight = 9f, TagGap = 4f;
+        private const float TagRingSize = 8f, TagSize = 7f, TagWidth = 100f, TagHeight = 9f, TagGap = 4f;
+        private const float BodyLabelSize = 6f, BodyLabelWidth = 45f, BodyLabelHeight = 8f, BodyLabelGap = 1.5f;
 
         private const string MonthFormat = "MMM yyyy";
         private const string CaptionDateFormat = "MMM d, yyyy";
         private const string DateFormat = "yyyy-MM-dd";
         private const string CaptionFormat = "Positions: JPL Horizons, as of {0}. Dots not to scale.";
-        private const string FlashText = "+1,000 mph";
-        private const string TagText = "Psyche is here today";
+        private const int FlybyBoostStat = 1;    // marsFlyby.stats[1] is the flyby speed boost ("+1,000 mph")
+        private const string TagFormat = "Location as of {0}";   // the snapshot's date: the screen has no live feed
 
         [SerializeField] private RectTransform plot;
         [SerializeField] private UIPolyline earthOrbit, marsOrbit, asteroidOrbit, trailSolid, trailDashed;
@@ -138,6 +140,13 @@ namespace PsycheVR.Gameplay
             view.marsDot = Dot(animated, "Mars", MonitorPalette.Coral, PlanetSize);
             view.asteroidDot = Dot(animated, "Asteroid", MonitorPalette.Grey, PlanetSize);
             view.spacecraftDot = Dot(animated, "Spacecraft", MonitorPalette.Mustard, SpacecraftSize);
+            // names beside the dots: Psyche up-right and Mars down-left stay apart through the flyby (the boost
+            // label takes the right); the asteroid down-right keeps clear of Psyche at arrival
+            BodyLabel(view.earthDot, "Earth", bodyFont, MonitorPalette.White, new Vector2(1f, 0f));
+            BodyLabel(view.marsDot, "Mars", bodyFont, MonitorPalette.Coral, new Vector2(-1f, -1f));
+            BodyLabel(view.asteroidDot, "Asteroid Psyche", bodyFont, MonitorPalette.LightGrey, new Vector2(1f, -1f));
+            BodyLabel(view.spacecraftDot, "Psyche", bodyFont, MonitorPalette.Mustard, new Vector2(1f, 1f));
+            BodyLabel(sunGlow, "Sun", bodyFont, MonitorPalette.White, new Vector2(0f, -1f), SunSize);
             var glow = Child(view.spacecraftDot, "Glow").gameObject.AddComponent<Image>();
             glow.sprite = MonitorSprites.Glow(); glow.raycastTarget = false;
             glow.color = WithAlpha(MonitorPalette.Mustard, GlowAlpha);
@@ -147,7 +156,7 @@ namespace PsycheVR.Gameplay
             view.flashRing = Dot(animated, "FlybyFlash", MonitorPalette.Mustard, FlashStartSize).GetComponent<Image>();
             view.flashRing.sprite = MonitorSprites.Ring();
             view.flashLabel = MonitorScreen.Text(view.flashRing.rectTransform, "Label", titleFont, FlashLabelSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.Mustard);
-            view.flashLabel.text = FlashText;
+            view.flashLabel.text = FlybyBoost(content);
             view.flashLabel.textWrappingMode = TextWrappingModes.NoWrap;
             var frt = view.flashLabel.rectTransform;
             frt.anchorMin = frt.anchorMax = new Vector2(0.5f, 0.5f); frt.pivot = new Vector2(0f, 0.5f);
@@ -157,7 +166,8 @@ namespace PsycheVR.Gameplay
             view.tagRing = Dot(animated, "Today", MonitorPalette.White, TagRingSize).GetComponent<Image>();
             view.tagRing.sprite = MonitorSprites.Ring();
             view.tagLabel = MonitorScreen.Text(view.tagRing.rectTransform, "Label", bodyFont, TagSize, TextAlignmentOptions.Bottom, MonitorPalette.White);
-            view.tagLabel.text = TagText;
+            view.tagLabel.text = string.Format(CultureInfo.InvariantCulture, TagFormat,
+                snapshot.BuildDate.ToString(CaptionDateFormat, CultureInfo.InvariantCulture));
             view.tagLabel.textWrappingMode = TextWrappingModes.NoWrap;
             var trt = view.tagLabel.rectTransform;
             trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f); trt.pivot = new Vector2(0.5f, 0f);
@@ -184,7 +194,7 @@ namespace PsycheVR.Gameplay
 
         /// <summary>
         /// Advances the animation by <paramref name="dt"/> seconds: 10 s from launch to arrival, a 3 s hold
-        /// on the "Psyche is here today" tag, then launch again.
+        /// on the "Location as of" tag, then launch again.
         /// </summary>
         public void Tick(float dt)
         {
@@ -363,6 +373,26 @@ namespace PsycheVR.Gameplay
         // dots are anchored at the plot's centre: offset from it
         private void Place(RectTransform rt, Vector2 panel) => rt.anchoredPosition = panel - plot.rect.center;
 
+        /// <summary>
+        /// A name beside <paramref name="dot"/>, riding with it. <paramref name="side"/> picks the corner it
+        /// sits off (x, y each -1, 0 or 1); <paramref name="dotSize"/> is the dot's own size when it is not
+        /// the dot rect's (the Sun's halo is larger than its disc).
+        /// </summary>
+        private static void BodyLabel(RectTransform dot, string name, TMP_FontAsset font, Color colour, Vector2 side, float dotSize = 0f)
+        {
+            float reach = (dotSize > 0f ? dotSize : dot.sizeDelta.x) * 0.5f + BodyLabelGap;
+            var align = side.x > 0f ? TextAlignmentOptions.MidlineLeft : side.x < 0f ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.Midline;
+            var label = MonitorScreen.Text(dot, name + "Name", font, BodyLabelSize, align, colour);
+            label.text = name;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            var rt = label.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(side.x > 0f ? 0f : side.x < 0f ? 1f : 0.5f, side.y > 0f ? 0f : side.y < 0f ? 1f : 0.5f);
+            rt.sizeDelta = new Vector2(BodyLabelWidth, BodyLabelHeight);
+            // diagonal corners sit off the dot's edge at 45 degrees; a centred row needs no vertical lift
+            rt.anchoredPosition = new Vector2(side.x, side.y).normalized * reach;
+        }
+
         // coloured dot + label rows, top right of the plot
         private static void Legend(RectTransform plot, TMP_FontAsset font)
         {
@@ -400,6 +430,14 @@ namespace PsycheVR.Gameplay
                 lrt.offsetMin = new Vector2(LegendDot + LegendGap, y - LegendRow * 0.5f);
                 lrt.offsetMax = new Vector2(0f, y + LegendRow * 0.5f);
             }
+        }
+
+        // the flash label: the Mars Flyby tab's speed boost stat, empty when the content lacks it
+        private static string FlybyBoost(MonitorContent content)
+        {
+            var stats = content != null ? content.marsFlyby?.stats : null;
+            return stats != null && stats.Length > FlybyBoostStat && stats[FlybyBoostStat] != null
+                ? stats[FlybyBoostStat].value ?? "" : "";
         }
 
         private static Color Faint(Color c) => WithAlpha(c, OrbitAlpha);

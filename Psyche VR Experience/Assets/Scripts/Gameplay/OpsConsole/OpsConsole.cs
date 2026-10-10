@@ -19,13 +19,14 @@ namespace PsycheVR.Gameplay
     /// page slides and photo fades use unscaled time.
     ///
     /// The desk's PING button calls <see cref="SendPing"/> (TG-227): the screen goes to the Deep Space
-    /// Network tab, the keyboard keys and the PING button go dead (disabled, so no sink and no buzz) and
-    /// a compressed round trip to Psyche plays over the X-band link illustration; when the reply lands the
-    /// footer gives the real numbers and everything unlocks. Power off cancels a ping.
+    /// Network tab, the PING button goes dead (disabled, so no sink and no buzz) and a compressed round
+    /// trip to Psyche plays over the X-band link illustration; when the reply lands the footer gives the
+    /// real numbers and the button comes back. The keyboard stays live: paging away does not stop the
+    /// ping, it finishes in the background, and a reply that landed while another tab showed is shown
+    /// once on the next visit to the DSN tab. Power off cancels a ping.
     /// </summary>
     public class OpsConsole : MonoBehaviour
     {
-        private const string CanvasName = "MonitorCanvas";
         private const float IdleSeconds = 45f;
         private const float AttractStepSeconds = 10f;
         private const int MarsFlybyIndex = 0;
@@ -43,9 +44,6 @@ namespace PsycheVR.Gameplay
         [SerializeField] private AudioSource clickSource;
 
         [SerializeField] private bool startOn = true;
-
-        [Tooltip("The keyboard's slap keys, disabled while a ping is in flight.")]
-        [SerializeField] private SlapKey[] keyboardKeys = new SlapKey[0];
 
         [Tooltip("The desk's PING button, disabled while its ping is in flight.")]
         [SerializeField] private SlapKey pingKey;
@@ -79,6 +77,7 @@ namespace PsycheVR.Gameplay
         private bool _footerOverridden;
         private string _tabFooter;   // the tab's own footer, restored when the override ends
         private System.DateTime _pingSentAt;
+        private string _pingResult;   // footer for a reply that landed while another tab showed, until the DSN tab shows it
 
         private void Awake()
         {
@@ -109,7 +108,8 @@ namespace PsycheVR.Gameplay
             if (!(_tabs[DsnIndex] is DsnTab dsn) || !dsn.CanPing) return;
             if (!_state.StartPing(DsnIndex)) return;
             _pingSentAt = System.DateTime.Now;
-            SetKeysLocked(true);
+            _pingResult = null;
+            SetPingKeyLocked(true);
             // a slide in progress still has a ShowCurrent pending: route through a new slide so the
             // ping starts after the DSN tab is shown, never before
             int direction = PingRoute.SlideDirection(_shownTab, DsnIndex, _screen.IsSliding);
@@ -127,6 +127,12 @@ namespace PsycheVR.Gameplay
         {
             SetPower(!IsOn);
         }
+
+        /// <summary>Shows <paramref name="text"/> on the monitor's header pop-up bar.</summary>
+        public void ShowPopup(string text) { if (_screen != null) _screen.ShowPopup(text); }
+
+        /// <summary>Hides the monitor's header pop-up bar.</summary>
+        public void HidePopup() { if (_screen != null) _screen.HidePopup(); }
 
         /// <summary>
         /// Shows <paramref name="text"/> in the footer instead of the current tab's footer; null puts
@@ -196,6 +202,8 @@ namespace PsycheVR.Gameplay
                 else _screen.HideAttract();
             }
             if (_shownTab >= 0) _tabs[_shownTab].Tick(Time.deltaTime);
+            // a ping keeps flying while another tab shows
+            if (_state.PingInFlight && _shownTab != DsnIndex && _tabs[DsnIndex] is DsnTab dsn) dsn.TickPing(Time.deltaTime);
         }
 
         /// <summary>Builds state, screen and tabs once. Logs one error and disables itself if it cannot.</summary>
@@ -213,7 +221,7 @@ namespace PsycheVR.Gameplay
             // remove it so Build never makes a second one.
             if (_screen.Title == null)
                 foreach (Transform child in transform)
-                    if (child.name == CanvasName) { DestroyImmediate(child.gameObject); break; }
+                    if (child.name == MonitorScreen.CanvasName) { DestroyImmediate(child.gameObject); break; }
             _screen.Build(screen, content);
             if (_screen.Title == null) return Fail(null);   // MonitorScreen logged why
 
@@ -236,7 +244,7 @@ namespace PsycheVR.Gameplay
         private void MarkDontSave()
         {
             if (_addedScreen) _screen.hideFlags |= HideFlags.DontSave;
-            Transform canvas = transform.Find(CanvasName);
+            Transform canvas = transform.Find(MonitorScreen.CanvasName);
             if (canvas == null) return;
             foreach (var t in canvas.GetComponentsInChildren<Transform>(true))
             {
@@ -245,7 +253,7 @@ namespace PsycheVR.Gameplay
             }
         }
 
-        /// <summary>A console disabled mid-ping gives everything back: view stopped, keys on, paging free, tab footer.</summary>
+        /// <summary>A console disabled mid-ping gives everything back: view stopped, PING button on, tab footer.</summary>
         private void OnDisable()
         {
             if (_state == null || !_state.PingInFlight) return;
@@ -254,44 +262,59 @@ namespace PsycheVR.Gameplay
             SetFooterOverride(null);
         }
 
-        /// <summary>Starts the ping view once the DSN tab shows; a slide that lands after power off starts nothing.</summary>
+        /// <summary>
+        /// Starts the ping view once the slide to the DSN tab ends; a slide that lands after power off starts
+        /// nothing. Paged away during that slide, the ping still starts and runs in the background.
+        /// </summary>
         private void BeginPing()
         {
-            if (!_state.PingInFlight || _shownTab != DsnIndex) return;
+            if (!_state.PingInFlight) return;
             if (((DsnTab)_tabs[DsnIndex]).BeginPing(OnPingLanded) == null)
             {
                 // no light time after all: give the console back
                 _state.CompletePing();
-                SetKeysLocked(false);
+                SetPingKeyLocked(false);
                 return;
             }
-            SetFooterOverride(content.pingSentLine);
+            if (_shownTab == DsnIndex) SetFooterOverride(content.pingSentLine);
         }
 
         private void OnPingLanded()
         {
             var timeline = ((DsnTab)_tabs[DsnIndex]).Ping.Timeline;
             _state.CompletePing();
-            SetKeysLocked(false);
+            SetPingKeyLocked(false);
             if (timeline == null) return;
             string result = string.Format(CultureInfo.InvariantCulture, content.pingResultFormat,
                 timeline.RoundTripMinutes, timeline.WaitedSeconds);
             string arrival = string.Format(CultureInfo.InvariantCulture, content.pingArrivalFormat,
                 PingTimeline.ArrivalClock(_pingSentAt, timeline.RealRoundTripSeconds * 0.5));
-            SetFooterOverride(result + "\n" + arrival);
+            if (_shownTab == DsnIndex) SetFooterOverride(result + "\n" + arrival);
+            else _pingResult = result + "\n" + arrival;   // landed in the background: shown on the next DSN visit
         }
 
-        /// <summary>Stops the ping view and unlocks the keys (the caller clears the state's ping).</summary>
+        /// <summary>
+        /// The DSN tab just showed: a ping in flight gets its "sent" footer back, a reply that landed in the
+        /// background shows its result once, and otherwise an old finished ping is cleared away.
+        /// </summary>
+        private void ShowPingOnDsn()
+        {
+            var dsn = (DsnTab)_tabs[DsnIndex];
+            if (_state.PingInFlight) SetFooterOverride(content.pingSentLine);
+            else if (_pingResult != null) { SetFooterOverride(_pingResult); _pingResult = null; }
+            else dsn.ClearFinishedPing();
+        }
+
+        /// <summary>Stops the ping view and frees the PING button (the caller clears the state's ping).</summary>
         private void EndPing()
         {
             ((DsnTab)_tabs[DsnIndex]).CancelPing();
-            SetKeysLocked(false);
+            _pingResult = null;
+            SetPingKeyLocked(false);
         }
 
-        private void SetKeysLocked(bool locked)
+        private void SetPingKeyLocked(bool locked)
         {
-            foreach (var key in keyboardKeys)
-                if (key != null) key.enabled = !locked;
             if (pingKey != null) pingKey.enabled = !locked;
         }
 
@@ -319,6 +342,7 @@ namespace PsycheVR.Gameplay
             _footerOverridden = false;   // Show writes the new tab's own footer
             _tabs[current].Show();
             _shownTab = current;
+            if (current == DsnIndex) ShowPingOnDsn();
             _screen.SetDots(current, TabTotal);
             onTabShown.Invoke(current);
         }

@@ -42,6 +42,10 @@ namespace PsycheVR.Gameplay
         private const string CaptionText = "How handoffs work";
         private const string ArrowText = "To Psyche";
         private const string NoteText = "Seen from above the North Pole";
+        // each complex's country on a smaller second line (the banner no longer names them); index-matched
+        // with DsnGeometry.Names: Goldstone, Madrid, Canberra
+        private static readonly string[] Countries = { "California", "Spain", "Australia" };
+        private const string CountryFormat = "{0}\n<size=75%>{1}</size>";
 
         [SerializeField] private RectTransform plot;
         [SerializeField] private RectTransform earth, arrowLabel;
@@ -139,13 +143,12 @@ namespace PsycheVR.Gameplay
             {
                 view.markers[i] = Dot(animated, DsnGeometry.Names[i], MonitorPalette.Mustard, MarkerSize);
                 var label = MonitorScreen.Text(animated, DsnGeometry.Names[i] + "Label", bodyFont, LabelSize, TextAlignmentOptions.Center, MonitorPalette.LightGrey);
-                label.text = DsnGeometry.Names[i];
+                label.text = string.Format(CountryFormat, DsnGeometry.Names[i], Countries[i]);
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                // sized to the word, so the pivot can hug the inside of the rim from any side
-                float width = label.GetPreferredValues(DsnGeometry.Names[i]).x;
+                // sized to the two lines, so the pivot can hug the inside of the rim from any side
                 var lrt = label.rectTransform;
                 lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0.5f);
-                lrt.sizeDelta = new Vector2(width, LabelHeight);
+                lrt.sizeDelta = label.GetPreferredValues(label.text);
                 view.labels[i] = label;
                 view.labelRects[i] = lrt;
             }
