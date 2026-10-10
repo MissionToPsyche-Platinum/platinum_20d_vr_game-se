@@ -59,6 +59,56 @@ Learn more about the real mission: [NASA Psyche Mission](https://science.nasa.go
    adb install build.apk
    ```
 
+For stamped release APKs, use **Tools > Build APK > Event / Story / Both**. Each
+APK embeds its Git short hash, UTC build time, flavor, and incremented Android
+version code in `Assets/Resources/SessionBuildInfo.json`. The generated asset is
+ignored by Git; `session_start` (and subsequent log records) includes `buildStamp`.
+Editor sessions use `editor-unbuilt`. Builds require Git and a valid checkout;
+failed builds may consume a version code. Retain the increased Android version
+code in `ProjectSettings/ProjectSettings.asset` when sharing build state.
+
+Run **Tools > Session Logs > Check Build Stamps** in Edit mode to verify both
+flavors' generated Resources assets, successive version codes, and JSONL stamps.
+The check restores the previous asset and version code. For final device
+verification, build two APKs using the menu, confirm that their Android version
+codes increase, and compare each APK's first session log stamp with its build
+output. Direct **Build and Run** does not generate a fresh stamp.
+
+To enable session uploads (TG-285), create the ignored local file
+`Psyche VR Experience/UserSettings/SessionUpload.local.json` with `endpointUrl`
+(the HTTPS TG-280 endpoint) and `token`. **Tools > Build APK** copies it into an
+ignored Resources asset. **Tools > Session Logs > Refresh Local Upload Configuration**
+refreshes it for Editor testing. Missing or invalid configuration removes any stale
+asset and disables uploads with a warning; local logging continues.
+
+`SessionLogUploader.UploadPending()` starts one asynchronous upload pass and returns
+false when disabled or already uploading. Startup automatically attempts one pass.
+The admin menu can read `IsEnabled`, `IsUploading`, `PendingCount` (-1 if the log
+directory cannot be read), and `LastResult`. TG-269 supplies the menu button.
+Successful HTTP responses must contain the TG-280 acknowledgment `{"ok":true}`;
+rejections and network failures remain pending for the next pass or app launch.
+A `.sent` sidecar stores the acknowledged content hash, so newly appended events
+become pending again. Original logs remain on the headset. Uploads use `SessionDeviceName.Current`, defaulting to Unity's device name.
+The TG-269 menu can call `SessionDeviceName.Set(name)` to save an operator-assigned
+name on this headset. Names are trimmed and limited to 256 characters; longer
+values throw `ArgumentException` without changing the saved name. Null or blank
+resets to the Unity default. `PlayerPrefs.Save()` persists each change across app
+restarts. Each `session_start` captures the name at session creation; uploads use
+the current name without rewriting historical logs. Run **Tools > Session Logs >
+Check Device Name** to verify naming and serialization while preserving your setting.
+
+Run **Tools > Session Logs > Check Upload Storage** for offline checks of payloads,
+acknowledgments, receipts, and configuration validation.
+
+Event-mode session logs record `kiosk_first_input` when the visitor starts the
+clock, then either `kiosk_puzzle_completed` or `kiosk_clock_expired`, whichever
+ends the timed portion first. The `details` field contains `elapsedSeconds=N`,
+measured by the kiosk clock since first input (excluding armed time and pauses).
+The top-level `elapsedSeconds` remains time since the log file opened. Completion
+before first input records zero kiosk seconds. Repeated callbacks and completion
+after timeout do not add another outcome; Story mode emits none of these events.
+Run **Tools > Session Logs > Check Kiosk Outcomes** for the transition/logging checks.
+
 For detailed Quest deployment guidance, see the [Unity Meta Quest documentation](https://docs.unity3d.com/Manual/xr-meta-quest.html).
 
 ## Project Structure

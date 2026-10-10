@@ -94,6 +94,9 @@ namespace PsycheVR.Modes.Editor
                 if (!TryWriteDefaultMode(mode))
                     return false;
 
+                SessionBuildPreparation.Prepare(mode);
+                SessionUploadPreparation.RefreshUploadConfig();
+
                 Debug.Log($"{LogPrefix} Building {mode} flavor -> {outputPath}");
 
                 var options = new BuildPlayerOptions
