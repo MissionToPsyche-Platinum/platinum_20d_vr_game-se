@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using PsycheVR.Audio;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -92,6 +93,7 @@ namespace PsycheVR.Gameplay
             if (page.IsFlipped != _flippedAtGrab)
             {
                 InteractionAudio.Play(InteractionSound.PageTurn, page.transform.position);
+                SessionEvents.Interaction("page_turned", this, "page=" + page.name + ";forward=" + (page.IsFlipped ? "true" : "false"));
             }
             RefreshInteractablePages();
         }

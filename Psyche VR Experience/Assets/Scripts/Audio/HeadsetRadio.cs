@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using PsycheVR.Data;
 
 namespace PsycheVR.Audio
 {
@@ -34,8 +35,12 @@ namespace PsycheVR.Audio
         [Tooltip("Volume change per second, so grabbing and letting go fade instead of cutting.")]
         [SerializeField] private float fadePerSecond = 2.5f;
 
+        /// <summary>Closeness (0 at arm's length, 1 at the ear) that counts as putting the headset on.</summary>
+        private const float AtEarCloseness = 0.85f;
+
         private AudioSource _source;
         private bool _wasHeld;
+        private bool _loggedAtEar;
 
         private void Awake()
         {
@@ -61,7 +66,10 @@ namespace PsycheVR.Audio
         {
             bool held = grabbable != null && grabbable.isSelected;
             if (held && !_wasHeld)
+            {
                 _source.Stop();   // each pick-up starts the transmissions from the first one
+                _loggedAtEar = false;
+            }
             _wasHeld = held;
 
             float target = TargetVolume();
@@ -84,6 +92,11 @@ namespace PsycheVR.Audio
 
             float distance = Vector3.Distance(transform.position, headTransform.position);
             float closeness = Mathf.InverseLerp(farDistance, nearDistance, distance);
+            if (closeness >= AtEarCloseness && !_loggedAtEar)
+            {
+                _loggedAtEar = true;
+                SessionEvents.Interaction("headset_to_ear", this);
+            }
             // Equal steps in decibels: linear volume would jump early and flatten out near the ear.
             return heldVolume * Mathf.Pow(nearHeadVolume / heldVolume, closeness);
         }

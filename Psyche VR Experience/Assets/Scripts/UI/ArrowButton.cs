@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using PsycheVR.Audio;
+using PsycheVR.Data;
 
-public class ArrowButton : MonoBehaviour
+public class ArrowButton : MonoBehaviour, ISessionInteractable
 {
     public InstructionTextManager manager;
 
@@ -41,6 +42,7 @@ public class ArrowButton : MonoBehaviour
     public void Press()
     {
         if (manager == null) return;
+        SessionEvents.Interaction("instructions_paged", this, "direction=" + (CompareTag("next_button") ? "next" : "back"));
 
         if (CompareTag("next_button"))
         {

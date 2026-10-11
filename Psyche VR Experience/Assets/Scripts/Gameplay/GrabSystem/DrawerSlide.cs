@@ -4,6 +4,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using PsycheVR.Audio;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -29,7 +30,7 @@ namespace PsycheVR.Gameplay
     /// with an overlap query instead of contacts.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class DrawerSlide : MonoBehaviour
+    public class DrawerSlide : MonoBehaviour, ISessionInteractable
     {
         [Tooltip("Shared grab settings asset (the Drawers section).")]
         [SerializeField] private GrabSettings grabSettings;
@@ -215,6 +216,7 @@ namespace PsycheVR.Gameplay
         private void OnGrab(SelectEnterEventArgs args)
         {
             _holder = args.interactorObject;
+            SessionEvents.Interaction("drawer_grabbed", this);
             _grabHandCoord = AxisCoord(HandPosition());
             _grabOffset = _offset;
             _velocity = 0f;
@@ -386,10 +388,12 @@ namespace PsycheVR.Gameplay
             if (target <= 0f && _offset > 0f)
             {
                 PlayStop(InteractionSound.DrawerStopClosed);
+                SessionEvents.Interaction("drawer_closed", this);
             }
             else if (target >= maxOpen && _offset < maxOpen)
             {
                 PlayStop(InteractionSound.DrawerStopOpen);
+                SessionEvents.Interaction("drawer_opened", this);
             }
 
             if (target <= 0f)

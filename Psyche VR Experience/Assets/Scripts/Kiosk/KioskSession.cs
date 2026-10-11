@@ -218,8 +218,12 @@ namespace PsycheVR.Kiosk
         private void RecordOutcome(string eventName)
         {
             if (GameModeManager.ActiveMode == GameMode.Event)
+            {
                 SessionDataLogger.LogEvent(eventName,
                     "elapsedSeconds=" + _elapsedSeconds.ToString("0.###", CultureInfo.InvariantCulture));
+                if (eventName != "kiosk_first_input")
+                    SessionLogUploader.RequestUpload();   // the visitor's result goes up as soon as it is known
+            }
         }
 
         /// <summary>

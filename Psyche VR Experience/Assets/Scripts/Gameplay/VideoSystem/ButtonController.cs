@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Data;
 
-public class ButtonController : MonoBehaviour
+public class ButtonController : MonoBehaviour, ISessionInteractable
 {
     public Transform buttonTop;
     public float pressDistance = 0.01f;
@@ -154,6 +155,7 @@ public class ButtonController : MonoBehaviour
             _interactable.enabled = false; //Prevent double pressing
         }
 
+        SessionEvents.Interaction("video_button_pressed", this);
         StartVideo();
         StartCoroutine(AnimateButton());
     }

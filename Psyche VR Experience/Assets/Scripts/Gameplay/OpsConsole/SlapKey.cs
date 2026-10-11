@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using PsycheVR.Audio;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -31,7 +32,7 @@ namespace PsycheVR.Gameplay
     /// a non-uniformly scaled parent (the message board's buttons), as long as the cap is not rotated
     /// against that scale.
     /// </summary>
-    public class SlapKey : MonoBehaviour
+    public class SlapKey : MonoBehaviour, ISessionInteractable
     {
         [Tooltip("The moving part. Defaults to this transform.")]
         [SerializeField] private Transform cap;
@@ -220,6 +221,7 @@ namespace PsycheVR.Gameplay
             _lastPress = Time.time;
             _anim = 0f;
             InteractionAudio.Play(InteractionSound.ButtonPress, transform.position);
+            SessionEvents.Interaction("key_pressed", this);
             onPressed.Invoke();
         }
 

@@ -1,8 +1,9 @@
 
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using PsycheVR.Data;
 
-public class ResetPieces : MonoBehaviour
+public class ResetPieces : MonoBehaviour, ISessionInteractable
 {
     private SnappableObject[] pieces;
     private UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable interactable;
@@ -40,6 +41,7 @@ public class ResetPieces : MonoBehaviour
     public void Press()
     {
         if (pieces == null) return;
+        SessionEvents.Interaction("puzzle_reset", this);
         foreach (SnappableObject piece in pieces)
         {
             if (piece != null && !piece.isSnapped)

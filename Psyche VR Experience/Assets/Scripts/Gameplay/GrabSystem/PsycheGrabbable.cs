@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -33,7 +34,7 @@ namespace PsycheVR.Gameplay
     /// and the desk top.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class PsycheGrabbable : XRGrabInteractable
+    public class PsycheGrabbable : XRGrabInteractable, ISessionInteractable
     {
         [Header("Psyche VR")]
         [Tooltip("Shared grab settings asset. Must be assigned.")]
@@ -46,6 +47,8 @@ namespace PsycheVR.Gameplay
         [SerializeField] private bool holdWhereGrabbed;
 
         private Rigidbody _rb;
+        private float _grabbedAt;   // unscaled time of the first hand's grab, for the session log
+        private string _sessionId;  // session log name, read before the grab moves the object out of its room
         private GrabProfile _profile;
         private bool _pullingIn;
         private readonly List<Collider> _gated = new List<Collider>();
@@ -226,7 +229,16 @@ namespace PsycheVR.Gameplay
         /// <inheritdoc />
         protected override void OnSelectEntered(SelectEnterEventArgs args)
         {
+            if (!isSelected)
+                _sessionId = SessionEvents.ObjectId(this);
+
             base.OnSelectEntered(args);
+
+            if (interactorsSelecting.Count == 1)   // a hand-to-hand handover is not a new grab
+            {
+                _grabbedAt = Time.unscaledTime;
+                SessionEvents.Interaction("object_grabbed", _sessionId);
+            }
 
             if (args.interactorObject is XRBaseInputInteractor holder)
             {
@@ -249,6 +261,7 @@ namespace PsycheVR.Gameplay
 
             if (!isSelected)
             {
+                SessionEvents.Interaction("object_released", _sessionId, "heldSeconds=" + SessionEvents.Seconds(Time.unscaledTime - _grabbedAt));
                 UngateColliders();
                 SetPressed(false);
                 _contactScore = 0f;

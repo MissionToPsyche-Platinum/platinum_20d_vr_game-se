@@ -2,6 +2,7 @@ using System.Globalization;
 using PsycheVR.OpsConsole.Core;
 using UnityEngine;
 using UnityEngine.Events;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -88,13 +89,21 @@ namespace PsycheVR.Gameplay
         /// <summary>Shows the next tab, wrapping to the first. Ignored while off.</summary>
         public void NextTab()
         {
-            if (_state != null && _state.Next()) Turn(+1);
+            if (_state != null && _state.Next())
+            {
+                Turn(+1);
+                SessionEvents.Interaction("console_tab_changed", this, "direction=next");
+            }
         }
 
         /// <summary>Shows the previous tab, wrapping to the last. Ignored while off.</summary>
         public void PreviousTab()
         {
-            if (_state != null && _state.Previous()) Turn(-1);
+            if (_state != null && _state.Previous())
+            {
+                Turn(-1);
+                SessionEvents.Interaction("console_tab_changed", this, "direction=back");
+            }
         }
 
         /// <summary>
@@ -107,6 +116,7 @@ namespace PsycheVR.Gameplay
             if (_state == null || !_state.IsOn || _state.PingInFlight) return;
             if (!(_tabs[DsnIndex] is DsnTab dsn) || !dsn.CanPing) return;
             if (!_state.StartPing(DsnIndex)) return;
+            SessionEvents.Interaction("ping_sent", this);
             _pingSentAt = System.DateTime.Now;
             _pingResult = null;
             SetPingKeyLocked(true);
@@ -126,6 +136,7 @@ namespace PsycheVR.Gameplay
         public void TogglePower()
         {
             SetPower(!IsOn);
+            SessionEvents.Interaction("console_power", this, "on=" + (IsOn ? "true" : "false"));
         }
 
         /// <summary>Shows <paramref name="text"/> on the monitor's header pop-up bar.</summary>
@@ -284,6 +295,7 @@ namespace PsycheVR.Gameplay
             var timeline = ((DsnTab)_tabs[DsnIndex]).Ping.Timeline;
             _state.CompletePing();
             SetPingKeyLocked(false);
+            SessionEvents.Interaction("ping_returned", this);
             if (timeline == null) return;
             string result = string.Format(CultureInfo.InvariantCulture, content.pingResultFormat,
                 timeline.RoundTripMinutes, timeline.WaitedSeconds);

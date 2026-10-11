@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using PsycheVR.Audio;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -189,6 +190,7 @@ namespace PsycheVR.Gameplay
                 _holder.SendHapticImpulse(crumpleHapticIntensity, crumpleHapticDuration);
 
             InteractionAudio.Play(InteractionSound.PaperCrumple, transform.position);
+            SessionEvents.Interaction("paper_crumpled", this);
 
             Crumpled?.Invoke(this);
         }

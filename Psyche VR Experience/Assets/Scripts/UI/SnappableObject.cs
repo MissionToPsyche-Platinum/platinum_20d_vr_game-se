@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit;
 using PsycheVR.Audio;
+using PsycheVR.Data;
 
-public class SnappableObject : MonoBehaviour
+public class SnappableObject : MonoBehaviour, ISessionInteractable
 {
     public Transform snapPoint;
     public bool isSnapped;
@@ -36,6 +37,7 @@ public class SnappableObject : MonoBehaviour
         if (!isSnapped)
         {
             InteractionAudio.Play(InteractionSound.PuzzleSnap, transform.position);
+            SessionEvents.Interaction("puzzle_piece_placed", this, "zone=" + SessionEvents.ObjectId(snapAnchor));
         }
         isSnapped = true;
     }
