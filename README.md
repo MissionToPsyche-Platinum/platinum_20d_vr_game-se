@@ -187,3 +187,4 @@ All work is tracked in Taiga. See [CONTRIBUTING.md](CONTRIBUTING.md) for our bra
 - **Dr. Cassie Bowman** -- Project Sponsor, NASA Psyche Mission, ASU
 - **NASA Psyche Mission** -- [science.nasa.gov/mission/psyche](https://science.nasa.gov/mission/psyche/)
 - **Arizona State University** -- School of Computing and Augmented Intelligence
+- **Third-party models, sounds and fonts** -- see [CREDITS.md](CREDITS.md)

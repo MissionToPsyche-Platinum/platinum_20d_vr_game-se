@@ -75,7 +75,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84d29e4d8e2a48c8876060d1284b2690, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Kiosk.KioskSession
-  sessionSeconds: 180
+  sessionSeconds: 150
   launchVideo: {fileID: 0}
   puzzle: {fileID: 7200000000000000004}
   cameraTransform: {fileID: 0}
