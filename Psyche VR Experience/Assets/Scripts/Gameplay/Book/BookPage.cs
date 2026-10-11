@@ -7,7 +7,9 @@ namespace PsycheVR.Gameplay
 {
     /// <summary>
     /// Interactive book page using the XRLever pattern.
-    /// Drives localRotation directly from hand position — no physics, no joints.
+    /// Drives localRotation directly from hand movement — no physics, no joints. The page's
+    /// outer edge follows the hand 1:1 from wherever it was grabbed, so a pinch near the
+    /// spine turns the page as far as one at the edge.
     /// </summary>
     public class BookPage : XRBaseInteractable
     {
@@ -75,7 +77,11 @@ namespace PsycheVR.Gameplay
         private float targetAngle;
         private float angleVelocity;
         private bool isAnimating;
-        private float grabAngleOffset; // delta between hand angle and page angle at grab start
+        private float grabAngleOffset; // delta between edge-target angle and page angle at grab start
+        private float lastRawAngle; // unwrapped target angle from the previous frame
+        private Vector3 grabHandStartParent; // hand position in parent space at grab start
+        private Vector3 grabEdgeStartParent; // page edge grip point in parent space at grab start
+        private BoxCollider pageCollider;
         private float smoothedAngularVelocity; // smoothed degrees/sec during grab
         private float grabSmoothVelocity; // SmoothDamp velocity buffer for grab tracking
         private Quaternion initialLocalRotation;
@@ -96,6 +102,7 @@ namespace PsycheVR.Gameplay
             // Register own collider BEFORE base.Awake() so XRI skips auto-discovery
             // and doesn't claim parent's (spine) colliders for this interactable.
             var col = GetComponent<Collider>();
+            pageCollider = col as BoxCollider;
             if (col != null)
             {
                 colliders.Clear();
@@ -136,12 +143,10 @@ namespace PsycheVR.Gameplay
 
         private void UpdateGrabAngle()
         {
-            float handAngle = ComputeHandAngle(interactorsSelecting[0]);
-            float rawAngle = handAngle - grabAngleOffset;
-
-            // Prevent wrap-around snap when hand crosses the 0/180 boundary.
-            if (rawAngle < minAngle - 10f || rawAngle > maxAngle + 10f)
-                rawAngle = currentAngle > (minAngle + maxAngle) / 2f ? maxAngle : minAngle;
+            // Unwrap so crossing the +-180 boundary behind the spine does not jump the page.
+            float edgeAngle = ComputeEdgeTargetAngle(interactorsSelecting[0]);
+            lastRawAngle += Mathf.DeltaAngle(lastRawAngle, edgeAngle);
+            float rawAngle = lastRawAngle - grabAngleOffset;
 
             float targetGrabAngle = Mathf.Clamp(rawAngle, minAngle, maxAngle);
 
@@ -165,21 +170,54 @@ namespace PsycheVR.Gameplay
         }
 
         /// <summary>
-        /// Compute the absolute angle of the hand relative to the spine edge
-        /// on the hinge plane. Returns degrees.
+        /// Middle of the page's outer edge (the edge opposite the spine), in world space.
+        /// The pinching hand is drawn here, and hand motion drives this point.
         /// </summary>
-        private float ComputeHandAngle(IXRSelectInteractor interactor)
+        public Vector3 EdgeGripPoint => transform.TransformPoint(EdgeGripLocal());
+
+        private Vector3 EdgeGripLocal()
         {
-            Vector3 handPos = interactor.GetAttachTransform(this).position;
+            if (pageCollider == null)
+                return -pivotOffset;
 
-            // Direction from spine edge to hand, in parent's local space.
-            Vector3 pivotToHand = transform.parent.InverseTransformPoint(handPos)
-                                  - spineEdgeParent;
+            // From the spine edge to the collider centre, minus the hinge and thickness
+            // components, is the page's width direction; the outer edge is half the
+            // collider's width beyond the centre along it.
+            Vector3 centre = pageCollider.center;
+            Vector3 size = pageCollider.size;
+            Vector3 localHinge = Quaternion.Inverse(initialLocalRotation) * hingeAxis;
+            Vector3 across = centre - pivotOffset;
+            across -= Vector3.Dot(across, localHinge) * localHinge;
+            int thin = size.x < size.y ? (size.x < size.z ? 0 : 2) : (size.y < size.z ? 1 : 2);
+            across[thin] = 0f;
+            if (across.sqrMagnitude < 1e-8f)
+                return -pivotOffset;
 
-            // Project onto the plane perpendicular to the hinge axis.
-            float h = Vector3.Dot(pivotToHand, hingeAxis);
-            Vector3 projected = pivotToHand - h * hingeAxis;
-            if (projected.sqrMagnitude < 0.0001f) return currentAngle + grabAngleOffset;
+            across.Normalize();
+            float halfWidth = 0.5f * Mathf.Abs(Vector3.Dot(Vector3.Scale(across, size), across));
+            return centre + across * halfWidth;
+        }
+
+        /// <summary>
+        /// Angle of the point the page edge should reach: the edge grip point at grab start,
+        /// moved by exactly as far as the hand has moved since. The hand position is the
+        /// interactor's own transform, not its attach point, which a far grab puts at the
+        /// ray hit and the pinching hand model drags along with the page. Degrees.
+        /// </summary>
+        private float ComputeEdgeTargetAngle(IXRSelectInteractor interactor)
+        {
+            Vector3 hand = transform.parent.InverseTransformPoint(interactor.transform.position);
+            return AngleAroundSpine(grabEdgeStartParent + (hand - grabHandStartParent));
+        }
+
+        /// <summary>Angle of a parent-space point around the spine edge on the hinge plane. Degrees.</summary>
+        private float AngleAroundSpine(Vector3 pointParent)
+        {
+            Vector3 pivotToPoint = pointParent - spineEdgeParent;
+            float h = Vector3.Dot(pivotToPoint, hingeAxis);
+            Vector3 projected = pivotToPoint - h * hingeAxis;
+            if (projected.sqrMagnitude < 0.0001f)
+                return lastRawAngle;
             projected.Normalize();
 
             float y = Vector3.Dot(projected, perpendicularDir);
@@ -237,10 +275,12 @@ namespace PsycheVR.Gameplay
             smoothedAngularVelocity = 0f;
             grabSmoothVelocity = 0f;
 
-            // Cache the offset between where the hand is and where the page is,
-            // so the page starts moving immediately with no jump or dead zone.
-            float handAngle = ComputeHandAngle(args.interactorObject);
-            grabAngleOffset = handAngle - currentAngle;
+            // The edge follows the hand's movement from here on; the offset absorbs any
+            // difference between the edge's measured angle and the page's own angle.
+            grabHandStartParent = transform.parent.InverseTransformPoint(args.interactorObject.transform.position);
+            grabEdgeStartParent = transform.parent.InverseTransformPoint(EdgeGripPoint);
+            lastRawAngle = AngleAroundSpine(grabEdgeStartParent);
+            grabAngleOffset = lastRawAngle - currentAngle;
 
             pageManager?.OnPageGrabbed(this);
         }

@@ -5834,26 +5834,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2568684638335630332, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -2.293
-      objectReference: {fileID: 0}
-    - target: {fileID: 4295604933242444315, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.836
-      objectReference: {fileID: 0}
-    - target: {fileID: 4295604933242444315, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -1.303
-      objectReference: {fileID: 0}
-    - target: {fileID: 4430021696848729451, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.802
-      objectReference: {fileID: 0}
-    - target: {fileID: 4430021696848729451, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.509
-      objectReference: {fileID: 0}
     - target: {fileID: 6802984766354693686, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
       propertyPath: m_Name
       value: Event_Room
@@ -5868,7 +5848,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7304108512264773847, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.41
+      value: 0.72
       objectReference: {fileID: 0}
     - target: {fileID: 7304108512264773847, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5969,6 +5949,21 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
     - targetCorrespondingSourceObject: {fileID: 858761638387314320, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 8156729117074008709, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 4536316278188600268, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 4820621886403761556, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 946024632913827037, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 2883092384713209288, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: e93bc2d59d9f79b4c864d9febca2cc7e, type: 3}

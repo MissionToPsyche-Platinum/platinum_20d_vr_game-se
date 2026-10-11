@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using PsycheVR.Audio;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -20,6 +22,7 @@ namespace PsycheVR.Gameplay
 
         private PsycheGrabbable _grabbable;
         private bool _isBookHeld;
+        private bool _flippedAtGrab;
 
         /// <summary>
         /// When true, auto-open animation is in progress.
@@ -69,12 +72,29 @@ namespace PsycheVR.Gameplay
             SetAllPagesEnabled(false);
         }
 
-        /// <summary>Called by BookPage on grab. Hook for future features.</summary>
-        public void OnPageGrabbed(BookPage page) { }
+        private void Update()
+        {
+            // A far grab switches the book's colliders off for the pull-in and PsycheGrabbable
+            // switches them all back on when the book arrives, spine collider included. Keep it
+            // off for as long as the book is held, or the other hand can take the spine.
+            if (_isBookHeld && bookGrabCollider != null && bookGrabCollider.enabled)
+                bookGrabCollider.enabled = false;
+        }
 
-        /// <summary>Called by BookPage after release. Refreshes interactable state.</summary>
+        /// <summary>Called by BookPage on grab. Remembers which side the page started on.</summary>
+        public void OnPageGrabbed(BookPage page)
+        {
+            _flippedAtGrab = page.IsFlipped;
+        }
+
+        /// <summary>Called by BookPage after release. Plays the turn if the page changed sides, then refreshes interactable state.</summary>
         public void OnPageReleased(BookPage page)
         {
+            if (page.IsFlipped != _flippedAtGrab)
+            {
+                InteractionAudio.Play(InteractionSound.PageTurn, page.transform.position);
+                SessionEvents.Interaction("page_turned", this, "page=" + page.name + ";forward=" + (page.IsFlipped ? "true" : "false"));
+            }
             RefreshInteractablePages();
         }
 

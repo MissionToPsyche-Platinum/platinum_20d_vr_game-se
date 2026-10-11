@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Data;
 
 namespace PsycheVR.VR
 {
@@ -61,6 +62,7 @@ namespace PsycheVR.VR
             if (_activeRoutine != null)
                 StopCoroutine(_activeRoutine);
 
+            SessionEvents.Interaction("teleported", anchor);
             _activeRoutine = StartCoroutine(TeleportRoutine(anchor));
         }
 

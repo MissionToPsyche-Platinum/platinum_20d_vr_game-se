@@ -135,8 +135,10 @@ public static class BookSetupEditor
         SizeColliderToChildren(spinePivot, bookCollider);
         SetExplicitColliders(grabbable, bookCollider);
 
-        if (spinePivot.GetComponent<BookGravityToggle>() == null)
-            spinePivot.gameObject.AddComponent<BookGravityToggle>();
+        // Gravity and throw feel come from the Book grab profile, not a separate component.
+        var profileSo = new SerializedObject(grabbable);
+        profileSo.FindProperty("profile").enumValueIndex = (int)GrabProfileKind.Book;
+        profileSo.ApplyModifiedPropertiesWithoutUndo();
 
         return bookCollider;
     }

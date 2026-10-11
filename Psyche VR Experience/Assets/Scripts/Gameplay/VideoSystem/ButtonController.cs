@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Data;
 
-public class ButtonController : MonoBehaviour
+public class ButtonController : MonoBehaviour, ISessionInteractable
 {
     public Transform buttonTop;
     public float pressDistance = 0.01f;
@@ -35,6 +36,9 @@ public class ButtonController : MonoBehaviour
     private readonly List<Transform> _hands = new List<Transform>();
     private readonly Dictionary<Transform, Vector3> _lastHandPositions = new Dictionary<Transform, Vector3>();
     private float _lastSlapTime = -Mathf.Infinity;
+
+    private const float SlapHapticIntensity = 0.5f;
+    private const float SlapHapticDuration = 0.06f;
     private float _nextHandRefreshTime = -Mathf.Infinity;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -123,6 +127,9 @@ public class ButtonController : MonoBehaviour
             {
                 _lastSlapTime = Time.time;
                 PressButton();
+                // Haptic pulse on the hand that slapped it.
+                var slapper = hand.GetComponent<NearFarInteractor>();
+                if (slapper != null) slapper.SendHapticImpulse(SlapHapticIntensity, SlapHapticDuration);
                 break;
             }
         }
@@ -148,6 +155,7 @@ public class ButtonController : MonoBehaviour
             _interactable.enabled = false; //Prevent double pressing
         }
 
+        SessionEvents.Interaction("video_button_pressed", this);
         StartVideo();
         StartCoroutine(AnimateButton());
     }

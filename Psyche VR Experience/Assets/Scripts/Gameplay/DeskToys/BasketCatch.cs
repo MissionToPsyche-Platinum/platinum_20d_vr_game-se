@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -14,7 +15,7 @@ namespace PsycheVR.Gameplay
     /// No sound yet: the landing clip belongs to the second audio pass (TG-265).
     /// </summary>
     [RequireComponent(typeof(Collider))]
-    public class BasketCatch : MonoBehaviour
+    public class BasketCatch : MonoBehaviour, ISessionInteractable
     {
         [Header("Haptics")]
         [Tooltip("Haptic intensity on the throwing controller when a ball lands. Lighter than the grab pulse.")]
@@ -50,6 +51,8 @@ namespace PsycheVR.Gameplay
             if (!_inside.Add(body))
                 return;
 
+            SessionEvents.Interaction("ball_in_basket", body, "basket=" + SessionEvents.ObjectId(this));
+
             if (thrower != null)
                 thrower.SendHapticImpulse(landingHapticIntensity, landingHapticDuration);
 
@@ -80,11 +83,8 @@ namespace PsycheVR.Gameplay
                 return true;
             }
 
-            if (body.GetComponent<BasketballPhysics>() == null)
-                return false;
-
             PsycheGrabbable grabbable = body.GetComponent<PsycheGrabbable>();
-            if (grabbable == null || grabbable.isSelected)
+            if (grabbable == null || grabbable.Profile != GrabProfileKind.Ball || grabbable.isSelected)
                 return false;
 
             thrower = grabbable.LastHolder;

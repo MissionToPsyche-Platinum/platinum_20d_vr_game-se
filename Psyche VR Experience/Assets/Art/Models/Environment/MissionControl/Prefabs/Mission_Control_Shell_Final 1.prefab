@@ -10626,7 +10626,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6122470550533146502}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: f6a3aee17ebd3d841bef631c6bb459e6, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: 4b21dc27553886717903ca8e728db813, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
@@ -16356,20 +16356,20 @@ PrefabInstance:
     - {fileID: 3746101167739964186, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
-      insertIndex: 1
+      insertIndex: -1
       addedObject: {fileID: 2928802613805292062}
     - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
-      insertIndex: 2
-      addedObject: {fileID: 6926080343775266372}
-    - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
-      insertIndex: 3
-      addedObject: {fileID: 8558712111498561404}
-    - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
-      insertIndex: 4
+      insertIndex: -1
       addedObject: {fileID: 1289763176156857549}
     - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
-      insertIndex: 5
+      insertIndex: -1
+      addedObject: {fileID: 8558712111498561404}
+    - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 2638230949316228273}
+    - targetCorrespondingSourceObject: {fileID: 8123108456117229809, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6926080343775266372}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5894f4db0a8830e43b6dd8e56b9decb7, type: 3}
 --- !u!4 &7133160080089134588 stripped

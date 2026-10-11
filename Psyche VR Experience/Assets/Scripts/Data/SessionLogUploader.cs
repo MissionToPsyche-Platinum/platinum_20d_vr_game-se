@@ -8,10 +8,20 @@ using UnityEngine.Networking;
 
 namespace PsycheVR.Data
 {
-    /// <summary>One attempt per pending snapshot on demand, and one pass at startup.</summary>
+    /// <summary>
+    /// Sends every new or grown session file: once at startup, on demand, and every
+    /// <see cref="PeriodicSeconds"/> while running. <see cref="RequestUpload"/> is the trigger the
+    /// logger uses at moments a visitor's data must not wait for the next launch (headset off,
+    /// visitor finished, session restarted); a request that arrives mid-pass runs right after it.
+    /// </summary>
     public sealed class SessionLogUploader : MonoBehaviour
     {
+        /// <summary>Seconds between automatic passes while the app runs.</summary>
+        private const float PeriodicSeconds = 180f;
+
         private static SessionLogUploader instance;
+        private bool rerunWanted;
+        private float nextPeriodic;
         private SessionUploadConfig config;
         private bool busy;
         private bool attemptedUpload;
@@ -67,6 +77,23 @@ namespace PsycheVR.Data
             // Logger bootstrap finishes before the startup pass, regardless of Start order.
             yield return null;
             if (!attemptedUpload) UploadPending();
+        }
+
+        /// <summary>
+        /// Starts a pass now, or right after the current one finishes. Unlike
+        /// <see cref="UploadPending"/> it is never dropped while a pass is running.
+        /// </summary>
+        public static void RequestUpload()
+        {
+            if (!UploadPending() && instance != null && instance.config != null)
+                instance.rerunWanted = true;
+        }
+
+        private void Update()
+        {
+            if (config == null || Time.unscaledTime < nextPeriodic) return;
+            nextPeriodic = Time.unscaledTime + PeriodicSeconds;
+            if (attemptedUpload) RequestUpload();
         }
 
         /// <summary>Starts an asynchronous pass; returns false if disabled or already busy.</summary>
@@ -127,7 +154,17 @@ namespace PsycheVR.Data
                 }
                 lastResult = $"Uploaded {sent}; failed {failed}; pending {PendingCount}.";
             }
-            finally { activeRequest = null; busy = false; }
+            finally
+            {
+                activeRequest = null;
+                busy = false;
+                nextPeriodic = Time.unscaledTime + PeriodicSeconds;
+            }
+            if (rerunWanted)
+            {
+                rerunWanted = false;
+                UploadPending();
+            }
         }
 
         private void OnDestroy()
