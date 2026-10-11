@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit;
+using PsycheVR.Audio;
 
 public class SnappableObject : MonoBehaviour
 {
@@ -32,6 +33,10 @@ public class SnappableObject : MonoBehaviour
         Vector3 positionDelta = snapAnchor.position - snapPoint.position;
         transform.position += positionDelta;
 
+        if (!isSnapped)
+        {
+            InteractionAudio.Play(InteractionSound.PuzzleSnap, transform.position);
+        }
         isSnapped = true;
     }
 

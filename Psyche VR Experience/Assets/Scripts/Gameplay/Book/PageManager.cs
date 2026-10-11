@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using PsycheVR.Audio;
 
 namespace PsycheVR.Gameplay
 {
@@ -20,6 +21,7 @@ namespace PsycheVR.Gameplay
 
         private PsycheGrabbable _grabbable;
         private bool _isBookHeld;
+        private bool _flippedAtGrab;
 
         /// <summary>
         /// When true, auto-open animation is in progress.
@@ -78,12 +80,19 @@ namespace PsycheVR.Gameplay
                 bookGrabCollider.enabled = false;
         }
 
-        /// <summary>Called by BookPage on grab. Hook for future features.</summary>
-        public void OnPageGrabbed(BookPage page) { }
+        /// <summary>Called by BookPage on grab. Remembers which side the page started on.</summary>
+        public void OnPageGrabbed(BookPage page)
+        {
+            _flippedAtGrab = page.IsFlipped;
+        }
 
-        /// <summary>Called by BookPage after release. Refreshes interactable state.</summary>
+        /// <summary>Called by BookPage after release. Plays the turn if the page changed sides, then refreshes interactable state.</summary>
         public void OnPageReleased(BookPage page)
         {
+            if (page.IsFlipped != _flippedAtGrab)
+            {
+                InteractionAudio.Play(InteractionSound.PageTurn, page.transform.position);
+            }
             RefreshInteractablePages();
         }
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using PsycheVR.Audio;
 
 namespace PsycheVR.Gameplay
 {
@@ -63,6 +64,7 @@ namespace PsycheVR.Gameplay
 
             _velocities = new float[totalPages];
             _state = State.Opening;
+            InteractionAudio.Play(InteractionSound.BookOpen, transform.position);
             _pageManager.IsAutoOpening = true;
 
             // Force-disable pages now in case PageManager's listener already
@@ -77,6 +79,7 @@ namespace PsycheVR.Gameplay
 
             _velocities = new float[totalPages];
             _state = State.Closing;
+            InteractionAudio.Play(InteractionSound.BookClose, transform.position);
             _pageManager.IsAutoOpening = false;
         }
 

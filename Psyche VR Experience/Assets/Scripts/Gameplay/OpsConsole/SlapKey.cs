@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using PsycheVR.Audio;
 
 namespace PsycheVR.Gameplay
 {
@@ -218,6 +219,7 @@ namespace PsycheVR.Gameplay
             _armed = false;
             _lastPress = Time.time;
             _anim = 0f;
+            InteractionAudio.Play(InteractionSound.ButtonPress, transform.position);
             onPressed.Invoke();
         }
 

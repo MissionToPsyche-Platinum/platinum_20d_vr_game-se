@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using PsycheVR.Audio;
 
 public class ArrowButton : MonoBehaviour
 {
@@ -29,7 +30,12 @@ public class ArrowButton : MonoBehaviour
         }
     }
 
-    private void OnClicked(SelectEnterEventArgs args) => Press();
+    private void OnClicked(SelectEnterEventArgs args)
+    {
+        // a slap reaches Press() through SlapKey, which plays its own press sound
+        InteractionAudio.Play(InteractionSound.ButtonPress, transform.position);
+        Press();
+    }
 
     /// <summary>Pages the instructions; called by a select or, on the event board, by a slap (SlapKey).</summary>
     public void Press()

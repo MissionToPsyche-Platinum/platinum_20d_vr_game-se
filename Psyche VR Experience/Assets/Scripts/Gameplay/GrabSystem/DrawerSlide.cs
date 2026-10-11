@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Audio;
 
 namespace PsycheVR.Gameplay
 {
@@ -62,6 +63,12 @@ namespace PsycheVR.Gameplay
 
         /// <summary>A hand that was inside must get this far (m) in front of the face before it can push the drawer in.</summary>
         private const float ClearDistance = 0.08f;
+
+        /// <summary>Drawers reaching a stop slower than this (m/s) make no sound.</summary>
+        private const float StopSoundMinSpeed = 0.15f;
+
+        /// <summary>Drawers reaching a stop at or above this speed (m/s) play at the library volume.</summary>
+        private const float StopSoundFullSpeed = 1.5f;
 
         /// <summary>Where a hand is relative to the drawer. Front hands push the face in; Inside hands push the inside of the front out.</summary>
         private enum HandState { Front, Inside }
@@ -373,9 +380,18 @@ namespace PsycheVR.Gameplay
             foreach (var kv in _trailCoordsNext) _trailCoords[kv.Key] = kv.Value;
         }
 
-        /// <summary>Clamps to the limits (stopping dead there) and moves the body.</summary>
+        /// <summary>Clamps to the limits (stopping dead there), knocks when it reaches one, and moves the body.</summary>
         private void SetOffset(float target)
         {
+            if (target <= 0f && _offset > 0f)
+            {
+                PlayStop(InteractionSound.DrawerStopClosed);
+            }
+            else if (target >= maxOpen && _offset < maxOpen)
+            {
+                PlayStop(InteractionSound.DrawerStopOpen);
+            }
+
             if (target <= 0f)
             {
                 target = 0f;
@@ -389,6 +405,16 @@ namespace PsycheVR.Gameplay
 
             _offset = target;
             _rb.MovePosition(_parent.TransformPoint(_closedLocal + _axisLocal * _offset));
+        }
+
+        /// <summary>The end-stop knock, louder the faster the drawer arrives.</summary>
+        private void PlayStop(InteractionSound sound)
+        {
+            float speed = Mathf.Abs(_velocity);
+            if (speed < StopSoundMinSpeed)
+                return;
+            InteractionAudio.Play(sound, handle.transform.position,
+                Mathf.InverseLerp(StopSoundMinSpeed, StopSoundFullSpeed, speed) * 0.8f + 0.2f);
         }
 
         private void ReleaseHolder()

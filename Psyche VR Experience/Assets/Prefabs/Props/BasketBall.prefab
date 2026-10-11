@@ -187,6 +187,7 @@ GameObject:
   - component: {fileID: 4219461643134953350}
   - component: {fileID: 1517154185525643904}
   - component: {fileID: 5174810935766551947}
+  - component: {fileID: 6106585013415038109}
   m_Layer: 0
   m_Name: BasketBall
   m_TagString: Untagged
@@ -393,3 +394,20 @@ MonoBehaviour:
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
   profile: 1
+  holdWhereGrabbed: 0
+--- !u!114 &6106585013415038109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9120289137364410836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bb5c27e8d10e6c3a82bf177f08ae0e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Audio.ImpactSound
+  sound: 7
+  minSpeed: 0.6
+  fullSpeed: 5
+  minInterval: 0.25

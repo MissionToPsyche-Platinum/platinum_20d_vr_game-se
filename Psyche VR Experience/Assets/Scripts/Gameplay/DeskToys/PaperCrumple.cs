@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Audio;
 
 namespace PsycheVR.Gameplay
 {
@@ -51,9 +52,6 @@ namespace PsycheVR.Gameplay
 
         [Tooltip("Duration of the crumple pulse (seconds).")]
         [SerializeField] private float crumpleHapticDuration = 0.05f;
-
-        [Tooltip("Optional. Left empty until TG-265 supplies a crumple clip.")]
-        [SerializeField] private AudioSource crumpleAudio;
 
         /// <summary>
         /// Contact offset for the sheet collider. The 4 mm sheet is thinner than the 1 cm
@@ -190,8 +188,7 @@ namespace PsycheVR.Gameplay
             if (_holder != null)
                 _holder.SendHapticImpulse(crumpleHapticIntensity, crumpleHapticDuration);
 
-            if (crumpleAudio != null && crumpleAudio.clip != null)
-                crumpleAudio.Play();
+            InteractionAudio.Play(InteractionSound.PaperCrumple, transform.position);
 
             Crumpled?.Invoke(this);
         }
