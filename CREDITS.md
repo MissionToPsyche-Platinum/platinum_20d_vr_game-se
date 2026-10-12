@@ -19,6 +19,24 @@ courtesy.
 | Computer Screen | Kenney | [poly.pizza/m/V5Qo141OcB](https://poly.pizza/m/V5Qo141OcB) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Modified |
 | Glove (player hands) | Quaternius | [poly.pizza/m/l1zv4LaA4I](https://poly.pizza/m/l1zv4LaA4I) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Used as the player's hands |
 
+## Images
+
+The mission ops console shows these mission images, each with its credit line on screen. Images with
+a PIA number are from the [NASA/JPL Photojournal](https://photojournal.jpl.nasa.gov); the two
+without one come from the Psyche team's reference materials. All are used under the project's
+NASA/JPL-Caltech permission.
+
+| Image | Credit | Shown on |
+| --- | --- | --- |
+| PIA26586, PIA26749, PIA26771, PIA26772, PIA26773, PIA26775 (Mars flyby images) | NASA/JPL-Caltech/ASU | Mars Flyby tab |
+| PIA24930 (trajectory) | NASA/JPL-Caltech | Mars Flyby tab |
+| PIA25136 (34 m antenna), gravity science link illustration | NASA/JPL-Caltech | Deep Space Network tab |
+| PIA25135 (solar array test), PIA25133 (solar cells) | NASA/JPL-Caltech | Solar Power tab |
+| PIA23879 (thruster firing), PIA24788 (thruster installation) | NASA/JPL-Caltech | Thruster tab |
+| Spacecraft cutout (Psyche fact sheet) | NASA/JPL-Caltech | Console header icon |
+
+The three-site Deep Space Network diagram on the same tab was drawn by the team.
+
 ## Sounds
 
 | Asset | Author | Source | Licence | Used for |
@@ -37,5 +55,5 @@ made by the team, with some clips from [NASA's historical sounds](https://www.na
 
 | Font | Source | Licence |
 | --- | --- | --- |
-| Barlow Condensed SemiBold | [Google Fonts](https://fonts.google.com/specimen/Barlow+Condensed) | [SIL Open Font License 1.1](https://openfontlicense.org) (text in `Assets/ThirdParty/OFL-BarlowCondensed.txt`) |
-| Inter Regular | [Google Fonts](https://fonts.google.com/specimen/Inter) | [SIL Open Font License 1.1](https://openfontlicense.org) (text in `Assets/ThirdParty/OFL-Inter.txt`) |
+| Barlow Condensed SemiBold | [Google Fonts](https://fonts.google.com/specimen/Barlow+Condensed) | [SIL Open Font License 1.1](https://openfontlicense.org) (text in `Assets/Fonts/OFL-BarlowCondensed.txt`) |
+| Inter Regular | [Google Fonts](https://fonts.google.com/specimen/Inter) | [SIL Open Font License 1.1](https://openfontlicense.org) (text in `Assets/Fonts/OFL-Inter.txt`) |
