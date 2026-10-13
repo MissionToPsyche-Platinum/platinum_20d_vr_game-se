@@ -52,6 +52,15 @@ namespace PsycheVR.Gameplay
         }
 #endif
 
+        /// <summary>A book whose content has a page video gets its player in play mode (no prefab change needed).</summary>
+        private void Start()
+        {
+            if (!Application.isPlaying || content == null || content.pageVideo == null) return;
+            var video = GetComponent<BookPageVideo>();
+            if (video == null) video = gameObject.AddComponent<BookPageVideo>();
+            video.Init(content);
+        }
+
         [ContextMenu("Apply Content")]
         public void Apply()
         {
@@ -152,7 +161,7 @@ namespace PsycheVR.Gameplay
             return 1;
         }
 
-        private static Transform FindChildRecursive(Transform parent, string name)
+        internal static Transform FindChildRecursive(Transform parent, string name)
         {
             for (int i = 0; i < parent.childCount; i++)
             {

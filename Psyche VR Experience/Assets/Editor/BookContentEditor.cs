@@ -53,7 +53,18 @@ namespace PsycheVR.EditorTools
 
             var content = (BookContent)target;
             Undo.RecordObject(content, "Load Book Content From Folder");
+            int foundCount = AssignFromFolder(content, folderPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[BookContent] Loaded {foundCount}/13 materials from {folderPath}");
+        }
 
+        /// <summary>
+        /// Assigns every material slot of <paramref name="content"/> from the materials in
+        /// <paramref name="folderPath"/> by the naming convention above; returns how many of the 13 were found.
+        /// Marks the asset dirty but does not save (the caller decides when).
+        /// </summary>
+        public static int AssignFromFolder(BookContent content, string folderPath)
+        {
             // Find all materials in the folder (recursive).
             var guids = AssetDatabase.FindAssets("t:Material", new[] { folderPath });
             var byName = new System.Collections.Generic.Dictionary<string, Material>(
@@ -93,9 +104,7 @@ namespace PsycheVR.EditorTools
             }
 
             EditorUtility.SetDirty(content);
-            AssetDatabase.SaveAssets();
 
-            // Report what was found.
             int foundCount = 0;
             if (content.cover) foundCount++;
             if (content.coverPage) foundCount++;
@@ -107,7 +116,7 @@ namespace PsycheVR.EditorTools
                 if (content.pages[i].front) foundCount++;
                 if (content.pages[i].back) foundCount++;
             }
-            Debug.Log($"[BookContent] Loaded {foundCount}/13 materials from {folderPath}");
+            return foundCount;
         }
     }
 }
