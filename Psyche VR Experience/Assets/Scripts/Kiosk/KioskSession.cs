@@ -47,9 +47,9 @@ namespace PsycheVR.Kiosk
         };
 
         [Header("Clock")]
-        [Tooltip("Seconds from the visitor's first grip or trigger press until the launch video starts on its own. Sponsor asked for 3 to 5 minutes, leaning 3.")]
+        [Tooltip("Seconds from the visitor's first grip or trigger press until the launch video starts on its own. Sponsor asked for 3 to 5 minutes; set to 2.5 for the Oct 10 sponsor build.")]
         [Min(1f)]
-        [SerializeField] private float sessionSeconds = 180f;
+        [SerializeField] private float sessionSeconds = 150f;
 
         [Header("Ending")]
         [Tooltip("Video started when the puzzle completes or the clock expires. Unset: the first play_video in the scene.")]
@@ -218,8 +218,12 @@ namespace PsycheVR.Kiosk
         private void RecordOutcome(string eventName)
         {
             if (GameModeManager.ActiveMode == GameMode.Event)
+            {
                 SessionDataLogger.LogEvent(eventName,
                     "elapsedSeconds=" + _elapsedSeconds.ToString("0.###", CultureInfo.InvariantCulture));
+                if (eventName != "kiosk_first_input")
+                    SessionLogUploader.RequestUpload();   // the visitor's result goes up as soon as it is known
+            }
         }
 
         /// <summary>

@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efcbfc8088562671b803792a5ad97b7f, type: 3}
+  m_Name: MonitorContent
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.MonitorContent
+  snapshot: {fileID: 4900000, guid: 6daf0bf0e989ffbcba1b582f5bfd9863, type: 3}
+  titleFont: {fileID: 11400000, guid: a3346420fb0a28dfcb6c21d8182b9db0, type: 2}
+  bodyFont: {fileID: 11400000, guid: fb256d38635300cb1814b5de8d4561bd, type: 2}
+  pageClick: {fileID: 8300000, guid: d14b106713a74b448bcab90869f1706e, type: 3}
+  handoffChime: {fileID: 8300000, guid: d14b106713a74b448bcab90869f1706e, type: 3}
+  marsFlyby:
+    title: Mars Flyby
+    banner: 
+    footer: Mars' gravity bent Psyche's path and flung it toward the asteroid belt.
+    mainPhotos:
+    - sprite: {fileID: 21300000, guid: bb8807ddd71afff68af6bf2886d1c177, type: 3}
+      caption: 'Psyche''s route: launch 2023, Mars 2026, the asteroid 2029.'
+      credit: NASA/JPL-Caltech
+    topPhotos:
+    - sprite: {fileID: 21300000, guid: 7932a96443413aa01bde896a92a911ac, type: 3}
+      caption: "Mars' crescent grew as Psyche closed in, May 2\u201315."
+      credit: NASA/JPL-Caltech/ASU
+    - sprite: {fileID: 21300000, guid: b11fca13276e86ff898b434dd7391298, type: 3}
+      caption: Dusty air made the crescent glow brighter than expected.
+      credit: NASA/JPL-Caltech/ASU
+    - sprite: {fileID: 21300000, guid: 76e900d5743201f41beb08e2ad9a6086, type: 3}
+      caption: Craters, ridges and wind streaks, shot in 6 minutes.
+      credit: NASA/JPL-Caltech/ASU
+    - sprite: {fileID: 21300000, guid: e451360d652edf239baafbd9db517a94, type: 3}
+      caption: Mars' south polar ice cap, just after closest approach.
+      credit: NASA/JPL-Caltech/ASU
+    - sprite: {fileID: 21300000, guid: 2a0b6a1829d149c5b9c9c1c385c676d4, type: 3}
+      caption: Huygens crater, seen in enhanced color.
+      credit: NASA/JPL-Caltech/ASU
+    - sprite: {fileID: 21300000, guid: b6f835fd589b0b7639b37361398f8039, type: 3}
+      caption: Leaving Mars behind, headed for the asteroid belt.
+      credit: NASA/JPL-Caltech/ASU
+    bottomPhotos: []
+    stats:
+    - value: 2,864 mi
+      label: from Mars' surface
+    - value: +1,000 mph
+      label: speed boost
+    - value: 0 kg
+      label: fuel for the boost
+  deepSpaceNetwork:
+    title: Deep Space Network
+    banner: "Goldstone \xB7 Madrid \xB7 Canberra: three Deep Space Communications
+      Complexes about 120\xB0 apart, so as Earth turns, one always faces Psyche."
+    footer: A radio signal to Psyche and back takes {RT} minutes.
+    mainPhotos:
+    - sprite: {fileID: 21300000, guid: 066707e2a9ec61cbf9079c5e316c9a27, type: 3}
+      caption: Big dishes on Earth talk to Psyche's 2-meter antenna by radio.
+      credit: NASA/JPL-Caltech
+    topPhotos:
+    - sprite: {fileID: 21300000, guid: 0a266388c51b143928584b30bcbebc62, type: 3}
+      caption: How handoffs work
+      credit: 
+    bottomPhotos:
+    - sprite: {fileID: 21300000, guid: 681669bb4ad98a282a2696bf6e8a5b6a, type: 3}
+      caption: A 34-meter dish, the size Psyche usually uses.
+      credit: NASA/JPL-Caltech
+    stats: []
+  solarPower:
+    title: Solar Power
+    banner: 
+    footer: 'Near Earth the arrays make 21 kW. At the asteroid, only about 2.3 kW:
+      about a hair dryer''s worth.'
+    mainPhotos: []
+    topPhotos:
+    - sprite: {fileID: 21300000, guid: 4d34f29bcbc02692487760a4dbcb4687, type: 3}
+      caption: One of Psyche's two solar array wings, unfolded for testing.
+      credit: NASA/JPL-Caltech
+    bottomPhotos:
+    - sprite: {fileID: 21300000, guid: 8b8c169037089685cb6aaf0b6e3c8fb7, type: 3}
+      caption: Solar cells up close.
+      credit: NASA/JPL-Caltech
+    stats:
+    - value: 21 kW
+      label: near Earth
+    - value: ~2.3 kW
+      label: at the asteroid's farthest point
+  thruster:
+    title: Thruster
+    banner: 
+    footer: 'Psyche keeps it up for weeks at a time: enough to cross the solar system.'
+    mainPhotos:
+    - sprite: {fileID: 21300000, guid: af5d023a8c5c3fe0da11e831baac50c1, type: 3}
+      caption: 'A Hall-effect thruster firing: the blue glow is xenon.'
+      credit: NASA/JPL-Caltech
+    topPhotos:
+    - sprite: {fileID: 21300000, guid: 05d77cfdc2a1fa5de85cc4b7aad09e74, type: 3}
+      caption: Psyche has four thrusters; only one fires at a time.
+      credit: NASA/JPL-Caltech
+    bottomPhotos: []
+    stats:
+    - value: ~250 mN
+      label: about an AA battery resting on your palm
+    - value: 1 of 4
+      label: thrusters fire at a time
+    - value: "0.35\u20131.3 kg"
+      label: of xenon a day
+  spacecraftIcon: {fileID: 21300000, guid: 0dea3dd17673683808a29b42fe8055d5, type: 3}
+  spacecraftIconCredit: NASA/JPL-Caltech
+  pushPrompt: Grab the mouse to feel Psyche's push.
+  pushRumbleLine: Rumble now simulating AA Thruster strength
+  pingLinkStart: {x: 0.28186274, y: 0.3422222}
+  pingLinkEnd: {x: 0.6887255, y: 0.62666667}
+  pingSentLine: Ping sent. Waiting for Psyche to answer.
+  pingResultFormat: 'Round trip: {0} min. You waited {1} seconds. NASA waits the
+    full {0}.'
+  pingArrivalFormat: Signal arrives at Psyche at {0}.
+  attractPrompt: Slap ENTER

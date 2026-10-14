@@ -2,6 +2,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Audio;
+using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
 {
@@ -165,6 +167,8 @@ namespace PsycheVR.Gameplay
 
             Restart(ref _nibRoutine, MoveTo(nib, nibTarget));
             Restart(ref _buttonRoutine, PressButton());
+            InteractionAudio.Play(InteractionSound.PenClick, transform.position);
+            SessionEvents.Interaction("pen_clicked", this);
         }
 
         private void Restart(ref Coroutine routine, IEnumerator next)
