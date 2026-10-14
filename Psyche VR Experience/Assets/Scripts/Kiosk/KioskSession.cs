@@ -10,9 +10,10 @@ namespace PsycheVR.Kiosk
 {
     /// <summary>
     /// Runs one kiosk visitor's session in Event mode. The clock arms on scene load and
-    /// starts at the visitor's first grip or trigger press, so handoff time does not
-    /// count against them. Whichever comes first, puzzle complete or clock expiry, starts
-    /// the launch video: that is the sponsor's "soft nudge" ending. The visitor may keep
+    /// starts at the visitor's first input, so handoff time does not
+    /// count against them. Only clock expiry starts the launch video: that is the sponsor's
+    /// "soft nudge" ending. Finishing the puzzle is logged but never ends the session early;
+    /// what the room does on completion belongs to the puzzle's own listeners. The visitor may keep
     /// exploring afterwards; nothing fires again until the helper resets the room
     /// (<see cref="KioskResetListener"/>), which reloads the scene.
     ///
@@ -52,9 +53,9 @@ namespace PsycheVR.Kiosk
         [SerializeField] private float sessionSeconds = 150f;
 
         [Header("Ending")]
-        [Tooltip("Video started when the puzzle completes or the clock expires. Unset: the first play_video in the scene.")]
+        [Tooltip("Video started when the clock expires. Unset: the first play_video in the scene.")]
         [SerializeField] private play_video launchVideo;
-        [Tooltip("Puzzle watcher whose Completed event ends the session early. Unset: the PuzzleCompletion on this object, if any.")]
+        [Tooltip("Puzzle watcher whose Completed event is logged; it never ends the session. Unset: the PuzzleCompletion on this object, if any.")]
         [SerializeField] private PuzzleCompletion puzzle;
 
         [Header("Hand-over message")]
@@ -82,6 +83,7 @@ namespace PsycheVR.Kiosk
         private ControllerHoldCombo _firstInput;
         private float _elapsedSeconds;
         private bool _armReady;
+        private bool _puzzleLogged;
         private VideoPlayer _videoPlayer;
         private bool _messageShown;
 
@@ -124,8 +126,8 @@ namespace PsycheVR.Kiosk
                     HandlePuzzleCompleted();
             }
 
-            // Skipped when the line above already ended the session: arming then would
-            // enable an input action nothing ever ticks.
+            // Skipped when something already ended the session (BeginEnding is public):
+            // arming then would enable an input action nothing ever ticks.
             if (CurrentPhase == Phase.Armed)
             {
                 // Hold 0: Completed fires on the first ticked frame one of the four controls
@@ -206,13 +208,18 @@ namespace PsycheVR.Kiosk
             }
         }
 
+        /// <summary>
+        /// Logs the completion once, while the clock has not yet run out, so the log can
+        /// show completion before expiry. Deliberately does not start the ending: the
+        /// 2.5-minute clock is the only thing that does.
+        /// </summary>
         private void HandlePuzzleCompleted()
         {
-            if (CurrentPhase == Phase.Ending || CurrentPhase == Phase.FreePlay)
+            if (_puzzleLogged || CurrentPhase == Phase.Ending || CurrentPhase == Phase.FreePlay)
                 return;
 
+            _puzzleLogged = true;
             RecordOutcome("kiosk_puzzle_completed");
-            BeginEnding("puzzle complete");
         }
 
         private void RecordOutcome(string eventName)

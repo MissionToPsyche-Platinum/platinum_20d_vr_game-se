@@ -221,6 +221,10 @@ namespace PsycheVR.Gameplay
                 var drawer = DrawerSlide.Containing(_rb.worldCenterOfMass);
                 if (drawer != null)
                     IgnoreDesk(drawer, true);
+
+                // Here, not in OnSelectEntered: by then isSelected is already true, so a
+                // "first hand" check there never passes and every grab logged a blank name.
+                _sessionId = SessionEvents.ObjectId(this);
             }
 
             base.OnSelectEntering(args);
@@ -229,9 +233,6 @@ namespace PsycheVR.Gameplay
         /// <inheritdoc />
         protected override void OnSelectEntered(SelectEnterEventArgs args)
         {
-            if (!isSelected)
-                _sessionId = SessionEvents.ObjectId(this);
-
             base.OnSelectEntered(args);
 
             if (interactorsSelecting.Count == 1)   // a hand-to-hand handover is not a new grab

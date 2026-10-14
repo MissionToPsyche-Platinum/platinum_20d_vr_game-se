@@ -33,7 +33,7 @@ namespace PsycheVR.Modes.Editor
                     CheckVisit(directory, gameMode, false, true);
                 }
                 Require(Directory.GetFiles(directory, "*.jsonl").Length == 6, "Visitors have separate session files");
-                Debug.Log("[KioskLoggingChecks] PASS: first input, completion, timeout, duplicate suppression, early completion, Story exclusion, visitor files, and invariant elapsed seconds.");
+                Debug.Log("[KioskLoggingChecks] PASS: first input, completion without ending, clock-only ending, duplicate suppression, early completion, Story exclusion, visitor files, and invariant elapsed seconds.");
             }
             finally
             {
@@ -71,8 +71,10 @@ namespace PsycheVR.Modes.Editor
                     }
                     Invoke(kiosk, "HandlePuzzleCompleted");
                     Invoke(kiosk, "HandlePuzzleCompleted");
+                    Require(kiosk.CurrentPhase != KioskSession.Phase.Ending || expires, "Puzzle completion never starts the ending");
                     Invoke(kiosk, "HandleFirstInput");
-                    Invoke(kiosk, "TickClock", 200f); // Late callbacks cannot emit another outcome.
+                    Invoke(kiosk, "TickClock", 200f); // The clock still ends a completed visit; late callbacks emit nothing more.
+                    Invoke(kiosk, "HandlePuzzleCompleted");
                     var entries = File.ReadAllLines(writer.FilePath).Select(JsonUtility.FromJson<Record>).ToArray();
                     Require(entries.All(entry => entry.sessionId == writer.SessionId), "Events belong to this visitor");
                     var events = entries.Where(entry => entry.eventName.StartsWith("kiosk_", StringComparison.Ordinal)).ToArray();
@@ -81,12 +83,14 @@ namespace PsycheVR.Modes.Editor
                         Require(events.Length == 0, "Story sessions exclude kiosk events");
                         return;
                     }
-                    Require(events.Length == (early ? 1 : 2), "Only first input and the winning outcome are logged");
-                    if (!early)
-                        Require(events[0].eventName == "kiosk_first_input" && events[0].details == "elapsedSeconds=0", "Clock start logged once at zero");
-                    var outcome = events[events.Length - 1];
-                    Require(outcome.eventName == (expires ? "kiosk_clock_expired" : "kiosk_puzzle_completed"), "Correct outcome wins");
-                    Require(outcome.details == "elapsedSeconds=" + (early ? "0" : expires ? "180.25" : "5.25"), "Elapsed seconds use invariant decimals and exclude armed time");
+                    // Expected kiosk events in order, as "name=elapsedSeconds".
+                    string[] expected = early
+                        ? new[] { "kiosk_puzzle_completed=0", "kiosk_first_input=0", "kiosk_clock_expired=200" }
+                        : expires
+                            ? new[] { "kiosk_first_input=0", "kiosk_clock_expired=180.25" }
+                            : new[] { "kiosk_first_input=0", "kiosk_puzzle_completed=5.25", "kiosk_clock_expired=205.25" };
+                    string[] actual = events.Select(e => e.eventName + "=" + e.details.Replace("elapsedSeconds=", "")).ToArray();
+                    Require(actual.SequenceEqual(expected), "Kiosk events are [" + string.Join(", ", expected) + "] but were [" + string.Join(", ", actual) + "]: completion logs once, the clock alone ends the visit, elapsed seconds use invariant decimals and exclude armed time");
                 }
                 finally
                 {
