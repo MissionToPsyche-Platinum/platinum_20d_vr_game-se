@@ -17,7 +17,7 @@ public class InstructionTextManager : MonoBehaviour
 
     public void Start()
     {
-        SetText("Please place the PSYCHE Bus (Large Black Box) on top of the Cylinder to begin");
+        SetText("Place the Psyche bus (the large black box) on top of the cylinder to begin.");
         SetTitle("Instruction");
         UpdateButtonState();
     }

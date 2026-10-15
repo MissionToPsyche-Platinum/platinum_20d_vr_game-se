@@ -3948,7 +3948,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -3982,6 +3982,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2304390436578863388}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5990073603412200550
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6553896121663930915}
+  m_Layer: 0
+  m_Name: Antenna_Grab_Point
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6553896121663930915
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5990073603412200550}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.037968718, y: 0.12287348, z: 0.40535027}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3268595280557866262}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6018941860425828083
 GameObject:
@@ -4286,7 +4317,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.5000001
   m_Height: 2
@@ -4413,6 +4444,37 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7973486505184510870
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7506423380685661242}
+  m_Layer: 0
+  m_Name: Bus_Grab_Point
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7506423380685661242
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7973486505184510870}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.05045959, y: 0.08538744, z: -0.026831225}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8292983169927376346}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8113851190590763736
 GameObject:
   m_ObjectHideFlags: 0
@@ -5247,6 +5309,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8735694167570851989, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2774318554406638358}
+    - targetCorrespondingSourceObject: {fileID: -8735694167570851989, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6553896121663930915}
     - targetCorrespondingSourceObject: {fileID: -2842213203381336153, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1723277434885674031}
@@ -5277,6 +5342,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -2842213203381336153, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5473497138515118459}
+    - targetCorrespondingSourceObject: {fileID: -2842213203381336153, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7506423380685661242}
     - targetCorrespondingSourceObject: {fileID: -6990619557524703604, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 681532460765749290}
@@ -5305,6 +5373,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -1102232764058850801, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8830182718176830965}
+    - targetCorrespondingSourceObject: {fileID: -1102232764058850801, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 398654285836707375}
     - targetCorrespondingSourceObject: {fileID: 835576015830161444, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4512455706144613509}
@@ -5317,6 +5388,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 835576015830161444, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1582783866880801233}
+    - targetCorrespondingSourceObject: {fileID: 835576015830161444, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3012179041697916546}
     - targetCorrespondingSourceObject: {fileID: -3317126894024577844, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6937918830426921099}
@@ -5329,6 +5403,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -3317126894024577844, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7943824400988125807}
+    - targetCorrespondingSourceObject: {fileID: -3317126894024577844, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 234954794257271692}
     - targetCorrespondingSourceObject: {fileID: 4049720174770202988, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8277264437691825083}
@@ -5341,6 +5418,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4049720174770202988, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4938649711642230149}
+    - targetCorrespondingSourceObject: {fileID: 4049720174770202988, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5446770794603712594}
   m_SourcePrefab: {fileID: 100100000, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
 --- !u!1 &1417377612736398097 stripped
 GameObject:
@@ -5383,11 +5463,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1417377612736398097}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ad34abafad169848a38072baa96cdb2, type: 3}
+  m_Script: {fileID: 11500000, guid: 024c0497c046aaa40bb096331a75098c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
   m_InteractionManager: {fileID: 0}
-  m_Colliders: []
+  m_Colliders:
+  - {fileID: 1793758907023754108}
+  - {fileID: 5446770794603712594}
   m_InteractionLayers:
     m_Bits: 1
   m_DistanceCalculationMode: 1
@@ -5503,6 +5585,8 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
+  grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  profile: 4
 --- !u!65 &1793758907023754108
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5522,8 +5606,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.8007015, y: 0.035943717, z: 0.47992468}
-  m_Center: {x: -1.4177198, y: 0.1851855, z: -0.54553324}
+  m_Size: {x: 0.8007015, y: 0.035943717, z: 0.16199988}
+  m_Center: {x: -1.4177198, y: 0.1851855, z: -0.5455519}
 --- !u!114 &4938649711642230149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5538,9 +5622,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 1931360734966200348}
   isSnapped: 0
-  objectDescription: One of two arrays of solar panels which power the propulsion
-    of the craft and its' instruments
+  objectDescription: One of two cross-shaped solar arrays, each with five panels.
+    Near Earth they make 21 kilowatts. At the asteroid they make only 2 to 3 kilowatts.
+    That power runs the instruments and the Hall-effect thrusters.
   objectTitle: Solar Panel
+--- !u!65 &5446770794603712594
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1417377612736398097}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.21599972, y: 0.035943717, z: 0.47992468}
+  m_Center: {x: -1.496602, y: 0.1851855, z: -0.5455485}
 --- !u!1 &2305976679890367065 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 835576015830161444, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
@@ -5603,7 +5709,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2305976679890367065}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ad34abafad169848a38072baa96cdb2, type: 3}
+  m_Script: {fileID: 11500000, guid: 024c0497c046aaa40bb096331a75098c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
   m_InteractionManager: {fileID: 0}
@@ -5668,7 +5774,7 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
-  m_AttachTransform: {fileID: 0}
+  m_AttachTransform: {fileID: 7506423380685661242}
   m_SecondaryAttachTransform: {fileID: 0}
   m_UseDynamicAttach: 0
   m_MatchAttachPosition: 1
@@ -5723,6 +5829,8 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
+  grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  profile: 4
 --- !u!114 &1582783866880801233
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5737,9 +5845,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 5282241022073745881}
   isSnapped: 0
-  objectDescription: Houses all instruments necessary for observing and monitoring
-    the Psyche 16 asteroid
+  objectDescription: The main body of the spacecraft. It carries the xenon fuel tanks,
+    the battery, and the flight computer. The solar arrays, antenna, and science instruments
+    all attach to it.
   objectTitle: Bus
+--- !u!65 &3012179041697916546
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2305976679890367065}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.16436237, y: 0.17077488, z: 0.18258737}
+  m_Center: {x: -0.05045959, y: 0.08538744, z: -0.026831225}
 --- !u!4 &3151383640492913254 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -9213519457612654565, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
@@ -5801,7 +5931,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6569875833885687922}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ad34abafad169848a38072baa96cdb2, type: 3}
+  m_Script: {fileID: 11500000, guid: 024c0497c046aaa40bb096331a75098c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
   m_InteractionManager: {fileID: 0}
@@ -5866,7 +5996,7 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
-  m_AttachTransform: {fileID: 0}
+  m_AttachTransform: {fileID: 6553896121663930915}
   m_SecondaryAttachTransform: {fileID: 0}
   m_UseDynamicAttach: 0
   m_MatchAttachPosition: 1
@@ -5921,6 +6051,8 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
+  grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  profile: 4
 --- !u!114 &8830182718176830965
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5935,10 +6067,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 2774318554406638358}
   isSnapped: 0
-  objectDescription: Supports communications between the craft and Earth via photons
-    using an experimental communication method known as Deep Space Optical Communication
-    (DSOC)
+  objectDescription: A 2-meter (6.5-foot) dish that talks to Earth by radio through
+    NASA's Deep Space Network. Scientists also track its signal to measure the asteroid's
+    gravity.
   objectTitle: Antenna
+--- !u!65 &398654285836707375
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6569875833885687922}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.12318741, y: 0.094196185, z: 0.097584724}
+  m_Center: {x: -0.037968718, y: 0.12287348, z: 0.40535027}
 --- !u!4 &8292983169927376346 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -2842213203381336153, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
@@ -5985,11 +6138,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 8822486580218463921}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ad34abafad169848a38072baa96cdb2, type: 3}
+  m_Script: {fileID: 11500000, guid: 024c0497c046aaa40bb096331a75098c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
   m_InteractionManager: {fileID: 0}
-  m_Colliders: []
+  m_Colliders:
+  - {fileID: 7996104926427369733}
+  - {fileID: 234954794257271692}
   m_InteractionLayers:
     m_Bits: 1
   m_DistanceCalculationMode: 1
@@ -6105,6 +6260,8 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
+  grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
+  profile: 4
 --- !u!65 &7996104926427369733
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6124,8 +6281,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.8007015, y: 0.035943717, z: 0.47992468}
-  m_Center: {x: -1.4177351, y: 0.1851855, z: -0.5455485}
+  m_Size: {x: 0.8007015, y: 0.035943717, z: 0.16199988}
+  m_Center: {x: -1.4177198, y: 0.1851855, z: -0.5455519}
 --- !u!114 &7943824400988125807
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6140,6 +6297,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnappableObject
   snapPoint: {fileID: 8923094216708055904}
   isSnapped: 0
-  objectDescription: One of two arrays of solar panels which power the propulsion
-    of the craft and its' instruments
+  objectDescription: One of two cross-shaped solar arrays, each with five panels.
+    Near Earth they make 21 kilowatts. At the asteroid they make only 2 to 3 kilowatts.
+    That power runs the instruments and the Hall-effect thrusters.
   objectTitle: Solar Panel
+--- !u!65 &234954794257271692
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8822486580218463921}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.21599972, y: 0.035943717, z: 0.47992468}
+  m_Center: {x: -1.496602, y: 0.1851855, z: -0.5455485}

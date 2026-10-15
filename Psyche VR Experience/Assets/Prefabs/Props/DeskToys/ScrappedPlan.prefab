@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 2}
-  m_SizeDelta: {x: 17, y: 16}
+  m_AnchoredPosition: {x: 0, y: -2.75}
+  m_SizeDelta: {x: 17, y: 20.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &9030557776634456808
 MeshRenderer:
@@ -228,8 +228,6 @@ GameObject:
   - component: {fileID: 8405481435526097473}
   - component: {fileID: 2198633584205870857}
   - component: {fileID: 6274570926337312706}
-  - component: {fileID: 7511432764536416188}
-  - component: {fileID: 2107315103024583129}
   - component: {fileID: 6260254408555509968}
   - component: {fileID: 661891691710307417}
   m_Layer: 0
@@ -413,9 +411,7 @@ MonoBehaviour:
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
-  useDynamicAttachOverride: 1
-  overrideEaseInDuration: 0
-  easeInDurationOverride: 0.15
+  profile: 2
 --- !u!114 &8405481435526097473
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -481,34 +477,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.037
   m_Center: {x: 0, y: 0.037, z: 0}
---- !u!114 &7511432764536416188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5436783388155129533}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c1695656bf9c8b2e9607f4dbfce7a61, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.DeskToyPhysics
-  throwVelocityScale: 0.35
-  throwAngularVelocityScale: 0.2
---- !u!114 &2107315103024583129
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5436783388155129533}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24755acaf3ace82468a146dc07e74d5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BasketballPhysics
-  throwVelocityScale: 1.5
-  throwAngularVelocityScale: 1
 --- !u!114 &6260254408555509968
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -523,10 +491,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.PaperCrumple
   sheetVisual: {fileID: 4101487356278270404}
   sheetCollider: {fileID: 2198633584205870857}
-  sheetPhysics: {fileID: 7511432764536416188}
   ballVisual: {fileID: 229977135091752793}
   ballCollider: {fileID: 6274570926337312706}
-  ballPhysics: {fileID: 2107315103024583129}
   pressThreshold: 0.6
   releaseThreshold: 0.35
   crumpleHapticIntensity: 0.3

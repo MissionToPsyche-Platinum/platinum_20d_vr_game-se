@@ -274,7 +274,6 @@ GameObject:
   - component: {fileID: 4163554853499533041}
   - component: {fileID: 3628171786269754356}
   - component: {fileID: 5669432409935658855}
-  - component: {fileID: 6066419690596684352}
   - component: {fileID: 2056802826079476148}
   - component: {fileID: 801216606412332083}
   - component: {fileID: 7551863462746721882}
@@ -467,21 +466,7 @@ MonoBehaviour:
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
-  useDynamicAttachOverride: 0
-  overrideEaseInDuration: 0
-  easeInDurationOverride: 0.15
---- !u!114 &6066419690596684352
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3606740451158710770}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da6c47686ef025346b21f2738df76a6e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BookGravityToggle
+  profile: 3
 --- !u!114 &2056802826079476148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -558,10 +543,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 786466f646a94c44fbff6ba3def86204, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BookHighlight
-  glowColor: {r: 0.7, g: 0.87, b: 1, a: 1}
-  rimPower: 4
-  fadeDuration: 0.25
-  targetRenderers: []
 --- !u!1 &4763686240701210253
 GameObject:
   m_ObjectHideFlags: 0

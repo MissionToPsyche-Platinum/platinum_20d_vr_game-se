@@ -14,6 +14,9 @@ public class CoffeeLiquidController : MonoBehaviour
 
     public float pourSpeed = 0.1f;
 
+    [Tooltip("How much coffee the mug holds, in seconds of a full-tilt pour. 1 empties in about a second; 2 holds twice as much.")]
+    public float capacity = 2f;
+
     private Vector3 initialScale;
     private float coffeeRemaining = 1f;
 
@@ -42,7 +45,7 @@ public class CoffeeLiquidController : MonoBehaviour
             if (!coffeePour.isPlaying)
                 coffeePour.Play();
 
-            coffeeRemaining -= currentPourSpeed * Time.deltaTime;
+            coffeeRemaining -= currentPourSpeed * Time.deltaTime / Mathf.Max(capacity, 0.01f);
 
             coffeeRemaining = Mathf.Clamp01(coffeeRemaining);
 

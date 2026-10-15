@@ -32,6 +32,44 @@ Automatic events: `session_start`, `session_end`, `scene_loaded`,
 End reasons in `details`: `application_quit`, `restart`, `mode_change`, or
 `logger_destroyed`.
 
+Quality-plan events (TG-308), also automatic:
+
+| Event | Details | Used for |
+| --- | --- | --- |
+| `scene_ready` | `loadSeconds`: app launch, restart or mode change to the first playable frame | Scene load time (≤ 10 s) |
+| `interactables_present` | `count`, `objects` (every interactable, `Room/Object`, joined by `\|`) | Objects nobody found |
+| `idle_started` | `after` (last action), `head` (x,y,z m), `yaw` (deg); logged after 20 s with no interaction | Where visitors stall |
+| `idle_ended` | `seconds` idle, `next` (the action that ended it) | Stall length |
+| `perf_sample` | every 60 s: `seconds`, `fps`, `overrunPct` (frames over 1.25 x the 72 Hz frame), `worstMs` | Frame rate in the field |
+| `low_memory` | none | Crash diagnosis |
+
+Gameplay events (TG-308), each with `object` (`Room/Object`, copy suffixes removed):
+
+| Event | Extra details |
+| --- | --- |
+| `object_grabbed`, `object_released` | release adds `heldSeconds` |
+| `drawer_grabbed`, `drawer_opened`, `drawer_closed` | |
+| `book_opened`, `book_closed`, `page_turned` | page adds `page`, `forward` |
+| `pen_clicked`, `paper_crumpled`, `ball_in_basket` | basket adds `basket` |
+| `puzzle_piece_placed`, `puzzle_reset` | piece adds `zone` |
+| `headset_to_ear` | |
+| `key_pressed`, `console_tab_changed`, `console_power`, `ping_sent`, `ping_returned` | tab adds `direction`, power adds `on` |
+| `instructions_paged`, `button_case_opened`, `video_button_pressed`, `teleported` | page adds `direction` |
+
+Event mode also logs `kiosk_first_input`, `kiosk_puzzle_completed` and
+`kiosk_clock_expired` (TG-283), each with `elapsedSeconds`. A kiosk reset ends the file,
+so one Event file is one visitor.
+
+Uploads (when the build has upload settings) happen at app start, every 3 minutes,
+when the headset is taken off or the Quest menu opens, when it is put back on, when an
+Event visitor finishes or runs out of time, and after every restart or mode change. A
+quit from the Quest menu pauses the app first, so the pause upload covers it; anything
+that still misses goes up at the next launch. Only new or grown files are sent.
+
+The Sheet gets a row for every upload, and a session is uploaded again whenever its
+file has grown, so use the latest row per `sessionId` (the Drive file is always the
+latest copy).
+
 ## Add gameplay events
 
 Call from Unity's main thread at the gameplay action you want to record:
@@ -39,11 +77,14 @@ Call from Unity's main thread at the gameplay action you want to record:
 ```csharp
 using PsycheVR.Data;
 
-SessionDataLogger.LogEvent("puzzle_piece_placed", "left_solar_panel");
+SessionEvents.Interaction("puzzle_piece_placed", this, "zone=" + SessionEvents.ObjectId(snapAnchor));
 ```
 
-The optional details string is JSON-escaped. The call returns `false` when logging
-is unavailable or the event name is blank. This example requires gameplay wiring.
+`SessionEvents.Interaction` names the object, adds optional `key=value` pairs and
+resets the idle clock; implement `ISessionInteractable` on the component so the object
+is counted in `interactables_present`. `SessionDataLogger.LogEvent(name, details)` is
+the raw call (JSON-escaped details; returns `false` when logging is unavailable or the
+name is blank) for events that are not visitor actions.
 
 ## Upload receiver
 

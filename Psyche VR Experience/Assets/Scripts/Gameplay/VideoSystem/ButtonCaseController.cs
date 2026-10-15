@@ -1,8 +1,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using PsycheVR.Data;
 
-public class ButtonCaseController : MonoBehaviour
+public class ButtonCaseController : MonoBehaviour, ISessionInteractable
 {
     private HingeJoint _hinge;
     private XRGrabInteractable _grabInteractable;
@@ -50,6 +51,8 @@ public class ButtonCaseController : MonoBehaviour
     {
         if (GetIsOpen())
             return;
+
+        SessionEvents.Interaction("button_case_opened", this);
 
         if (Hinge == null)
             Hinge = GetComponent<HingeJoint>();

@@ -5,11 +5,12 @@ using PsycheVR.UI;
 namespace PsycheVR.Kiosk
 {
     /// <summary>
-    /// The helper's reset: both grips and both A/X buttons held together, from any
-    /// state, without wearing the headset. Nothing in Event mode uses the face buttons,
-    /// so a visitor grabbing two objects cannot trigger it, and it shares no full set of
-    /// controls with the pause menu's admin combo (grips + stick clicks). Completing it
-    /// reloads the master scene in Event mode, which resets every object.
+    /// The helper's reset: on the left controller grip, trigger and Y, on the right grip, trigger and a
+    /// thumbstick click, all six held together, from any state. The old grips + A/X hold was too easy
+    /// for a visitor holding two props to fall into; this one needs a deliberate hand shape on each
+    /// controller, and nothing in Event mode uses Y or the stick click. After
+    /// <see cref="indicatorDelaySeconds"/> the shared <see cref="HoldRingHud"/> appears mid-view and fills;
+    /// completing the hold reloads the master scene in Event mode, which resets every object.
     ///
     /// Ticks on unscaled time so it works while the game is paused. F9 in the editor.
     /// </summary>
@@ -17,22 +18,34 @@ namespace PsycheVR.Kiosk
     {
         private const string LogPrefix = "[KioskResetListener]";
         private const string GripControl = "/gripPressed";
-        private const string PrimaryButtonControl = "/primaryButton";
+        private const string TriggerControl = "/triggerPressed";
+        private const string SecondaryButtonControl = "/secondaryButton";      // Y on the left controller
+        private const string ThumbstickClickControl = "/{Primary2DAxisClick}";
         private const string EditorFallbackControl = "<Keyboard>/f9";
 
         private static readonly string[] Controls =
         {
             ControllerHoldCombo.LeftHand + GripControl,
+            ControllerHoldCombo.LeftHand + TriggerControl,
+            ControllerHoldCombo.LeftHand + SecondaryButtonControl,
             ControllerHoldCombo.RightHand + GripControl,
-            ControllerHoldCombo.LeftHand + PrimaryButtonControl,
-            ControllerHoldCombo.RightHand + PrimaryButtonControl
+            ControllerHoldCombo.RightHand + TriggerControl,
+            ControllerHoldCombo.RightHand + ThumbstickClickControl
         };
 
-        [Tooltip("Seconds both grips and both A/X buttons must be held before the room resets. F9 in the editor.")]
+        [Tooltip("Seconds the combo (left grip + trigger + Y, right grip + trigger + stick click) must be held before the room resets. F9 in the editor.")]
         [Min(0.5f)]
-        [SerializeField] private float holdSeconds = 3f;
+        [SerializeField] private float holdSeconds = 4f;
+
+        [Tooltip("Seconds into the hold before the progress ring appears mid-view. A brief accidental press shows nothing.")]
+        [Min(0f)]
+        [SerializeField] private float indicatorDelaySeconds = 1f;
+
+        [Tooltip("Headset camera the ring locks to. Unset: Camera.main.")]
+        [SerializeField] private Transform cameraTransform;
 
         private ControllerHoldCombo _combo;
+        private HoldRingHud _ring;
         private bool _ready;
 
         // Built in OnEnable and disposed in OnDisable, unlike KioskSession, because this
@@ -40,13 +53,16 @@ namespace PsycheVR.Kiosk
         private void OnEnable()
         {
             _ready = false;
-            _combo = new ControllerHoldCombo("Kiosk Reset", Controls, EditorFallbackControl, holdSeconds, 0f);
+            _combo = new ControllerHoldCombo("Kiosk Reset", Controls, EditorFallbackControl, holdSeconds, indicatorDelaySeconds);
             _combo.Completed += ResetRoom;
             _combo.Enable();
         }
 
         private void OnDisable()
         {
+            if (_ring != null)
+                _ring.Report(this, false, 0f);
+
             if (_combo == null)
                 return;
 
@@ -70,6 +86,20 @@ namespace PsycheVR.Kiosk
 
             // Unscaled: the reset must work while the pause menu has the game frozen.
             _combo.Tick(Time.unscaledDeltaTime);
+            ShowRing();
+        }
+
+        private void ShowRing()
+        {
+            if (_ring == null)
+            {
+                if (cameraTransform == null && Camera.main != null)
+                    cameraTransform = Camera.main.transform;
+                _ring = HoldRingHud.For(cameraTransform);
+                if (_ring == null)
+                    return;
+            }
+            _ring.Report(this, _combo.IndicatorVisible, _combo.Progress);
         }
 
         private void ResetRoom()
