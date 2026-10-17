@@ -87,6 +87,9 @@ namespace PsycheVR.Gameplay
         [Tooltip("Pull-in speed (m/s) that sets the ease time between the two limits.")]
         [SerializeField, Range(0.5f, 20f)] private float pullSpeed = 4f;
 
+        [Tooltip("Turn speed (degrees per second) for an object with a fixed hold pose (the book) on its way into the hand. The ease lasts long enough for the turn as well as the distance, so a book pulled spine-out from the shelf turns smoothly instead of whipping round.")]
+        [SerializeField, Range(90f, 1440f)] private float pullTurnSpeed = 360f;
+
         [Tooltip("Distance from the palm (metres) under which a grab is 'near': no collider gating, and where a far pull-in turns collision back on.")]
         [SerializeField, Range(0.02f, 0.5f)] private float nearThreshold = 0.15f;
 
@@ -202,6 +205,7 @@ namespace PsycheVR.Gameplay
         public float MinSnapDuration => minSnapDuration;
         public float MaxSnapDuration => maxSnapDuration;
         public float PullSpeed => pullSpeed;
+        public float PullTurnSpeed => pullTurnSpeed;
         public float NearThreshold => nearThreshold;
         public float MaxHeldVelocity => maxHeldVelocity;
         public float MaxHeldSpeed => maxHeldSpeed;

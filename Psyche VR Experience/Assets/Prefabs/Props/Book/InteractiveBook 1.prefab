@@ -467,6 +467,7 @@ MonoBehaviour:
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
   profile: 3
+  holdWhereGrabbed: 0
 --- !u!114 &2056802826079476148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -530,7 +531,7 @@ MonoBehaviour:
   - {fileID: 947128904534596991}
   forwardAngle: 70
   backwardAngle: -70
-  smoothTime: 0.25
+  smoothTime: 0.45
 --- !u!114 &3013354957409255187
 MonoBehaviour:
   m_ObjectHideFlags: 0

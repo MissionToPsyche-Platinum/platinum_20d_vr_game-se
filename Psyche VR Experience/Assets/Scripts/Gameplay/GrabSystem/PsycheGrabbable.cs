@@ -31,7 +31,12 @@ namespace PsycheVR.Gameplay
     ///
     /// Grabbed inside a desk drawer, the object ignores the whole desk until it is out of the
     /// drawer and clear of every desk collider, so it lifts out instead of catching on the walls
-    /// and the desk top.
+    /// and the desk top. Grabbed inside a <see cref="Bookshelf"/>, it ignores the case and the other
+    /// books in it the same way until it is out.
+    ///
+    /// An object with a fixed hold pose (the book) eases into the hand for as long as its turn into
+    /// that pose takes at <see cref="GrabSettings.PullTurnSpeed"/>, not just its distance: a book
+    /// pulled spine-out from the shelf turns smoothly instead of whipping round in a tenth of a second.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     public class PsycheGrabbable : XRGrabInteractable, ISessionInteractable
@@ -70,7 +75,10 @@ namespace PsycheVR.Gameplay
         private bool _pressed;
         private int _handLayer = -1;
         private readonly List<Collider> _ignoredStatic = new List<Collider>();
-        private DrawerSlide _leavingDrawer;
+        // a drawer's desk or a bookcase being left: its colliders are ignored until the object is out
+        private readonly List<Collider> _clearOf = new List<Collider>();
+        private readonly List<Collider> _ownColliders = new List<Collider>();
+        private System.Func<Vector3, bool> _stillInside;
         private int _baseExcludeLayers;
         private float _grabTime;
         private float _farFromHandFor;
@@ -206,17 +214,28 @@ namespace PsycheVR.Gameplay
                     args.interactorObject.GetAttachTransform(this).position,
                     GetAttachTransform(args.interactorObject).position);
 
+                // A fixed hold pose turns the object on the way in; give the turn time too. A dynamic
+                // attach takes the hand's rotation, so those objects do not turn at all.
+                float turn = _profile.keepGrabbedRotation ? 0f : Quaternion.Angle(
+                    GetAttachTransform(args.interactorObject).rotation,
+                    args.interactorObject.GetAttachTransform(this).rotation);
+
                 attachEaseInTime = Mathf.Clamp(
-                    distance / grabSettings.PullSpeed,
+                    Mathf.Max(distance / grabSettings.PullSpeed, turn / grabSettings.PullTurnSpeed),
                     grabSettings.MinSnapDuration,
                     grabSettings.MaxSnapDuration);
 
                 if (distance > grabSettings.NearThreshold && !holdWhereGrabbed)
                     GateColliders();
 
+                var shelf = Bookshelf.Containing(_rb.worldCenterOfMass);
+                if (shelf != null)
+                    BeginLeaving(shelf.CollidersToClear(_rb), shelf.Contains);
+
                 // Before base: XRI records isKinematic here and restores it on release, so a
                 // hovering (kinematic) object must be handed back to physics first.
                 FloorHover.EndHover(this);
+                Bookshelf.Unshelve(this);
 
                 var drawer = DrawerSlide.Containing(_rb.worldCenterOfMass);
                 if (drawer != null)
@@ -267,8 +286,7 @@ namespace PsycheVR.Gameplay
                 _contactScore = 0f;
                 _contactThisStep = false;
                 RestoreStaticCollisions();
-                if (_leavingDrawer != null)
-                    IgnoreDesk(_leavingDrawer, false);
+                EndLeaving();
                 _rb.excludeLayers = _baseExcludeLayers;
             }
         }
@@ -303,31 +321,60 @@ namespace PsycheVR.Gameplay
             _ignoredStatic.Clear();
         }
 
-        /// <summary>Turns collisions between this object and every collider of the drawer's desk off or back on.</summary>
+        /// <summary>Starts or ends leaving the drawer's desk (see <see cref="BeginLeaving"/>).</summary>
         private void IgnoreDesk(DrawerSlide drawer, bool ignore)
         {
-            foreach (var other in drawer.DeskColliders)
-            {
-                if (other == null) continue;
-                foreach (var c in colliders)
-                {
-                    if (c != null)
-                        Physics.IgnoreCollision(c, other, ignore);
-                }
-            }
-            _leavingDrawer = ignore ? drawer : null;
+            if (ignore) BeginLeaving(drawer.DeskColliders, drawer.Contains);
+            else EndLeaving();
         }
 
-        /// <summary>True once the object has left the drawer's box and overlaps no desk collider.</summary>
-        private bool ClearOfDesk()
+        /// <summary>
+        /// Starts leaving a drawer or a bookcase: collisions between every collider on this body (the
+        /// book's pages included, which XRI's list leaves out) and <paramref name="others"/> are off
+        /// until <see cref="ClearOfContainer"/> says the object is out.
+        /// </summary>
+        private void BeginLeaving(IReadOnlyList<Collider> others, System.Func<Vector3, bool> stillInside)
         {
-            if (_leavingDrawer.Contains(_rb.worldCenterOfMass))
+            EndLeaving();
+            _ownColliders.Clear();
+            foreach (var c in GetComponentsInChildren<Collider>(true))
+                if (c.attachedRigidbody == _rb) _ownColliders.Add(c);
+            foreach (var other in others)
+            {
+                if (other == null) continue;
+                _clearOf.Add(other);
+                foreach (var c in _ownColliders)
+                    Physics.IgnoreCollision(c, other, true);
+            }
+            _stillInside = stillInside;
+        }
+
+        /// <summary>Turns the collisions <see cref="BeginLeaving"/> turned off back on.</summary>
+        private void EndLeaving()
+        {
+            foreach (var other in _clearOf)
+            {
+                if (other == null) continue;
+                foreach (var c in _ownColliders)
+                {
+                    if (c != null)
+                        Physics.IgnoreCollision(c, other, false);
+                }
+            }
+            _clearOf.Clear();
+            _stillInside = null;
+        }
+
+        /// <summary>True once the object has left the drawer's or bookcase's box and overlaps none of its colliders.</summary>
+        private bool ClearOfContainer()
+        {
+            if (_stillInside(_rb.worldCenterOfMass))
                 return false;
 
-            foreach (var c in colliders)
+            foreach (var c in _ownColliders)
             {
                 if (c == null || !c.enabled) continue;
-                foreach (var other in _leavingDrawer.DeskColliders)
+                foreach (var other in _clearOf)
                 {
                     if (other == null || !other.enabled) continue;
                     if (!c.bounds.Intersects(other.bounds)) continue;
@@ -370,8 +417,8 @@ namespace PsycheVR.Gameplay
                 return;
 
 
-            if (_leavingDrawer != null && ClearOfDesk())
-                IgnoreDesk(_leavingDrawer, false);
+            if (_stillInside != null && ClearOfContainer())
+                EndLeaving();
 
             if (CheckRunaway())
                 return;
