@@ -2,6 +2,12 @@ using System.Collections;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Video;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Audio;
+using PsycheVR.Gameplay;
 using PsycheVR.UI;
 using PsycheVR.Data;
 using PsycheVR.Modes;
@@ -16,6 +22,11 @@ namespace PsycheVR.Kiosk
     /// exploring afterwards; nothing fires again until the helper resets the room
     /// (<see cref="KioskResetListener"/>), which reloads the scene.
     ///
+    /// The first input is both triggers squeezed together (TG-324), with the puzzle success tone, and
+    /// until then nothing in the room can be touched: no hover, no grab, no XRI press, and the hands
+    /// have no colliders, so they push and slap nothing. A grip or trigger brushed while the controllers
+    /// change hands neither moves anything nor dismisses the controller guide.
+    ///
     /// Lives on the Kiosk prefab, which a <see cref="Modes.ModeGate"/> removes in Story
     /// mode, so this component never runs there.
     /// </summary>
@@ -24,7 +35,7 @@ namespace PsycheVR.Kiosk
         /// <summary>Where the session is.</summary>
         public enum Phase
         {
-            /// <summary>Waiting for the visitor's first input.</summary>
+            /// <summary>Waiting for both triggers; the room is locked.</summary>
             Armed,
             /// <summary>Clock running.</summary>
             Running,
@@ -35,19 +46,18 @@ namespace PsycheVR.Kiosk
         }
 
         private const string LogPrefix = "[KioskSession]";
-        private const string GripControl = "/gripPressed";
         private const string TriggerControl = "/triggerPressed";
+        /// <summary>Starts the session in the editor, where the simulator holds one trigger at a time.</summary>
+        private const string EditorStartControl = "<Keyboard>/f7";
 
-        private static readonly string[] FirstInputControls =
+        private static readonly string[] StartControls =
         {
-            ControllerHoldCombo.LeftHand + GripControl,
-            ControllerHoldCombo.RightHand + GripControl,
             ControllerHoldCombo.LeftHand + TriggerControl,
             ControllerHoldCombo.RightHand + TriggerControl
         };
 
         [Header("Clock")]
-        [Tooltip("Seconds from the visitor's first grip or trigger press until the launch video starts on its own. Sponsor asked for 3 to 5 minutes; set to 2.5 for the Oct 10 sponsor build.")]
+        [Tooltip("Seconds from the visitor's two-trigger start until the launch video starts on its own. Sponsor asked for 3 to 5 minutes; set to 2.5 for the Oct 10 sponsor build.")]
         [Min(1f)]
         [SerializeField] private float sessionSeconds = 150f;
 
@@ -80,6 +90,7 @@ namespace PsycheVR.Kiosk
         [SerializeField] private float videoEndMarginSeconds = 2f;
 
         private ControllerHoldCombo _firstInput;
+        private RoomLock _lock;
         private float _elapsedSeconds;
         private bool _armReady;
         private VideoPlayer _videoPlayer;
@@ -128,18 +139,21 @@ namespace PsycheVR.Kiosk
             // enable an input action nothing ever ticks.
             if (CurrentPhase == Phase.Armed)
             {
-                // Hold 0: Completed fires on the first ticked frame one of the four controls
-                // is observed pressed, and not again until all four have been released.
-                _firstInput = new ControllerHoldCombo("Kiosk First Input", FirstInputControls, null, 0f, 0f, anyControl: true);
+                // Hold 0: Completed fires on the first ticked frame both triggers are observed
+                // pressed together.
+                _firstInput = new ControllerHoldCombo("Kiosk First Input", StartControls, EditorStartControl, 0f, 0f);
                 _firstInput.Completed += HandleFirstInput;
                 _firstInput.Enable();
 
-                Debug.Log($"{LogPrefix} Armed; {sessionSeconds:0}s session starts on first input.", this);
+                _lock = new RoomLock();
+                _lock.Engage();
+                Debug.Log($"{LogPrefix} Armed; {sessionSeconds:0}s session starts when both triggers are squeezed.", this);
             }
         }
 
         private void OnDestroy()
         {
+            ReleaseLock();
             if (_videoPlayer != null)
             {
                 _videoPlayer.loopPointReached -= HandleVideoEnded;
@@ -189,8 +203,57 @@ namespace PsycheVR.Kiosk
 
             CurrentPhase = Phase.Running;
             _firstInput?.Disable();
+            ReleaseLock();
+            var head = cameraTransform != null ? cameraTransform : (Camera.main != null ? Camera.main.transform : transform);
+            InteractionAudio.Play(InteractionSound.PuzzleSnap, head.position);
             RecordOutcome("kiosk_first_input");
-            Debug.Log($"{LogPrefix} First input; clock running.", this);
+            Debug.Log($"{LogPrefix} Both triggers; room unlocked, clock running.", this);
+        }
+
+        private void ReleaseLock()
+        {
+            _lock?.Release();
+            _lock = null;
+        }
+
+        /// <summary>
+        /// Keeps the room untouchable before the session starts: a hover and select filter on every
+        /// interaction manager (grabs, XRI buttons, teleport) plus <see cref="HandPhysics.Locked"/>, which
+        /// keeps the hand colliders off (they push props and press the slap keys).
+        /// </summary>
+        private sealed class RoomLock : IXRHoverFilter, IXRSelectFilter
+        {
+            private XRInteractionManager[] _managers;
+
+            public bool canProcess => true;
+
+            public bool Process(IXRHoverInteractor interactor, IXRHoverInteractable interactable) => false;
+
+            public bool Process(IXRSelectInteractor interactor, IXRSelectInteractable interactable) => false;
+
+            public void Engage()
+            {
+                _managers = UnityEngine.Object.FindObjectsByType<XRInteractionManager>(FindObjectsSortMode.None);
+                foreach (var m in _managers)
+                {
+                    m.hoverFilters.Add(this);
+                    m.selectFilters.Add(this);
+                }
+                HandPhysics.Locked = true;
+            }
+
+            public void Release()
+            {
+                if (_managers != null)
+                    foreach (var m in _managers)
+                    {
+                        if (m == null) continue;
+                        m.hoverFilters.Remove(this);
+                        m.selectFilters.Remove(this);
+                    }
+                _managers = null;
+                HandPhysics.Locked = false;
+            }
         }
 
         private void TickClock(float deltaTime)
