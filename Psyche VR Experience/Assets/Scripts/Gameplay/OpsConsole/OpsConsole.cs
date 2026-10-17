@@ -327,7 +327,7 @@ namespace PsycheVR.Gameplay
 
         private void SetPingKeyLocked(bool locked)
         {
-            if (pingKey != null) pingKey.enabled = !locked;
+            if (pingKey != null) pingKey.Blocked = locked;   // not enabled: disabling it snaps the dome back mid-press
         }
 
         private bool Fail(string message)
