@@ -5,6 +5,7 @@ using System.Security;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using Application = UnityEngine.Application;
 
 namespace PsycheVR.Data
 {
@@ -20,6 +21,9 @@ namespace PsycheVR.Data
         private const float PeriodicSeconds = 180f;
 
         private static SessionLogUploader instance;
+        #if UNITY_EDITOR
+            public static bool SuppressUploadsForTests { get; set; }
+        #endif
         private bool rerunWanted;
         private float nextPeriodic;
         private SessionUploadConfig config;
@@ -85,6 +89,11 @@ namespace PsycheVR.Data
         /// </summary>
         public static void RequestUpload()
         {
+        #if UNITY_EDITOR
+            if (SuppressUploadsForTests)
+            return;
+        #endif
+
             if (!UploadPending() && instance != null && instance.config != null)
                 instance.rerunWanted = true;
         }
@@ -99,6 +108,10 @@ namespace PsycheVR.Data
         /// <summary>Starts an asynchronous pass; returns false if disabled or already busy.</summary>
         public static bool UploadPending()
         {
+            #if UNITY_EDITOR
+                if (SuppressUploadsForTests)
+                    return false;
+            #endif
             EnsureCreated();
             if (instance.config == null || instance.busy) return false;
             instance.attemptedUpload = true;
