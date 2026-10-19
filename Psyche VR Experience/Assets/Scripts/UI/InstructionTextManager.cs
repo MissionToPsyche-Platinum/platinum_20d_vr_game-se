@@ -1,7 +1,13 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using PsycheVR.Gameplay;
 
+/// <summary>
+/// The puzzle info board's pages: one per kind of piece placed (the two solar arrays share one), paged with
+/// Next and Previous. With a <see cref="screen"/> (the Event room board, TG-295) the pages show on the
+/// designed display with a picture of each piece; without one the two plain text fields are used.
+/// </summary>
 public class InstructionTextManager : MonoBehaviour
 {
     public TMP_Text instructionText;
@@ -14,12 +20,39 @@ public class InstructionTextManager : MonoBehaviour
     public bool solarAdded = false;
     public GameObject nextButton;
     public GameObject previousButton;
+    [Tooltip("Designed display for the pages; leave empty to use the plain text fields.")]
+    public PuzzleBoardScreen screen;
+
+    private readonly Sprite[] picture = new Sprite[4];
+    private readonly int[] entry = { -1, -1, -1, -1 };
 
     public void Start()
     {
-        SetText("Place the Psyche bus (the large black box) on top of the cylinder to begin.");
-        SetTitle("Instruction");
+        if (screen != null)
+        {
+            // the screen replaces the plain fields
+            if (instructionText != null) instructionText.gameObject.SetActive(false);
+            if (titleText != null) titleText.gameObject.SetActive(false);
+            screen.ShowStart();
+        }
+        else
+        {
+            SetText("Place the Psyche bus (the large black box) on top of the cylinder to begin.");
+            SetTitle("Instruction");
+        }
         UpdateButtonState();
+    }
+
+    /// <summary>Shows the page at <see cref="currPosition"/> on whichever display is in use.</summary>
+    private void ShowCurrent()
+    {
+        SetTitle(title[currPosition]);
+        SetText(description[currPosition]);
+        if (screen == null) return;
+        var found = new int[currSize];
+        for (int i = 0; i < currSize; i++) found[i] = entry[i];
+        screen.ShowPage(title[currPosition], description[currPosition], picture[currPosition],
+                        currPosition, currSize, entry[currPosition], found);
     }
 
     private void UpdateButtonState()
@@ -58,8 +91,7 @@ public class InstructionTextManager : MonoBehaviour
             if (solarAdded)
             {
                 currPosition = firstSolarPosition;
-                SetTitle(title[firstSolarPosition]);
-                SetText(description[firstSolarPosition]);
+                ShowCurrent();
                 UpdateButtonState();
                 return;
             }
@@ -77,12 +109,16 @@ public class InstructionTextManager : MonoBehaviour
 
         title[currSize] = toAddTitle;
         description[currSize] = toAddDesc;
+        if (screen != null)
+        {
+            picture[currSize] = screen.PictureFor(snapObject.tag);
+            entry[currSize] = screen.IndexOf(snapObject.tag);
+        }
 
         currSize++;
         currPosition = currSize - 1;
 
-        SetTitle(title[currPosition]);
-        SetText(description[currPosition]);
+        ShowCurrent();
         UpdateButtonState();
     }
 
@@ -97,8 +133,7 @@ public class InstructionTextManager : MonoBehaviour
             currPosition = 0;
         }
 
-        SetTitle(title[currPosition]);
-        SetText(description[currPosition]);
+        ShowCurrent();
     }
 
     public void Previous()
@@ -112,7 +147,6 @@ public class InstructionTextManager : MonoBehaviour
             currPosition = currSize - 1;
         }
 
-        SetTitle(title[currPosition]);
-        SetText(description[currPosition]);
+        ShowCurrent();
     }
 }

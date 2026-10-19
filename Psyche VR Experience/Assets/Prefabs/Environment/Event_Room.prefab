@@ -5004,6 +5004,70 @@ MonoBehaviour:
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
   profile: 0
   holdWhereGrabbed: 0
+--- !u!1 &2390685601056279941
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6212961762469047410}
+  - component: {fileID: 7869311389386044613}
+  m_Layer: 0
+  m_Name: PuzzleBoardScreen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6212961762469047410
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2390685601056279941}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2148275078374344902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7869311389386044613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2390685601056279941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e820a85d206ae4b9ea9b0642c7ce3868, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.PuzzleBoardScreen
+  plaque: {fileID: 7133959035521480645}
+  faceMarker: {fileID: 3870585269701579812}
+  titleFont: {fileID: 11400000, guid: a3346420fb0a28dfcb6c21d8182b9db0, type: 2}
+  bodyFont: {fileID: 11400000, guid: fb256d38635300cb1814b5de8d4561bd, type: 2}
+  pieces:
+  - tags:
+    - PSYCHE_Bus
+    picture: {fileID: 21300000, guid: 34b073d7c1e5608abb216396b8fb79d3, type: 3}
+  - tags:
+    - PSYCHE_Right_Solar
+    - PSYCHE_Left_Solar
+    picture: {fileID: 21300000, guid: 966cf38fcc1935267b0fd2bbe7b66cb3, type: 3}
+  - tags:
+    - PSYCHE_Antenna
+    picture: {fileID: 21300000, guid: b50dddd174686d16f80d57f63cd4b9e8, type: 3}
+  startTitle: Start with the bus
+  startText: Place the Psyche bus (the large black box) on top of the pedestal to
+    begin. Each piece you add shows up here.
+  startPicture: {fileID: 21300000, guid: 34b073d7c1e5608abb216396b8fb79d3, type: 3}
+  kicker: PSYCHE SPACECRAFT
 --- !u!1 &2431566047548892219
 GameObject:
   m_ObjectHideFlags: 0
@@ -20575,6 +20639,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1582783866880801233, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: objectDescription
+      value: 'The main body that the arrays, antenna and instruments bolt onto.
+
+        Function:
+        Holds the xenon fuel tanks, battery and flight computer
+
+        Engines:
+        Four Hall-effect thrusters'
+      objectReference: {fileID: 0}
     - target: {fileID: 1794414052886867834, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.043670382
@@ -20611,6 +20685,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.y
       value: -17.6
       objectReference: {fileID: 0}
+    - target: {fileID: 2813398524933384892, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: screen
+      value: 
+      objectReference: {fileID: 7869311389386044613}
     - target: {fileID: 2813398524933384892, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: nextButton
       value: 
@@ -20747,6 +20825,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: Snappable
       objectReference: {fileID: 0}
+    - target: {fileID: 4938649711642230149, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: objectDescription
+      value: 'One of two cross-shaped solar arrays, each made of five panels.
+
+        Function:
+        Powers the Hall-effect thrusters and instruments
+
+        Span: Both arrays
+        reach about 25 m (81 ft) tip to tip'
+      objectReference: {fileID: 0}
     - target: {fileID: 5467445662337191046, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.0005859567
@@ -20795,6 +20883,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.y
       value: 145.87
       objectReference: {fileID: 0}
+    - target: {fileID: 7943824400988125807, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: objectDescription
+      value: 'One of two cross-shaped solar arrays, each made of five panels.
+
+        Function:
+        Powers the Hall-effect thrusters and instruments
+
+        Span: Both arrays
+        reach about 25 m (81 ft) tip to tip'
+      objectReference: {fileID: 0}
     - target: {fileID: 8278190662150088687, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.012136737
@@ -20839,6 +20937,19 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: 16af0d45422ba55759c2d2674511664c, type: 2}
+    - target: {fileID: 8830182718176830965, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      propertyPath: objectDescription
+      value: 'A 2-meter (6.5-foot) dish that sends and receives radio signals.
+
+        Function:
+        Deep Space Network communication with Earth
+
+        Signal: X-band radio,
+        the same kind the Deep Space Network''s dishes use
+
+        Gravity: Tiny
+        changes in its signal show how the asteroid''s gravity pulls on the spacecraft'
+      objectReference: {fileID: 0}
     - target: {fileID: 9219512072919256940, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.06
@@ -20860,6 +20971,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 797518901996711883, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8741564524958089155}
+    - targetCorrespondingSourceObject: {fileID: 797518901996711883, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6212961762469047410}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6569875833885687922, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       insertIndex: -1
@@ -20881,6 +20995,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83c6d047c0cf6ca4fa159a62cdde8323, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InstructionTextManager
+--- !u!224 &3870585269701579812 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2555365292453901097, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+  m_PrefabInstance: {fileID: 1639714860910487309}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5615299038079461247 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6569875833885687922, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
@@ -20908,6 +21027,11 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4595535360539346020, guid: ca0e666a944f8ba4ea70039bf0be8dfa, type: 3}
+--- !u!23 &7133959035521480645 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8485210543790854344, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
+  m_PrefabInstance: {fileID: 1639714860910487309}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1672275532411475864
 PrefabInstance:
   m_ObjectHideFlags: 0
