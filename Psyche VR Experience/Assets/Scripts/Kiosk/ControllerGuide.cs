@@ -8,13 +8,16 @@ namespace PsycheVR.Kiosk
 {
     /// <summary>
     /// Event mode's first screen (TG-324): how the controllers work, shown before the visitor starts. A card
-    /// floats at eye height in front of the start spot with two pictures: grab (a Touch Plus controller with
+    /// floats at eye height in front of the visitor with two pictures: grab (a Touch Plus controller with
     /// the grip and the trigger lit) and slap (the game's glove coming down on a dome button in still frames);
     /// no other button is used in Event mode. Pictures: docs/superpowers/scripts/guide/README.md.
     /// Its call to action, "Squeeze both triggers to start", is the press that starts the session clock and
     /// unlocks the room (<see cref="KioskSession"/> leaves Armed), so nothing else dismisses it: a visitor
     /// reads it, or the staff tell them to squeeze both triggers. Everything is
     /// on the card, nothing is audio-only, and the scene reload between visitors brings it back.
+    /// It follows the head like the end message (<see cref="HeadFollow"/>, TG-322): it stays put through
+    /// small movements and glides back in front after a large turn or step, so a visitor who looks away
+    /// before starting still finds it.
     ///
     /// Built in code at Start like the puzzle board, in the same palette and fonts. Lives on the Kiosk
     /// prefab, which Story mode removes, so it never shows there.
@@ -27,7 +30,6 @@ namespace PsycheVR.Kiosk
         private const float Pad = 14f;
         private const float KickerSize = 12f, TitleSize = 32f, HeadSize = 24f, LineSize = 15f, CtaSize = 18f;
         private const float FadeSeconds = 0.5f;
-        private const float FallbackEyeHeight = 1.5f;     // m, when the head is not tracked yet
 
         [Tooltip("The session whose first input dismisses the card.")]
         [SerializeField] private KioskSession session;
@@ -37,7 +39,7 @@ namespace PsycheVR.Kiosk
         [SerializeField] private Sprite grabPicture;
         [SerializeField] private Sprite slapPicture;
 
-        [Tooltip("How far (m) in front of the start spot the card floats.")]
+        [Tooltip("How far (m) in front of the visitor the card floats when nothing is in the way.")]
         [SerializeField] private float distance = 0.55f;
 
         private RectTransform _root;
@@ -49,20 +51,10 @@ namespace PsycheVR.Kiosk
             if (session == null) session = GetComponent<KioskSession>();
             if (session == null || session.CurrentPhase != KioskSession.Phase.Armed) { enabled = false; return; }
             Build();
-            Place();
-        }
-
-        /// <summary>At eye height, <see cref="distance"/> ahead of the rig's start facing, turned to face it.</summary>
-        private void Place()
-        {
             var origin = FindAnyObjectByType<XROrigin>();
-            Transform start = origin != null ? origin.transform : transform;
-            var cam = origin != null && origin.Camera != null ? origin.Camera.transform : (Camera.main != null ? Camera.main.transform : null);
-            float eye = cam != null && cam.position.y - start.position.y > 0.8f ? cam.position.y : start.position.y + FallbackEyeHeight;
-            Vector3 forward = Vector3.ProjectOnPlane(start.forward, Vector3.up).normalized;
-            Vector3 at = start.position + forward * distance;
-            _root.position = new Vector3(at.x, eye, at.z);
-            _root.rotation = Quaternion.LookRotation(forward, Vector3.up);   // a canvas faces its -Z: readable from the start spot
+            var head = origin != null && origin.Camera != null ? origin.Camera.transform : (Camera.main != null ? Camera.main.transform : null);
+            if (head != null)
+                _root.gameObject.AddComponent<HeadFollow>().Init(head, distance, Height * 0.5f / MillimetresPerMetre);
         }
 
         private void Update()
