@@ -39,6 +39,7 @@ Every metric prints even for an empty folder/filter result; the CSV still gets i
 header. CSV durations cover observed records only. Open, suspended, ended,
 abnormal and unknown-device states remain explicit for manual review.
 
-The supplied fixture-answer verification (#312) and real Drive-log audit (#313)
-are separate follow-up tasks; temporary synthetic checks are not that acceptance
-evidence.
+The supplied fixture-answer verification (#312) is pending the original fixtures;
+temporary synthetic checks are not that acceptance evidence. The completed
+[October 19 Drive-log audit (#313)](audits/2026-10-19/README.md) includes the
+201-session output, index reconciliation, three raw-log checks and data limitations.
