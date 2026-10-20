@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
-using static System.Net.Mime.MediaTypeNames;
 using Application = UnityEngine.Application;
 
 public class StressTestLogger : MonoBehaviour
@@ -31,6 +30,7 @@ public class StressTestLogger : MonoBehaviour
 
         string header =
             "Timestamp,Reset,Phase," +
+            "ResetStart,ResetEnd,ResetDurationSeconds,TotalElapsedSeconds," +
             "TotalObjects,SceneObjects,PersistentObjects," +
             "ManagedMemoryMiB,AllocatedMemoryMiB,ReservedMemoryMiB," +
             "ObjectDelta,ObjectGrowth," +
@@ -49,7 +49,12 @@ public class StressTestLogger : MonoBehaviour
         string phase,
         StressTestMetrics.Snapshot current,
         StressTestMetrics.Snapshot previous,
-        StressTestMetrics.Snapshot baseline)
+        StressTestMetrics.Snapshot baseline,
+        DateTime resetStart,
+        DateTime resetEnd,
+        double resetDurationSeconds,
+        double totalElapsedSeconds)
+
     {
         if (!initialized)
         {
@@ -61,20 +66,32 @@ public class StressTestLogger : MonoBehaviour
             DateTime.Now.ToString("O"),
             reset.ToString(),
             phase,
+
+            // Timing
+            resetStart.ToString("O"),
+            resetEnd.ToString("O"),
+            resetDurationSeconds.ToString("F3", CultureInfo.InvariantCulture),
+            totalElapsedSeconds.ToString("F3", CultureInfo.InvariantCulture),
+
+            // Object counts
             current.TotalObjects.ToString(),
             current.SceneObjects.ToString(),
             current.PersistentObjects.ToString(),
 
+            // Memory measurements
             ToMiB(current.ManagedMemoryBytes),
             ToMiB(current.AllocatedMemoryBytes),
             ToMiB(current.ReservedMemoryBytes),
 
+            // Object changes
             (current.TotalObjects - previous.TotalObjects).ToString(),
             (current.TotalObjects - baseline.TotalObjects).ToString(),
 
+            // Persistent object changes
             (current.PersistentObjects - previous.PersistentObjects).ToString(),
             (current.PersistentObjects - baseline.PersistentObjects).ToString(),
 
+            // Memory changes
             ToMiB(current.AllocatedMemoryBytes -
                   previous.AllocatedMemoryBytes),
 

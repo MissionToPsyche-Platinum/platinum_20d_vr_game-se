@@ -2,7 +2,28 @@ using PsycheVR.Modes;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static System.Net.Mime.MediaTypeNames;
+using System;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
+
+/*
+ * STRESS TESTING MECHANISM
+ *
+ * Tests scene reload times, memory allocation, GameObject counts,
+ * and other performance metrics across repeated Event mode resets.
+ *
+ * TO RUN:
+ * Add the EventStressTestController prefab to the scene
+ * and enter Play Mode normally.
+ *
+ * *** IMPORTANT ***
+ * This test suppresses normal session logging.
+ *
+ * To restore normal session logging, REMOVE the
+ * EventStressTestController prefab instance from the scene.
+ *
+ * ALWAYS REMOVE THE PREFAB INSTANCE BEFORE BUILDING THE APK.
+ */
 
 public class EventReloadStressTest : MonoBehaviour
 {
@@ -15,6 +36,12 @@ public class EventReloadStressTest : MonoBehaviour
     private StressTestLogger logger;
     private int completedResets;
     private bool waitingForScene;
+    private DateTime testStart;
+    private DateTime testEnd;
+    private DateTime resetStart;
+    private DateTime resetEnd;
+    private Stopwatch timer = new Stopwatch();
+    private Stopwatch resetTimer = new Stopwatch();
     public static bool IsStressTestRunning { get; private set;}
     private static EventReloadStressTest instance;
 
@@ -32,8 +59,6 @@ public class EventReloadStressTest : MonoBehaviour
         }
 
         instance = this;
-        IsStressTestRunning = true;
-
         DontDestroyOnLoad(gameObject);
 
         metrics = GetComponent<StressTestMetrics>();
@@ -74,12 +99,15 @@ public class EventReloadStressTest : MonoBehaviour
     {
         if (instance != this)
             return;
-
+        IsStressTestRunning = true;
         StartCoroutine(RunStressTest());
     }
 
     private IEnumerator RunStressTest()
     {
+        testStart = DateTime.Now;
+        timer.Start();
+        Debug.Log($"[StressTest] Test started at: {testStart:yyyy-MM-dd HH:mm:ss}");
         while (completedResets < totalResets)
         {
             yield return new WaitForSecondsRealtime(delayBetweenResets);
@@ -89,12 +117,17 @@ public class EventReloadStressTest : MonoBehaviour
             Debug.Log(
                 $"[StressTest] Starting reset {completedResets + 1}/{totalResets}"
             );
-
+            resetStart = DateTime.Now;
+            resetTimer.Restart();
             GameModeManager.SwitchTo(GameMode.Event);
 
             yield return new WaitUntil(() => !waitingForScene);
             // Allow the newly loaded scene to finish initializing.
             yield return new WaitForSecondsRealtime(stabilizationDelay);
+
+
+            resetEnd = DateTime.Now;
+            resetTimer.Stop();
 
             // Capture measurements after the reset.
             StressTestMetrics.Snapshot snapshot = metrics.Capture();
@@ -104,74 +137,70 @@ public class EventReloadStressTest : MonoBehaviour
                 baselineSnapshot = snapshot;
                 previousSnapshot = snapshot;
                 hasBaseline = true;
+
                 logger.Record(
                     completedResets,
                     "Baseline",
                     snapshot,
                     snapshot,
-                    snapshot
+                    snapshot,
+                    resetStart,
+                    resetEnd,
+                    resetTimer.Elapsed.TotalSeconds,
+                    timer.Elapsed.TotalSeconds
                 );
 
                 Debug.Log("[StressTest] Baseline established.");
             }
             else
             {
-                int objectDelta = snapshot.TotalObjects -
-                                  previousSnapshot.TotalObjects;
-
-                int objectGrowth = snapshot.TotalObjects -
-                                   baselineSnapshot.TotalObjects;
-
-                int persistentDelta = snapshot.PersistentObjects -
-                                      previousSnapshot.PersistentObjects;
-
-                int persistentGrowth = snapshot.PersistentObjects -
-                                       baselineSnapshot.PersistentObjects;
-
-                float memoryDelta =
-                    (snapshot.AllocatedMemoryBytes -
-                     previousSnapshot.AllocatedMemoryBytes) / 1048576f;
-
-                float memoryGrowth =
-                    (snapshot.AllocatedMemoryBytes -
-                     baselineSnapshot.AllocatedMemoryBytes) / 1048576f;
-
                 logger.Record(
                     completedResets,
                     "Measured",
                     snapshot,
                     previousSnapshot,
-                     baselineSnapshot
-                );
-
-                Debug.Log(
-                    $"[StressTest] Reset {completedResets}\n" +
-                    $"Objects: {snapshot.TotalObjects} " +
-                    $"(Previous: {objectDelta:+#;-#;0}, Baseline: {objectGrowth:+#;-#;0})\n" +
-                    $"Persistent: {snapshot.PersistentObjects} " +
-                    $"(Previous: {persistentDelta:+#;-#;0}, Baseline: {persistentGrowth:+#;-#;0})\n" +
-                    $"Allocated Memory: {snapshot.AllocatedMemoryBytes / 1048576f:F2} MiB " +
-                    $"(Previous: {memoryDelta:+0.00;-0.00;0.00}, " +
-                    $"Baseline: {memoryGrowth:+0.00;-0.00;0.00})"
+                    baselineSnapshot,
+                    resetStart,
+                    resetEnd,
+                    resetTimer.Elapsed.TotalSeconds,
+                    timer.Elapsed.TotalSeconds
                 );
             }
 
-            previousSnapshot = snapshot;
-
             Debug.Log(
-                $"[StressTest] Reset {completedResets} | " +
-                $"Total Objects: {snapshot.TotalObjects} | " +
-                $"Scene Objects: {snapshot.SceneObjects} | " +
-                $"Persistent Objects: {snapshot.PersistentObjects} | " +
-                $"Managed Memory: {snapshot.ManagedMemoryBytes / 1048576f:F2} MB | " +
-                $"Allocated Memory: {snapshot.AllocatedMemoryBytes / 1048576f:F2} MB | " +
-                $"Reserved Memory: {snapshot.ReservedMemoryBytes / 1048576f:F2} MB"
+                $"[StressTest] Reset {completedResets}/{totalResets}\n" +
+                $"Start: {resetStart:yyyy-MM-dd HH:mm:ss}\n" +
+                $"End: {resetEnd:yyyy-MM-dd HH:mm:ss}\n" +
+                $"Duration: {resetTimer.Elapsed.TotalSeconds:F2} seconds\n" +
+                $"Total Objects: {snapshot.TotalObjects} " +
+                $"(Previous: {snapshot.TotalObjects - previousSnapshot.TotalObjects:+#;-#;0}, " +
+                $"Baseline: {snapshot.TotalObjects - baselineSnapshot.TotalObjects:+#;-#;0})\n" +
+                $"Scene Objects: {snapshot.SceneObjects}\n" +
+                $"Persistent Objects: {snapshot.PersistentObjects} " +
+                $"(Previous: {snapshot.PersistentObjects - previousSnapshot.PersistentObjects:+#;-#;0}, " +
+                $"Baseline: {snapshot.PersistentObjects - baselineSnapshot.PersistentObjects:+#;-#;0})\n" +
+                $"Managed Memory: {snapshot.ManagedMemoryBytes / 1048576f:F2} MiB\n" +
+                $"Allocated Memory: {snapshot.AllocatedMemoryBytes / 1048576f:F2} MiB " +
+                $"(Previous: {(snapshot.AllocatedMemoryBytes - previousSnapshot.AllocatedMemoryBytes) / 1048576f:+0.00;-0.00;0.00}, " +
+                $"Baseline: {(snapshot.AllocatedMemoryBytes - baselineSnapshot.AllocatedMemoryBytes) / 1048576f:+0.00;-0.00;0.00})\n" +
+                $"Reserved Memory: {snapshot.ReservedMemoryBytes / 1048576f:F2} MiB"
             );
+
+            previousSnapshot = snapshot;
         }
 
+        timer.Stop();
+        testEnd = DateTime.Now;
         Debug.Log(
-            $"[StressTest] Completed {completedResets} resets."
-        );
+            $"[StressTest] Test completed.\n" +
+            $"Start: {testStart:yyyy-MM-dd HH:mm:ss}\n" +
+            $"End: {testEnd:yyyy-MM-dd HH:mm:ss}\n" +
+            $"Total Resets: {completedResets}\n" +
+            $"Total Duration: {timer.Elapsed.TotalSeconds:F2} seconds\n" +
+            $"Average Time Per Reset: " +
+            $"{(completedResets > 0 ? timer.Elapsed.TotalSeconds / completedResets : 0):F2} seconds"
+);
+
         Debug.Log(UnityEngine.Application.persistentDataPath);
     }
 
