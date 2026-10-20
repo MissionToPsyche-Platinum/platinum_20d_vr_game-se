@@ -463,7 +463,7 @@ Transform:
   m_GameObject: {fileID: 202865269274947184}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.029000003, y: 0, z: 0.70000005}
+  m_LocalPosition: {x: 0.029000003, y: 0, z: 0.851}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4428,6 +4428,25 @@ MonoBehaviour:
   plate: {fileID: 4187657648003551268}
   friction: 220
   maxSpeed: 360
+  onFinished:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3587782269403434417}
+        m_TargetAssemblyTypeName: InstructionTextManager, Assembly-CSharp
+        m_MethodName: ShowComplete
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  lowerDistance: 0.27
+  lowerSeconds: 1.2
+  floatOffset: {x: 0, y: 0, z: 0.3}
+  floatTilt: {x: -10, y: 0, z: 20}
   breakDistance: 0.45
 --- !u!1 &2174707363511765491
 GameObject:
@@ -5119,6 +5138,7 @@ MonoBehaviour:
     begin. Each piece you add shows up here.
   startPicture: {fileID: 21300000, guid: 34b073d7c1e5608abb216396b8fb79d3, type: 3}
   kicker: PSYCHE SPACECRAFT
+  completeTitle: Psyche Satellite Complete
 --- !u!1 &2401949729940510056
 GameObject:
   m_ObjectHideFlags: 0
@@ -5148,7 +5168,7 @@ Transform:
   m_GameObject: {fileID: 2401949729940510056}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.144, y: 0.24725533, z: 0.036000013}
+  m_LocalPosition: {x: -0.144, y: 0.24725533, z: 0.18699998}
   m_LocalScale: {x: 0.12, y: 0.006, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6104,7 +6124,7 @@ Transform:
   m_GameObject: {fileID: 2663198391679698819}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0279, y: 1.0262, z: 0.6396}
+  m_LocalPosition: {x: 0.0279, y: 1.0262, z: 0.7939}
   m_LocalScale: {x: 0.03, y: 0.03, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6456,9 +6476,6 @@ MonoBehaviour:
   - {fileID: 9175382212580402316}
   forwardAngle: 70
   backwardAngle: -70
-  openDelay: 1
-  coverTurn: -90
-  turnSeconds: 0.5
   smoothTime: 0.45
 --- !u!114 &7350886050464849275
 MonoBehaviour:
@@ -6895,7 +6912,7 @@ Transform:
   m_GameObject: {fileID: 3060028484093957061}
   serializedVersion: 2
   m_LocalRotation: {x: -0.00000003785517, y: 0.8660254, z: -0.49999997, w: -0.000000021855694}
-  m_LocalPosition: {x: -0.15327938, y: -0.22359556, z: -0.24012342}
+  m_LocalPosition: {x: -0.15327938, y: -0.22359556, z: -0.08912349}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8814,9 +8831,6 @@ MonoBehaviour:
   - {fileID: 947128904534596991}
   forwardAngle: 70
   backwardAngle: -70
-  openDelay: 1
-  coverTurn: -90
-  turnSeconds: 0.5
   smoothTime: 0.45
 --- !u!114 &3013354957409255187
 MonoBehaviour:
@@ -11385,9 +11399,6 @@ MonoBehaviour:
   - {fileID: 983393592813072778}
   forwardAngle: 70
   backwardAngle: -70
-  openDelay: 1
-  coverTurn: -90
-  turnSeconds: 0.5
   smoothTime: 0.45
 --- !u!114 &2862841625139678719
 MonoBehaviour:
@@ -11700,9 +11711,6 @@ MonoBehaviour:
   - {fileID: 3105020918624568342}
   forwardAngle: 70
   backwardAngle: -70
-  openDelay: 1
-  coverTurn: -90
-  turnSeconds: 0.5
   smoothTime: 0.45
 --- !u!114 &7845957381449329420
 MonoBehaviour:
@@ -21001,7 +21009,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1794414052886867834, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.036000013
+      value: 0.18699998
       objectReference: {fileID: 0}
     - target: {fileID: 1794414052886867834, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -21187,11 +21195,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7316848375869107111, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.1729
+      value: 0.17289996
       objectReference: {fileID: 0}
     - target: {fileID: 7316848375869107111, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.0108
+      value: 0.14019996
       objectReference: {fileID: 0}
     - target: {fileID: 7316848375869107111, guid: f434a054e9ddced41a361ff6f8a74db7, type: 3}
       propertyPath: m_LocalRotation.w

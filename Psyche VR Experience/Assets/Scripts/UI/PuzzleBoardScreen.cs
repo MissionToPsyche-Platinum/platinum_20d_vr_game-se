@@ -11,7 +11,9 @@ namespace PsycheVR.Gameplay
     /// ("PSYCHE SPACECRAFT", "PIECE 2 OF 3") and the piece's name, then a picture of the piece beside its
     /// description, and a row of progress dots, one per kind of piece: found pieces fill in, the page on
     /// show is Mustard. A description's first line reads as a sentence; each later "Label: value" line is
-    /// a stat, its label in small Mustard capitals (<see cref="Format"/>), so the page scans at a glance. <see cref="InstructionTextManager"/> decides what to show and calls
+    /// a stat, its label in small Mustard capitals (<see cref="Format"/>), so the page scans at a glance.
+    /// When the model is finished, <see cref="ShowComplete"/> shows the completion page (TG-297): the
+    /// completion title alone, at title size, centred where the description sits; no one reads more then. <see cref="InstructionTextManager"/> decides what to show and calls
     /// <see cref="ShowPage"/>; before the first piece is placed the board shows the start page.
     ///
     /// The board's plaque sits under a heavily non-uniformly scaled transform, so the canvas is parented
@@ -60,9 +62,15 @@ namespace PsycheVR.Gameplay
         [SerializeField] private Sprite startPicture;
         [SerializeField] private string kicker = "PSYCHE SPACECRAFT";
 
+        [Header("Completion page")]
+        [Tooltip("Shown as written, not in capitals: \"Psyche\" is never all caps (publishing rules).")]
+        [SerializeField] private string completeTitle = "Psyche Satellite Complete";
+
         private RectTransform _root;
         private TMP_Text _kicker, _count, _title, _body;
         private Image _picture, _glow;
+        private RectTransform _card;
+        private TMP_Text _centreTitle;
         private Image[] _dots;
 
         /// <summary>Number of kinds of piece (progress dots).</summary>
@@ -85,10 +93,31 @@ namespace PsycheVR.Gameplay
             return i >= 0 ? pieces[i].picture : null;
         }
 
+        /// <summary>The completion page: the completion title alone in the middle, every dot lit.</summary>
+        public void ShowComplete()
+        {
+            if (_root == null) return;
+            _kicker.text = kicker;
+            _count.text = pieces.Length + " OF " + pieces.Length + " PLACED";
+            Fill("", "", null);
+            _centreTitle.text = completeTitle;
+            SetCompleteLayout(true);
+            foreach (var d in _dots) d.color = MonitorPalette.Mustard;
+        }
+
+        /// <summary>The completion page's layout (the centred title only) or the piece pages' (picture and text).</summary>
+        private void SetCompleteLayout(bool complete)
+        {
+            _card.gameObject.SetActive(!complete);
+            _body.gameObject.SetActive(!complete);
+            _centreTitle.gameObject.SetActive(complete);
+        }
+
         /// <summary>The start page, shown until the first piece is placed.</summary>
         public void ShowStart()
         {
             if (_root == null) return;
+            SetCompleteLayout(false);
             _kicker.text = kicker;
             _count.text = "0 OF " + pieces.Length + " PLACED";
             Fill(startTitle, startText, startPicture);
@@ -102,6 +131,7 @@ namespace PsycheVR.Gameplay
         public void ShowPage(string title, string text, Sprite picture, int page, int pageCount, int currentEntry, int[] found)
         {
             if (_root == null) return;
+            SetCompleteLayout(false);
             _kicker.text = kicker;
             _count.text = "PIECE " + (page + 1) + " OF " + pageCount;
             Fill(title, text, picture);
@@ -204,12 +234,18 @@ namespace PsycheVR.Gameplay
             rule.rectTransform.offsetMin = new Vector2(Pad, -1.5f); rule.rectTransform.offsetMax = new Vector2(-Pad, 1.5f);
 
             var card = Region(body, "PictureCard", 0f, 1f, 0f, PictureShare);
+            _card = card;
             Fill(card, "Card", MonitorPalette.DarkPurple);
             _glow = MonitorUi.Halo(card, "Glow", MonitorUi.WithAlpha(MonitorPalette.Purple, 0.9f), 1f).GetComponent<Image>();
             MonitorUi.Stretch(_glow.rectTransform);
             _picture = MonitorUi.Child(card, "Picture").gameObject.AddComponent<Image>();
             _picture.preserveAspect = true; _picture.raycastTarget = false;
             Stretch(_picture.rectTransform, 0f, 0f, 1f, 1f, 0f);
+
+            // the completion title: the header title's font and size, shown as written, centred in the body
+            _centreTitle = Text(body, "CompleteTitle", titleFont, TitleSize, TextAlignmentOptions.Center, MonitorPalette.White);
+            Stretch(_centreTitle.rectTransform, 0f, 0f, 1f, 1f, Pad);
+            _centreTitle.gameObject.SetActive(false);
 
             _body = Text(body, "Description", bodyFont, BodyMax, TextAlignmentOptions.MidlineLeft, MonitorPalette.White);
             Stretch(_body.rectTransform, PictureShare, 0f, 1f, 1f, Pad);

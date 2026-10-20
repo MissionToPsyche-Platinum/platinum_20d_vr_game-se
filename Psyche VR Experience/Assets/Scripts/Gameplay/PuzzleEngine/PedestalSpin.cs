@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using PsycheVR.Audio;
 using PsycheVR.Data;
 
 namespace PsycheVR.Gameplay
@@ -22,6 +24,11 @@ namespace PsycheVR.Gameplay
     /// Taking the larger, not the sum, keeps a drag where the wrist turns along from counting twice.
     /// Placed pieces lose their rigidbody interpolation: turning their parent every frame fought it and
     /// made them jiggle.
+    ///
+    /// When every tagged zone on the turntable holds its piece (TG-297), the model is lifted off: its pieces
+    /// move under a new <see cref="FloatingModel"/> at the model's centre, which glides <see cref="floatOffset"/>
+    /// off the pedestal and can be turned on every axis, while the post and the plate sink <see cref="lowerDistance"/> into the column and the
+    /// plate stops taking grabs.
     ///
     /// The pedestal sits inside the nested puzzle prefab under a non-uniform scale, so at Awake this makes a
     /// plain pivot ("Turntable", unit scale, on the post's axis) and moves the pedestal and the plate under
@@ -45,6 +52,21 @@ namespace PsycheVR.Gameplay
         [Tooltip("Fastest the pedestal coasts after a release (degrees per second). A held plate follows the hand at any speed.")]
         [SerializeField] private float maxSpeed = 360f;
 
+        [Tooltip("Raised once when the last piece is placed and the model lifts off (the board shows its completion page).")]
+        [SerializeField] private UnityEvent onFinished = new UnityEvent();
+
+        [Tooltip("How far (m) the post and plate sink into the column when the puzzle is done.")]
+        [SerializeField] private float lowerDistance = 0.27f;
+
+        [Tooltip("Seconds the post and plate take to sink.")]
+        [SerializeField] private float lowerSeconds = 1.2f;
+
+        [Tooltip("Where (m, world lengths) the finished model glides to from the pedestal, along the pedestal parent's axes. Event room: level, toward the video screen, clear of the message board.")]
+        [SerializeField] private Vector3 floatOffset = new Vector3(0f, 0f, 0.3f);
+
+        [Tooltip("Degrees the finished model banks into as it glides (x, y, z about the pedestal parent's axes): z lifts the right panel, negative x tips the top toward the visitor.")]
+        [SerializeField] private Vector3 floatTilt = new Vector3(-10f, 0f, 20f);
+
         [Tooltip("A hand this far (m) from the plate's rim lets go: room for a long sideways swipe.")]
         [SerializeField] private float breakDistance = 0.45f;
 
@@ -57,8 +79,14 @@ namespace PsycheVR.Gameplay
         private IXRSelectInteractor _holder;
         private float _angle, _lastTwist, _speed, _dragRadius;
         private Vector3 _dragTangent, _lastHand;
+        private bool _finished;
+        private float _lowerStart = -1f;
+        private Vector3 _turntableHome;
         private Quaternion _baseRotation;
         private float _plateRadius;
+
+        /// <summary>Raised once when the last piece is placed and the model lifts off.</summary>
+        public UnityEvent OnFinished => onFinished;
 
         /// <summary>The pivot everything on the pedestal turns with (null before Awake).</summary>
         public Transform Turntable => _turntable;
@@ -113,6 +141,52 @@ namespace PsycheVR.Gameplay
             zone.Placed.transform.SetParent(_turntable, true);
             var rb = zone.Placed.GetComponent<Rigidbody>();
             if (rb != null) rb.interpolation = RigidbodyInterpolation.None;
+            if (!_finished && AllPlaced()) Finish();
+        }
+
+        /// <summary>True when every tagged zone on the turntable holds its piece (untagged zones never take one).</summary>
+        private bool AllPlaced()
+        {
+            int zones = 0;
+            foreach (var z in _turntable.GetComponentsInChildren<SnapZone>(true))
+            {
+                if (string.IsNullOrEmpty(z.requiredTag)) continue;
+                zones++;
+                if (!z.hasSnapped) return false;
+            }
+            return zones > 0;
+        }
+
+        /// <summary>Lifts the finished model off the turntable and starts sinking the post and plate.</summary>
+        private void Finish()
+        {
+            _finished = true;
+            if (_holder != null) ReleaseHolder();
+            _speed = 0f;
+            plate.enabled = false;
+
+            var pieces = _turntable.GetComponentsInChildren<SnappableObject>(true);
+            Bounds b = default; bool first = true;
+            foreach (var p in pieces)
+                foreach (var r in p.GetComponentsInChildren<Renderer>())
+                {
+                    if (!r.enabled) continue;
+                    if (first) { b = r.bounds; first = false; } else b.Encapsulate(r.bounds);
+                }
+            var model = new GameObject("FloatingModel").transform;
+            model.SetParent(_turntable.parent, false);
+            model.position = first ? _turntable.position : b.center;
+            foreach (var p in pieces)
+                if (p.transform.parent == _turntable) p.transform.SetParent(model, true);
+            model.gameObject.AddComponent<FloatingModel>().Init(grabSettings,
+                _turntable.parent.TransformDirection(floatOffset),   // direction only: the parent may be non-uniformly scaled
+                _turntable.parent.rotation * Quaternion.Euler(floatTilt) * Quaternion.Inverse(_turntable.parent.rotation));
+
+            _turntableHome = _turntable.position;
+            _lowerStart = Time.time;
+            SessionEvents.Interaction("pedestal_lowered", this);
+            InteractionAudio.Play(InteractionSound.PuzzleComplete, model.position);
+            onFinished.Invoke();
         }
 
         private void OnGrab(SelectEnterEventArgs args)
@@ -149,6 +223,14 @@ namespace PsycheVR.Gameplay
         {
             float dt = Time.deltaTime;
             if (dt <= 0f || _turntable == null) return;
+            if (_finished)
+            {
+                if (_lowerStart < 0f) return;
+                float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((Time.time - _lowerStart) / lowerSeconds));
+                _turntable.position = _turntableHome + Vector3.down * (lowerDistance * k);
+                if (k >= 1f) _lowerStart = -1f;
+                return;
+            }
             float previous = _angle;
 
             if (_holder != null)

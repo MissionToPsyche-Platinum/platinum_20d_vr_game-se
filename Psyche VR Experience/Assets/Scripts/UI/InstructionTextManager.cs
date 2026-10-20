@@ -22,6 +22,10 @@ public class InstructionTextManager : MonoBehaviour
     public GameObject previousButton;
     [Tooltip("Designed display for the pages; leave empty to use the plain text fields.")]
     public PuzzleBoardScreen screen;
+    [Tooltip("Seconds the completion page shows before the pages come back (a slap on Back or Next comes back sooner).")]
+    public float completeSeconds = 10f;
+
+    private float completeUntil = -1f;
 
     private readonly Sprite[] picture = new Sprite[4];
     private readonly int[] entry = { -1, -1, -1, -1 };
@@ -43,9 +47,28 @@ public class InstructionTextManager : MonoBehaviour
         UpdateButtonState();
     }
 
+    /// <summary>
+    /// The model is finished (TG-297, raised by PedestalSpin): the screen shows the completion page for
+    /// <see cref="completeSeconds"/>, then goes back to the page it was on.
+    /// </summary>
+    public void ShowComplete()
+    {
+        if (screen == null) return;
+        screen.ShowComplete();
+        completeUntil = Time.time + completeSeconds;
+    }
+
+    private void Update()
+    {
+        if (completeUntil < 0f || Time.time < completeUntil) return;
+        completeUntil = -1f;
+        if (currSize > 0) ShowCurrent();
+    }
+
     /// <summary>Shows the page at <see cref="currPosition"/> on whichever display is in use.</summary>
     private void ShowCurrent()
     {
+        completeUntil = -1f;
         SetTitle(title[currPosition]);
         SetText(description[currPosition]);
         if (screen == null) return;
