@@ -14084,6 +14084,7 @@ Transform:
   - {fileID: 8621751417132886094}
   - {fileID: 4527332380286653913}
   - {fileID: 8023940253993859661}
+  - {fileID: 838828499538420082}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6824815210030888999
@@ -15615,6 +15616,64 @@ MonoBehaviour:
   velocityFlipThreshold: 60
   velocitySmoothing: 0.6
   attachTransform: {fileID: 0}
+--- !u!1 &7573188262661987932
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 838828499538420082}
+  - component: {fileID: 6140751221312414390}
+  - component: {fileID: 5413533634442983823}
+  m_Layer: 0
+  m_Name: EventVisitorBounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &838828499538420082
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7573188262661987932}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7304108512264773847}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6140751221312414390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7573188262661987932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a14b494c9b0a420f92e3007f48323592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Modes.ModeGate
+  activeIn: 01000000
+--- !u!114 &5413533634442983823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7573188262661987932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b19db3e033077d88892c1279ba722fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Kiosk.VisitorBounds
 --- !u!1 &7707123015940851596
 GameObject:
   m_ObjectHideFlags: 0
