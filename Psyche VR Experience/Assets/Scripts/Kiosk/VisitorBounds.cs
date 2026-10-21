@@ -12,8 +12,10 @@ namespace PsycheVR.Kiosk
     ///
     /// Every frame the head is swept, as a small sphere, from the last spot known to be inside the room
     /// to where the headset now is, sliding along anything solid in the way. The view fades as the
-    /// headset gets further past that spot (TG-290): black a quarter metre into a wall or out of the
-    /// window, and clear again as soon as the visitor steps back.
+    /// headset gets further past that spot (TG-290), and the rig is shifted sideways by the same
+    /// distance so the view stays at it (TG-291): walking or leaning into a wall stops the view at the
+    /// wall, and stepping back clears it at once. The shift is sideways only, so the rig never leaves
+    /// the floor and gravity has nothing to fight; leaning down into the desk only fades.
     ///
     /// Only scenery counts (colliders without a rigidbody): props, puzzle pieces and the hands never
     /// hold the head back, so hands still knock things over as before. Sweeping from the last clear spot,
@@ -22,6 +24,7 @@ namespace PsycheVR.Kiosk
     /// Lives on the Event room under a <see cref="Modes.ModeGate"/> for Event mode; Story mode keeps
     /// its own locomotion and is untouched.
     /// </summary>
+    [DefaultExecutionOrder(-50)] // before HeadFollow, so the cards place themselves from the shifted head
     public sealed class VisitorBounds : MonoBehaviour
     {
         /// <summary>Radius (m) of the sphere swept for the head: keeps the camera's near plane out of walls.</summary>
@@ -47,6 +50,8 @@ namespace PsycheVR.Kiosk
         private bool _seeded;
         private Vector3 _clear;         // the last head position known to be inside the room
         private Vector3 _lastRaw;
+        private Vector3 _applied;       // the sideways shift this component has added to the rig
+        private Vector3 _expectedRig;   // where it left the rig, to notice anything else moving it
         private float _alpha = -1f;
 
         private void Awake()
@@ -63,7 +68,8 @@ namespace PsycheVR.Kiosk
         {
             if (!Find()) return;
 
-            Vector3 raw = _head.position;
+            if ((_rig.position - _expectedRig).sqrMagnitude > 1e-8f) _applied = Vector3.zero; // placed by someone else
+            Vector3 raw = _head.position - _applied; // where the head would be without the shift
             if (!_seeded || (raw - _lastRaw).sqrMagnitude > JumpDistance * JumpDistance)
             {
                 _clear = raw;
@@ -74,6 +80,12 @@ namespace PsycheVR.Kiosk
                 _clear = Slide(_clear, raw);
             }
             _lastRaw = raw;
+
+            Vector3 shift = _clear - raw;
+            shift.y = 0f;
+            _rig.position += shift - _applied;
+            _applied = shift;
+            _expectedRig = _rig.position;
 
             SetFade(Mathf.InverseLerp(FadeStart, FadeFull, Vector3.Distance(raw, _clear)));
         }
@@ -86,6 +98,7 @@ namespace PsycheVR.Kiosk
             _rig = origin.Origin != null ? origin.Origin.transform : origin.transform;
             _head = origin.Camera.transform;
             _fade = _head.GetComponentInChildren<BlinkFadeOverlay>(true);
+            _expectedRig = _rig.position;
             if (_fade == null) Debug.LogWarning("[VisitorBounds] no BlinkFadeOverlay under the camera; the view will not fade.", this);
             return true;
         }
