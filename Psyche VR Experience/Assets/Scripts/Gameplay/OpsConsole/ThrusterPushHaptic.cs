@@ -7,7 +7,8 @@ namespace PsycheVR.Gameplay
     /// <summary>
     /// "Feel Psyche's push": while the visitor holds the ops console's mouse and the monitor shows
     /// the Thruster tab, the holding controller gets a soft, steady buzz for <see cref="MaxSeconds"/>,
-    /// with the content's rumble line on the monitor's header pop-up bar for as long as it lasts.
+    /// with the content's rumble line on a large card in the middle of the monitor for as long as it
+    /// lasts, big enough to notice while the visitor is looking at the mouse in their hand.
     ///
     /// Until a visitor's first grab, the Thruster tab carries the content's prompt ("grab the mouse")
     /// on that pop-up; after it, the prompt never shows again (a kiosk reset reloads the scene, so the
@@ -39,7 +40,7 @@ namespace PsycheVR.Gameplay
         private bool _running;
         private float _elapsed;
         private float _nextPulse;
-        private bool _rumbleShown;     // the rumble line is on the pop-up
+        private bool _rumbleShown;     // the rumble line is on the centred card
         private bool _promptRetired;   // this visitor has grabbed the mouse once
 
         private void OnEnable()
@@ -100,9 +101,10 @@ namespace PsycheVR.Gameplay
             _promptRetired = true;
             _elapsed = 0f;
             _nextPulse = 0f;
-            _rumbleShown = console.Content != null && !string.IsNullOrEmpty(console.Content.pushRumbleLine);
-            if (_rumbleShown) console.ShowPopup(console.Content.pushRumbleLine);
-            else console.HidePopup();   // the prompt goes either way
+            console.HidePopup();   // the prompt goes either way
+            var screen = console.GetComponent<MonitorScreen>();   // OpsConsole adds it when it builds
+            _rumbleShown = screen != null && console.Content != null && !string.IsNullOrEmpty(console.Content.pushRumbleLine);
+            if (_rumbleShown) screen.ShowCallout(console.Content.pushRumbleLine);
             Step();
         }
 
@@ -133,7 +135,8 @@ namespace PsycheVR.Gameplay
         {
             if (!_rumbleShown) return;
             _rumbleShown = false;
-            console.HidePopup();
+            var screen = console.GetComponent<MonitorScreen>();
+            if (screen != null) screen.HideCallout();
         }
     }
 }
