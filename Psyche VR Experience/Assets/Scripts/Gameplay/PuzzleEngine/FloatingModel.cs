@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -16,7 +17,15 @@ namespace PsycheVR.Gameplay
     /// (swing), and a twist of the wrist about that same line turns it about the line (twist). Only the
     /// wrist's twist is added, not its whole rotation, so moving the hand round while the wrist turns with it
     /// does not count twice. The model stays where it is, so letting go leaves it hovering; the bob eases out
-    /// while it is held so the centre stays still under the hand. No drag-to-spin: that is the pedestal's.
+    /// while it is held so the centre stays still under the hand.
+    ///
+    /// An open hand slapping it spins it in the direction of the slap, on any axis (up, down, sideways): the
+    /// spin matches the hand's speed across the model at the touch (one to one), then coasts down with the
+    /// pedestal's friction and top speed (<see cref="HandPushProbe"/> finds the touches).
+    ///
+    /// Floating cards keep clear of it by its resting spot, not its moving panels: <see cref="Active"/> lists
+    /// the models, each with <see cref="Home"/> and a <see cref="Radius"/> that holds the whole model whichever
+    /// way it is turned.
     /// </summary>
     public class FloatingModel : MonoBehaviour, ISessionInteractable
     {
@@ -27,6 +36,19 @@ namespace PsycheVR.Gameplay
         private const float DriftEaseSeconds = 1.5f;   // drift fades back in after a release
         private const float BobEaseSeconds = 0.4f;     // the bob fades out on a grab and back in after
         private const float MinTrackRadius = 0.02f;    // m: a hand this close to the centre turns it by its wrist alone
+        private const float TouchReach = 0.3f;         // m past the model's bounds a hand is checked for a touch
+        private const float MinPushRadius = 0.05f;     // m: a push this close to the centre has no lever
+
+        private static readonly List<FloatingModel> s_active = new List<FloatingModel>();
+
+        /// <summary>Finished models in the scene, for anything that must keep clear of them.</summary>
+        public static IReadOnlyList<FloatingModel> Active => s_active;
+
+        /// <summary>Where the model rests once its glide is done (world).</summary>
+        public Vector3 Home => _home;
+
+        /// <summary>Radius (m) of a sphere about <see cref="Home"/> that holds the whole model in any orientation.</summary>
+        public float Radius { get; private set; }
 
         private XRSimpleInteractable _grab;
         private IXRSelectInteractor _holder;
@@ -37,16 +59,27 @@ namespace PsycheVR.Gameplay
         private Quaternion _tilt = Quaternion.identity;
         private float _tiltDone;                       // 0..1: how much of the tilt has been turned in
         private float _born, _released = float.NegativeInfinity;
+        private Vector3 _spin;                         // deg/s, as axis * speed in world space
+        private float _spinFriction, _spinMax;         // its slowing (deg/s per s) and its cap (deg/s)
+        private Collider[] _parts;
+        private readonly HandPushProbe _push = new HandPushProbe();
 
         /// <summary>Sets the model up once its pieces are children: grab, glow, and the glide from here.</summary>
         /// <param name="grabSettings">Shared grab settings, for the glow.</param>
+        /// <param name="spinFriction">How fast a pushed spin slows (degrees per second, per second): the pedestal's.</param>
+        /// <param name="spinMax">Fastest a pushed spin turns (degrees per second): the pedestal's coasting cap.</param>
         /// <param name="lift">World offset (m) from where it was built to where it hovers.</param>
         /// <param name="tilt">World rotation it banks into over the glide.</param>
-        public void Init(GrabSettings grabSettings, Vector3 lift, Quaternion tilt)
+        public void Init(GrabSettings grabSettings, float spinFriction, float spinMax, Vector3 lift, Quaternion tilt)
         {
+            _spinFriction = spinFriction;
+            _spinMax = spinMax;
+            _parts = GetComponentsInChildren<Collider>();
             _lift = lift;
             _tilt = tilt;
             _home = transform.position + lift;
+            Radius = ModelRadius();
+            s_active.Add(this);
             _born = Time.time;
             // added after the pieces were parented, so it collects their colliders
             _grab = gameObject.AddComponent<XRSimpleInteractable>();
@@ -59,6 +92,7 @@ namespace PsycheVR.Gameplay
 
         private void OnDestroy()
         {
+            s_active.Remove(this);
             if (_grab == null) return;
             _grab.selectEntered.RemoveListener(OnGrab);
             _grab.selectExited.RemoveListener(OnRelease);
@@ -67,6 +101,7 @@ namespace PsycheVR.Gameplay
         private void OnGrab(SelectEnterEventArgs args)
         {
             _holder = args.interactorObject;
+            _spin = Vector3.zero;
             var attach = _holder.GetAttachTransform(_grab);
             _lastHand = attach.rotation;
             _lastHandPos = attach.position;
@@ -126,7 +161,49 @@ namespace PsycheVR.Gameplay
             }
 
             float drift = DriftSpeed * Mathf.Clamp01((Time.time - _released) / DriftEaseSeconds) * Mathf.Clamp01(t / RiseSeconds);
+            float speed = _spin.magnitude;
+            float slowed = Mathf.MoveTowards(speed, 0f, _spinFriction * Time.deltaTime);
+            if (speed > 0f)
+            {
+                transform.Rotate(_spin / speed, (speed + slowed) * 0.5f * Time.deltaTime, Space.World);
+                _spin *= slowed / speed;
+            }
             transform.Rotate(Vector3.up, drift * Time.deltaTime, Space.World);
+        }
+
+        /// <summary>Turns open hands slapping the model this physics step into spin (not while held or gliding).</summary>
+        private void FixedUpdate()
+        {
+            if (_grab == null || _holder != null || Time.time - _born <= RiseSeconds) return;
+            _push.Poll(_parts, TouchReach, Push);
+        }
+
+        private void Push(Vector3 at, Vector3 velocity)
+        {
+            Vector3 r = at - transform.position;
+            if (r.magnitude < MinPushRadius) return;
+            // the surface under the hand follows the hand: angular velocity = r x v / |r|^2
+            Vector3 target = Vector3.Cross(r, velocity) / r.sqrMagnitude * Mathf.Rad2Deg;
+            target = Vector3.ClampMagnitude(target, _spinMax);
+            // a faster slap takes over; a slap against the turn reverses it
+            if (target.sqrMagnitude > _spin.sqrMagnitude || Vector3.Dot(target, _spin) < 0f)
+            {
+                if (_spin == Vector3.zero) SessionEvents.Interaction("model_pushed", this);
+                _spin = target;
+            }
+        }
+
+        /// <summary>Half the diagonal of the model's bounds: a sphere that holds it however it is turned.</summary>
+        private float ModelRadius()
+        {
+            bool any = false;
+            Bounds b = default;
+            foreach (var r in GetComponentsInChildren<Renderer>())
+            {
+                if (!r.enabled) continue;
+                if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
+            }
+            return any ? b.extents.magnitude : 0f;
         }
     }
 }

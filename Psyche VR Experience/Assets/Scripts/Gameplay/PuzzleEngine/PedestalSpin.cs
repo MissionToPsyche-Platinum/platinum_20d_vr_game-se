@@ -178,7 +178,7 @@ namespace PsycheVR.Gameplay
             model.position = first ? _turntable.position : b.center;
             foreach (var p in pieces)
                 if (p.transform.parent == _turntable) p.transform.SetParent(model, true);
-            model.gameObject.AddComponent<FloatingModel>().Init(grabSettings,
+            model.gameObject.AddComponent<FloatingModel>().Init(grabSettings, friction, maxSpeed,
                 _turntable.parent.TransformDirection(floatOffset),   // direction only: the parent may be non-uniformly scaled
                 _turntable.parent.rotation * Quaternion.Euler(floatTilt) * Quaternion.Inverse(_turntable.parent.rotation));
 
