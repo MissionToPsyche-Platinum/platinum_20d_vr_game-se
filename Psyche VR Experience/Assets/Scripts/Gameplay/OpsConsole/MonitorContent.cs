@@ -83,6 +83,10 @@ namespace PsycheVR.Gameplay
         [Header("Kiosk")]
         public string attractPrompt = "Slap ENTER";
 
+        [Header("Power off")]
+        [Tooltip("Shown on the black screen while the computer's power button has it off; visitors turned it off by accident on Oct 13.")]
+        [TextArea] public string powerOffMessage = "NO POWER\nCheck the computer's power button";
+
         /// <summary>Tabs in screen order.</summary>
         public Tab[] Tabs => new[] { marsFlyby, deepSpaceNetwork, solarPower, thruster };
     }
