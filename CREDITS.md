@@ -29,6 +29,7 @@ Original assets created using Blender by the [Blender Foundation](https://www.bl
 | Ultimate Interior Furniture Pack | Fries and Seagull | [Unity Asset Store](https://assetstore.unity.com/packages/3d/props/interior/ultimate-interior-furniture-pack-low-poly-household-kitchen-prop-316897) | [Standard Unity Asset Store EULA](https://unity.com/legal/as-terms) | Assorted furniture assets |
 | Cute Furniture FREE - Low Poly 3D | ithappy | [Unity Asset Store](https://assetstore.unity.com/packages/3d/props/furniture/cute-furniture-free-low-poly-3d-models-pack-260522) | [Standard Unity Asset Store EULA](https://unity.com/legal/as-terms) | Assorted furniture assets |
 | Nature Starter Kit 1 | Shapes | [Unity Asset Store](https://assetstore.unity.com/packages/3d/environments/nature-starter-kit-1-49962) | [Standard Unity Asset Store EULA](https://unity.com/legal/as-terms) | Assorted outdoor assets |
+| Meta Quest Touch Plus controller | Copyright (c) 2019 Amazon ([WebXR Input Profiles](https://github.com/immersive-web/webxr-input-profiles)) | [npm @webxr-input-profiles/assets 1.0.20](https://www.npmjs.com/package/@webxr-input-profiles/assets) | [MIT](https://opensource.org/license/mit) | Rendered as the controller picture on the first Event screen; not shipped as a model |
 
  
 ## Images

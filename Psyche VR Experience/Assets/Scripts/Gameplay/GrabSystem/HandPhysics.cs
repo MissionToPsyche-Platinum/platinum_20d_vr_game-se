@@ -9,7 +9,8 @@ namespace PsycheVR.Gameplay
     /// through static furniture instead of wedging. HandPresence switches
     /// <see cref="CollisionEnabled"/> off while the hand holds something; switching it back
     /// on waits <see cref="reenableDelay"/> so the collider does not pop the just-released
-    /// object out of the palm.
+    /// object out of the palm. While <see cref="Locked"/> is set (the kiosk before its two-trigger start)
+    /// every hand's colliders stay off, so the hands touch, push and slap nothing.
     ///
     /// Inside a desk drawer the hand stops pushing props (it excludes the Default layer) but keeps
     /// its colliders, so DrawerSlide still sees it: a kinematic hand pressing a light sheet into
@@ -60,6 +61,12 @@ namespace PsycheVR.Gameplay
         private bool _wantCollision = true;
         private float _reenableAt;
         private bool _inDrawer;
+
+        /// <summary>
+        /// True: every hand's colliders are off. Cleared, each hand collides again once it is clear of
+        /// props, as after a release, so a hand resting inside one does not launch it.
+        /// </summary>
+        public static bool Locked { get; set; }
 
         /// <summary>
         /// Whether the hand collides. Off is immediate; on takes effect after the delay.
@@ -158,7 +165,9 @@ namespace PsycheVR.Gameplay
 
         private void FixedUpdate()
         {
-            if (_wantCollision && !_colliders[0].enabled && Time.time >= _reenableAt && IsClear())
+            if (Locked && _colliders[0].enabled)
+                SetColliders(false);
+            else if (!Locked && _wantCollision && !_colliders[0].enabled && Time.time >= _reenableAt && IsClear())
                 SetColliders(true);
 
             if ((palmAnchor.position - _rb.position).sqrMagnitude > MaxStepDistance * MaxStepDistance)
