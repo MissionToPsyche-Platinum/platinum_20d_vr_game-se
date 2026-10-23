@@ -118,6 +118,7 @@ namespace PsycheVR.Data
                     LogDirectory,
                     sessionMode.ToString(), scene, Application.version, Application.platform.ToString(),
                     SessionBuildInfo.CurrentStamp, SessionDeviceName.Current);
+                session.RecordEvent("storage_status", scene, SessionStorageStatus.Details(LogDirectory));
                 Debug.Log($"{LogPrefix} Saving session to {session.FilePath}", this);
                 readyPending = true;
                 idle = false;
