@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using PsycheVR.Gameplay;
 
 namespace PsycheVR.Kiosk
 {
@@ -11,10 +11,13 @@ namespace PsycheVR.Kiosk
     ///
     /// It never sits inside a wall, desk or screen: the spot ahead is swept for blockers every frame
     /// and the panel is pulled in to the clear distance, shrinking with it so it keeps the same size
-    /// in view. A blocker closer than the panel re-centres it at once. Fixed scenery counts, and so does the
-    /// spacecraft model, built or not (its pieces on the pedestal, the finished model floating): it is big
-    /// enough to hide the card. Other props with a rigidbody (a book in the hand) and anything held are
-    /// ignored, so they never push the card about.
+    /// in view. A blocker closer than the panel re-centres it at once. Only fixed scenery counts, plus the
+    /// finished spacecraft model taken as a fixed sphere at its resting spot (<see cref="FloatingModel.Home"/>,
+    /// <see cref="FloatingModel.Radius"/>): its swinging panels never move the card. Props with a rigidbody
+    /// and the puzzle pieces themselves are ignored.
+    ///
+    /// Distance and size change only while the panel glides to a new spot, never in between, so it holds
+    /// still in depth for the eyes to focus on.
     ///
     /// Put it on the canvas root (not under the camera) and call <see cref="Init"/>.
     /// </summary>
@@ -32,8 +35,8 @@ namespace PsycheVR.Kiosk
         private const float SmoothSeconds = 0.35f;
         /// <summary>Gap (m) kept between the panel and a blocker in front of it.</summary>
         private const float ClearancePadding = 0.12f;
-        /// <summary>Closest (m) the panel ever comes, however tight the space.</summary>
-        private const float MinDistance = 0.25f;
+        /// <summary>Closest (m) the panel ever comes, however tight the space: nearer than this is hard to focus on.</summary>
+        private const float MinDistance = 0.5f;
 
         private Transform _head;
         private float _distance;
@@ -43,6 +46,7 @@ namespace PsycheVR.Kiosk
         private Vector3 _velocity;
         private float _scaleVelocity;
         private float _scaleK = 1f;
+        private float _targetScaleK = 1f;   // the size for the current spot, set only while gliding
 
         /// <summary>
         /// Starts following <paramref name="head"/>, placed straight ahead at once.
@@ -56,7 +60,7 @@ namespace PsycheVR.Kiosk
             _distance = distance;
             _sweepRadius = sweepRadius;
             _baseScale = transform.localScale;
-            _scaleK = Clear(out Vector3 at) / _distance;
+            _scaleK = _targetScaleK = Clear(out Vector3 at) / _distance;
             transform.position = at;
             Face();
             transform.localScale = _baseScale * _scaleK;
@@ -77,6 +81,7 @@ namespace PsycheVR.Kiosk
 
             if (_recentring)
             {
+                _targetScaleK = clear / _distance;
                 transform.position = Vector3.SmoothDamp(transform.position, target, ref _velocity, SmoothSeconds);
                 if (off < StopAngle && Vector3.Distance(transform.position, target) < StopStep)
                 {
@@ -85,7 +90,7 @@ namespace PsycheVR.Kiosk
                 }
             }
 
-            _scaleK = Mathf.SmoothDamp(_scaleK, clear / _distance, ref _scaleVelocity, SmoothSeconds);
+            _scaleK = Mathf.SmoothDamp(_scaleK, _targetScaleK, ref _scaleVelocity, SmoothSeconds);
             transform.localScale = _baseScale * _scaleK;
             Face();
         }
@@ -139,20 +144,38 @@ namespace PsycheVR.Kiosk
                 if (hit.transform.IsChildOf(head.root) || !IsBlocker(hit.collider)) continue;
                 distance = Mathf.Min(distance, hit.distance - ClearancePadding);
             }
+            foreach (var model in FloatingModel.Active)
+            {
+                if (model == null || model.Radius <= 0f) continue;
+                if (RayHitsSphere(origin, direction, model.Home, model.Radius + sweepRadius, out float t) && t < distance + ClearancePadding)
+                    distance = Mathf.Min(distance, t - ClearancePadding);
+            }
             return Mathf.Clamp(distance, Mathf.Min(MinDistance, requested), requested);
         }
 
         /// <summary>
-        /// True when <paramref name="c"/> should keep the card in front of it: scenery (no rigidbody) or a
-        /// spacecraft piece that nobody is holding. Other props are left out so a book in the hand does not
-        /// shove the card around.
+        /// True when <paramref name="c"/> should keep the card in front of it: fixed scenery only (no rigidbody).
+        /// Props and the spacecraft pieces are left out; the finished model counts by its resting sphere instead.
         /// </summary>
         private static bool IsBlocker(Collider c)
         {
-            if (c.attachedRigidbody == null) return true;
-            if (c.GetComponentInParent<SnappableObject>() == null) return false;
-            var grab = c.GetComponentInParent<XRBaseInteractable>();
-            return grab == null || !grab.isSelected;
+            return c.attachedRigidbody == null
+                   && c.GetComponentInParent<SnappableObject>() == null
+                   && c.GetComponentInParent<FloatingModel>() == null;
+        }
+
+        /// <summary>Distance along a unit <paramref name="dir"/> from <paramref name="origin"/> to where it enters the sphere; 0 when it starts inside.</summary>
+        private static bool RayHitsSphere(Vector3 origin, Vector3 dir, Vector3 centre, float radius, out float t)
+        {
+            Vector3 oc = origin - centre;
+            float b = Vector3.Dot(oc, dir);
+            float c = oc.sqrMagnitude - radius * radius;
+            t = 0f;
+            if (c <= 0f) return true;              // inside the sphere already
+            float disc = b * b - c;
+            if (disc < 0f || b > 0f) return false;  // misses, or the sphere is behind
+            t = -b - Mathf.Sqrt(disc);
+            return true;
         }
     }
 }

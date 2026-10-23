@@ -28,7 +28,7 @@ namespace PsycheVR.Kiosk
         private const float Width = 500f, Height = 380f;  // mm
         private const float GrabShare = 0.62f;            // the grab picture is wide (callouts both sides), the slap one tall
         private const float Pad = 14f;
-        private const float KickerSize = 12f, TitleSize = 32f, HeadSize = 24f, LineSize = 15f, CtaSize = 18f;
+        private const float TitleSize = 32f, HeadSize = 24f, LineSize = 15f, CtaSize = 18f;
         private const float FadeSeconds = 0.5f;
 
         [Tooltip("The session whose first input dismisses the card.")]
@@ -87,11 +87,8 @@ namespace PsycheVR.Kiosk
             var header = Region(_root, "Header", 0f, 1f, 0.79f, 1f);
             var band = Fill(header, "Band", MonitorPalette.DarkPurple);
             band.rectTransform.offsetMin = new Vector2(-Pad, 0f); band.rectTransform.offsetMax = new Vector2(Pad, Pad);
-            var kicker = Text(header, "Kicker", bodyFont, KickerSize, TextAlignmentOptions.TopLeft, MonitorPalette.Mustard, "BEFORE YOU START");
-            kicker.characterSpacing = 6f;
-            Stretch(kicker.rectTransform, 0f, 0.64f, 1f, 1f);
-            var title = Text(header, "Title", titleFont, TitleSize, TextAlignmentOptions.BottomLeft, MonitorPalette.White, "HOW YOUR HANDS WORK");
-            Stretch(title.rectTransform, 0f, 0f, 1f, 0.64f);
+            var title = Text(header, "Title", titleFont, TitleSize, TextAlignmentOptions.MidlineLeft, MonitorPalette.White, "HOW YOUR HANDS WORK");
+            Stretch(title.rectTransform, 0f, 0f, 1f, 1f);
             title.enableAutoSizing = true; title.fontSizeMin = TitleSize * 0.7f; title.fontSizeMax = TitleSize;
             var rule = Fill(header, "Rule", MonitorPalette.Mustard);
             rule.rectTransform.anchorMin = Vector2.zero; rule.rectTransform.anchorMax = new Vector2(1f, 0f);
