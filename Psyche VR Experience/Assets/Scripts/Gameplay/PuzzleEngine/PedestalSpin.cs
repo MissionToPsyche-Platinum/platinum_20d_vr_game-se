@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -33,7 +34,10 @@ namespace PsycheVR.Gameplay
     /// The pedestal sits inside the nested puzzle prefab under a non-uniform scale, so at Awake this makes a
     /// plain pivot ("Turntable", unit scale, on the post's axis) and moves the pedestal and the plate under
     /// it. Each piece a zone on the turntable takes (<see cref="SnapZone.Placed"/>) is moved under it too.
-    /// The plate is the grab handle: an XRSimpleInteractable that glows like any grabbable.
+    /// The plate is the grab handle: an XRSimpleInteractable that glows like any grabbable. Visitors also
+    /// reach for the model by a solar panel, so an open hand slapping a placed piece spins the turntable the
+    /// way a slap spins the finished model (<see cref="HandPushProbe"/>): the rim follows the hand's speed
+    /// across it at the touch, then coasts down under <see cref="friction"/>, capped at <see cref="maxSpeed"/>.
     /// </summary>
     public class PedestalSpin : MonoBehaviour, ISessionInteractable
     {
@@ -67,9 +71,13 @@ namespace PsycheVR.Gameplay
         [Tooltip("Degrees the finished model banks into as it glides (x, y, z about the pedestal parent's axes): z lifts the right panel, negative x tips the top toward the visitor.")]
         [SerializeField] private Vector3 floatTilt = new Vector3(-10f, 0f, 20f);
 
-        [Tooltip("A hand this far (m) from the plate's rim lets go: room for a long sideways swipe.")]
+        [Tooltip("A hand this far (m) from the plate's rim (or from its grab radius on a placed piece) lets go: room for a long sideways swipe.")]
         [SerializeField] private float breakDistance = 0.45f;
 
+        /// <summary>A hand this far (m) past the placed pieces' bounds is tracked for a slap.</summary>
+        private const float TouchReach = 0.3f;
+        /// <summary>A slap this close (m) to the post has no lever.</summary>
+        private const float MinPushRadius = 0.05f;
         /// <summary>Weight of the newest step in the smoothed hand speed (0..1).</summary>
         private const float SpeedSmoothing = 0.15f;
         /// <summary>A grab closer than this (m) to the post has no useful rim direction; the visitor's side is used instead.</summary>
@@ -77,7 +85,10 @@ namespace PsycheVR.Gameplay
 
         private Transform _turntable;
         private IXRSelectInteractor _holder;
-        private float _angle, _lastTwist, _speed, _dragRadius;
+        private IXRSelectInteractable _held;
+        private readonly List<Collider> _pieceParts = new List<Collider>();
+        private readonly HandPushProbe _push = new HandPushProbe();
+        private float _angle, _lastTwist, _speed, _dragRadius, _breakRadius;
         private Vector3 _dragTangent, _lastHand;
         private bool _finished;
         private float _lowerStart = -1f;
@@ -141,7 +152,9 @@ namespace PsycheVR.Gameplay
             zone.Placed.transform.SetParent(_turntable, true);
             var rb = zone.Placed.GetComponent<Rigidbody>();
             if (rb != null) rb.interpolation = RigidbodyInterpolation.None;
-            if (!_finished && AllPlaced()) Finish();
+            if (_finished) return;
+            _pieceParts.AddRange(zone.Placed.GetComponentsInChildren<Collider>());
+            if (AllPlaced()) Finish();
         }
 
         /// <summary>True when every tagged zone on the turntable holds its piece (untagged zones never take one).</summary>
@@ -164,6 +177,7 @@ namespace PsycheVR.Gameplay
             if (_holder != null) ReleaseHolder();
             _speed = 0f;
             plate.enabled = false;
+            _pieceParts.Clear();
 
             var pieces = _turntable.GetComponentsInChildren<SnappableObject>(true);
             Bounds b = default; bool first = true;
@@ -192,7 +206,8 @@ namespace PsycheVR.Gameplay
         private void OnGrab(SelectEnterEventArgs args)
         {
             _holder = args.interactorObject;
-            _lastHand = _holder.GetAttachTransform(plate).position;
+            _held = args.interactableObject;
+            _lastHand = _holder.GetAttachTransform(_held).position;
             _lastTwist = Twist();
             // the rim's direction of travel under the grab, for a positive turn; fixed for the whole drag
             Vector3 radial = Vector3.ProjectOnPlane(_lastHand - _turntable.position, Vector3.up);
@@ -202,6 +217,7 @@ namespace PsycheVR.Gameplay
                 radial = cam != null ? Vector3.ProjectOnPlane(cam.transform.position - _turntable.position, Vector3.up) : Vector3.back;
             }
             _dragRadius = Mathf.Max(radial.magnitude, _plateRadius);
+            _breakRadius = _dragRadius;
             _dragTangent = Vector3.Cross(Vector3.up, radial).normalized;
             _speed = 0f;
             SessionEvents.Interaction("pedestal_grabbed", this);
@@ -209,14 +225,38 @@ namespace PsycheVR.Gameplay
 
         private void OnRelease(SelectExitEventArgs args)
         {
-            if (ReferenceEquals(args.interactorObject, _holder)) _holder = null;
+            if (!ReferenceEquals(args.interactorObject, _holder)) return;
+            _holder = null;
+            _held = null;
         }
 
         /// <summary>The hand's twist (degrees) about the world vertical: the yaw part of its rotation.</summary>
         private float Twist()
         {
-            Quaternion q = _holder.GetAttachTransform(plate).rotation;
+            Quaternion q = _holder.GetAttachTransform(_held).rotation;
             return 2f * Mathf.Atan2(q.y, q.w) * Mathf.Rad2Deg;
+        }
+
+        /// <summary>Turns open hands slapping a placed piece this physics step into turntable spin (not while the plate is held).</summary>
+        private void FixedUpdate()
+        {
+            if (_finished || _holder != null || _turntable == null || _pieceParts.Count == 0) return;
+            _push.Poll(_pieceParts, TouchReach, Push);
+        }
+
+        private void Push(Vector3 at, Vector3 velocity)
+        {
+            Vector3 radial = Vector3.ProjectOnPlane(at - _turntable.position, Vector3.up);
+            if (radial.magnitude < MinPushRadius) return;
+            // the rim under the hand follows the hand, as in a drag: speed along the rim / radius
+            float along = Vector3.Dot(velocity, Vector3.Cross(Vector3.up, radial).normalized);
+            float target = Mathf.Clamp(along / radial.magnitude * Mathf.Rad2Deg, -maxSpeed, maxSpeed);
+            // a faster slap takes over; a slap against the turn reverses it
+            if (Mathf.Abs(target) > Mathf.Abs(_speed) || Mathf.Sign(target) != Mathf.Sign(_speed))
+            {
+                if (_speed == 0f) SessionEvents.Interaction("pedestal_pushed", this);
+                _speed = target;
+            }
         }
 
         private void Update()
@@ -235,9 +275,9 @@ namespace PsycheVR.Gameplay
 
             if (_holder != null)
             {
-                Vector3 hand = _holder.GetAttachTransform(plate).position;
+                Vector3 hand = _holder.GetAttachTransform(_held).position;
                 Vector3 flat = hand - _turntable.position;
-                float fromRim = Mathf.Abs(new Vector2(flat.x, flat.z).magnitude - _plateRadius);
+                float fromRim = Mathf.Abs(new Vector2(flat.x, flat.z).magnitude - _breakRadius);
                 if (fromRim > breakDistance)
                 {
                     ReleaseHolder();
@@ -270,9 +310,11 @@ namespace PsycheVR.Gameplay
         private void ReleaseHolder()
         {
             var interactor = _holder;
+            var held = _held as XRBaseInteractable;
             _holder = null;
-            if (plate.interactionManager != null && interactor != null && plate.interactorsSelecting.Contains(interactor))
-                plate.interactionManager.SelectExit(interactor, (IXRSelectInteractable)plate);
+            _held = null;
+            if (held != null && held.interactionManager != null && interactor != null && held.interactorsSelecting.Contains(interactor))
+                held.interactionManager.SelectExit(interactor, (IXRSelectInteractable)held);
         }
     }
 }
