@@ -132,6 +132,11 @@ namespace PsycheVR.Data
 
         private bool RecordEvent(string eventName, string scene, string details = "")
         {
+            if(FindFirstObjectByType<StressTestLogger>() != null)
+            {
+                Debug.Log("Logger Found");
+                return false;
+            }
             if (session == null || string.IsNullOrWhiteSpace(eventName))
                 return false;
 
