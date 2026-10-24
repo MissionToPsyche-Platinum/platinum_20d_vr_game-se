@@ -31,3 +31,9 @@ Target (Quality Plan): under 1% of frames over 17.4 ms.
 ## How it is measured
 
 Each Event session logs a `perf_sample` every 60 s (`fps`, `overrunPct`, `worstMs`; see SESSION_DATA_LOGGER.md). For each build, run three 2.5-minute sessions on the Quest 3 and compare those samples. Use the Unity Profiler over adb for anything the samples cannot explain.
+
+## Results after the TG-202 bake (Oct 23, build v52)
+
+Four Event sessions on the Quest 3 with the full-resolution bake: 71.3 fps on average and 0.89% of frames over budget, under the 1% target (Quality Plan). Worst cold load 4.8 s. The Oct 13 sponsor build ran 61-68 fps with 8-34% of frames over budget.
+
+Still open: one 290-380 ms frame at the start of every session, and a few 60-100 ms frames every couple of minutes.
