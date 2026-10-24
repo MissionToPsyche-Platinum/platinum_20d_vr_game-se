@@ -70,6 +70,10 @@ The Sheet gets a row for every upload, and a session is uploaded again whenever 
 file has grown, so use the latest row per `sessionId` (the Drive file is always the
 latest copy).
 
+## Reports
+Run `python3 tools/session-log-report/report.py /path/to/logs [--build STAMP] [--since YYYY-MM-DD]` to print all four quality-plan metrics and write `sessions.csv`.
+See [report usage and data rules](../tools/session-log-report/README.md); source logs are read-only, and unreadable files are named in the output.
+
 ## Add gameplay events
 
 Call from Unity's main thread at the gameplay action you want to record:
