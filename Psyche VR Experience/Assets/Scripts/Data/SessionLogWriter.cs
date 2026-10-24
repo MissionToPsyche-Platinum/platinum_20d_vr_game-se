@@ -33,6 +33,8 @@ namespace PsycheVR.Data
         public SessionLogWriter(string directory, string mode, string scene,
             string applicationVersion, string platform, string buildStamp = "", string deviceName = "")
         {
+            if (UnityEngine.Object.FindFirstObjectByType<StressTestLogger>() != null)
+                return;
             this.mode = mode;
             this.applicationVersion = applicationVersion;
             this.platform = platform;
@@ -64,10 +66,13 @@ namespace PsycheVR.Data
         /// </summary>
         public void RecordEvent(string eventName, string scene, string details = "")
         {
+            if (UnityEngine.Object.FindFirstObjectByType<StressTestLogger>() != null)
+                return;
             if (writer == null)
                 throw new ObjectDisposedException(nameof(SessionLogWriter));
             if (string.IsNullOrWhiteSpace(eventName))
                 throw new ArgumentException("An event name is required.", nameof(eventName));
+
 
             var entry = new SessionLogEntry
             {

@@ -1,0 +1,98 @@
+{
+  "main": {
+    "metrics": [
+      "33.33% (1/3)",
+      "25.00% (1/4)",
+      "12.00 s",
+      "fps: 60.00; overruns > 17.4 ms: 1.00%"
+    ],
+    "rows": {
+      "complete": {
+        "recordCount": "7",
+        "durationSeconds": "60",
+        "exitState": "ended",
+        "eventCompletedBeforeExpiry": "true",
+        "worstSceneLoadSeconds": "4.00",
+        "weightedFps": "40.00",
+        "weightedOverrunPct": "1.50",
+        "fpsSampleSeconds": "30.0",
+        "overrunSampleSeconds": "30.0"
+      },
+      "expired": {
+        "recordCount": "5",
+        "durationSeconds": "40",
+        "exitState": "abnormal",
+        "eventCompletedBeforeExpiry": "false",
+        "worstSceneLoadSeconds": "12.00",
+        "weightedFps": "80.00",
+        "weightedOverrunPct": "0.50"
+      },
+      "suspended": {
+        "recordCount": "2",
+        "exitState": "suspended",
+        "eventCompletedBeforeExpiry": "n/a: not Event mode"
+      },
+      "open": {
+        "recordCount": "2",
+        "exitState": "open",
+        "eventCompletedBeforeExpiry": "false"
+      },
+      "other": {
+        "recordCount": "2",
+        "exitState": "ended",
+        "eventCompletedBeforeExpiry": "n/a: not Event mode"
+      }
+    }
+  },
+  "build_v1": {
+    "metrics": [
+      "50.00% (1/2)",
+      "25.00% (1/4)",
+      "12.00 s",
+      "fps: 60.00; overruns > 17.4 ms: 1.00%"
+    ],
+    "ids": [
+      "complete",
+      "expired",
+      "other",
+      "suspended"
+    ]
+  },
+  "since_oct2": {
+    "metrics": [
+      "0.00% (0/2)",
+      "50.00% (1/2)",
+      "12.00 s",
+      "fps: 80.00; overruns > 17.4 ms: 0.50%"
+    ],
+    "ids": [
+      "expired",
+      "open",
+      "suspended"
+    ]
+  },
+  "empty": {
+    "metrics": [
+      "n/a: no visitor sessions",
+      "n/a: no eligible sessions (newest open sessions excluded)",
+      "n/a: no valid samples",
+      "fps: n/a: no valid samples; overruns > 17.4 ms: n/a: no valid samples"
+    ]
+  },
+  "legacy": {
+    "metrics": [
+      "0.00% (0/1)",
+      "n/a: 1 unended sessions lack deviceName; cannot identify open sessions",
+      "n/a: no valid samples",
+      "fps: n/a: no valid samples; overruns > 17.4 ms: n/a: no valid samples"
+    ]
+  },
+  "invalid_metrics": {
+    "metrics": [
+      "0.00% (0/1)",
+      "0.00% (0/1)",
+      "n/a: no valid samples",
+      "fps: 60.00; overruns > 17.4 ms: 2.00%"
+    ]
+  }
+}

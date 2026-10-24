@@ -1,0 +1,8 @@
+Selected 201 unique sessions; 1 open sessions excluded from exit rate
+Metric                    | Value                                                                   | Target
+-----------------------------------------------------------------------------------------------------------------------
+Event Completion Rate     | 7.54% (15/199)                                                          | >= 70%
+Field Abnormal Exit Rate  | n/a: 43 unended sessions lack deviceName; cannot identify open sessions | 0%
+Scene load time           | 10.95 s                                                                 | <= 10 s
+Field frame rate          | fps: 18.67; overruns > 17.4 ms: 73.30%                                  | overruns < 1%
+Wrote sessions.csv

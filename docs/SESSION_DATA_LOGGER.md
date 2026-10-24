@@ -131,6 +131,9 @@ interrupted-move recovery, legacy/stale receipts, the size boundary and rejectio
 and storage counts. The tests resolve the runtime types from `Assembly-CSharp`
 because Unity test assembly definitions cannot directly reference that assembly.
 The existing **Tools → Session Logs → Check Upload Storage** checks remain available.
+## Reports
+Run `python3 tools/session-log-report/report.py /path/to/logs [--build STAMP] [--since YYYY-MM-DD]` to print all four quality-plan metrics and write `sessions.csv`.
+See [report usage and data rules](../tools/session-log-report/README.md); source logs are read-only, and unreadable files are named in the output.
 
 ## Add gameplay events
 
