@@ -59,7 +59,7 @@ The bookcase books print these images on their pages, each with its credit line 
 | Taters test video, first 13 seconds ([NASA SVS 31275](https://svs.gsfc.nasa.gov/31275)), and stills from it | NASA/JPL-Caltech | The Cat Who Crossed the Solar System |
 | PIA26145 (DSOC team watching the video arrive) | NASA/JPL-Caltech | The Cat Who Crossed the Solar System |
 | PIA26750, PIA26586, PIA26771, PIA26749, PIA26773, PIA26775, PIA26772 (Mars flyby images) | NASA/JPL-Caltech/ASU | Psyche at Mars |
-| PIA17790 (Goldstone 70 m antenna), PIA23795 (Canberra 70 m antenna) | NASA/JPL-Caltech | Calling Psyche |
+| PIA17790 (Goldstone 70 m antenna), PIA17791 (Goldstone 34 m beam waveguide antenna), PIA23795 (Canberra 70 m antenna) | NASA/JPL-Caltech | Calling Psyche |
 | PIA25138 (spacecraft), PIA24471 (asteroid Psyche), both illustrations | NASA/JPL-Caltech/ASU | Journey to a Metal World |
 | PIA24930 (mission plan), PIA26102 (orbital operations) | NASA/JPL-Caltech | Journey to a Metal World |
 
