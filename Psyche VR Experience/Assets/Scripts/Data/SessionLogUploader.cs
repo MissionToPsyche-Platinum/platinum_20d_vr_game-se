@@ -27,29 +27,19 @@ namespace PsycheVR.Data
         private bool attemptedUpload;
         private string lastResult = "Not uploaded yet.";
         private UnityWebRequest activeRequest;
+        private string acknowledgedActivePath, acknowledgedActiveHash;
+        private int sent, failed;
 
         public static bool IsUploading => instance != null && instance.busy;
         public static bool IsEnabled => instance != null && instance.config != null;
         public static string LastResult => instance != null ? instance.lastResult : "Uploader not initialized.";
 
-        /// <summary>Includes an active file whose content changed since its last acknowledgment.</summary>
+        /// <summary>Logs in the pending folder, including the current session.</summary>
         public static int PendingCount
         {
             get
             {
-                try
-                {
-                    int count = 0;
-                    foreach (string path in SessionUploadStore.Files(SessionDataLogger.LogDirectory))
-                    {
-                        try
-                        {
-                            if (!SessionUploadStore.IsSent(path, SessionUploadStore.Hash(SessionUploadStore.Read(path)))) count++;
-                        }
-                        catch (Exception error) when (IsFileError(error)) { count++; }
-                    }
-                    return count;
-                }
+                try { return SessionUploadStore.Files(SessionDataLogger.LogDirectory).Length; }
                 catch (Exception error) when (IsFileError(error)) { return -1; }
             }
         }
@@ -76,7 +66,13 @@ namespace PsycheVR.Data
         {
             // Logger bootstrap finishes before the startup pass, regardless of Start order.
             yield return null;
-            if (!attemptedUpload) UploadPending();
+            if (config == null)
+            {
+                // Legacy receipts still migrate when uploads are disabled.
+                busy = true;
+                yield return UploadFiles();
+            }
+            else if (!attemptedUpload) UploadPending();
         }
 
         /// <summary>
@@ -109,7 +105,8 @@ namespace PsycheVR.Data
 
         private IEnumerator UploadFiles()
         {
-            int sent = 0, failed = 0;
+            sent = 0;
+            failed = 0;
             try
             {
                 string[] files = null;
@@ -118,39 +115,9 @@ namespace PsycheVR.Data
                 if (files == null) yield break;
                 foreach (string path in files)
                 {
-                    string hash = null, body = null;
-                    try
-                    {
-                        string content = SessionUploadStore.Read(path);
-                        hash = SessionUploadStore.Hash(content);
-                        if (!SessionUploadStore.IsSent(path, hash))
-                            body = JsonUtility.ToJson(SessionUploadStore.Payload(path, content, config.token, SessionDeviceName.Current));
-                    }
-                    catch (Exception error) when (IsFileError(error) || error is ArgumentException)
-                    { failed++; }
-                    if (body == null) continue;
-
-                    lastResult = "Uploading " + Path.GetFileName(path);
-                    bool acknowledged = false;
-                    string url = config.endpointUrl + (config.endpointUrl.Contains("?") ? "&" : "?") +
-                        "uploadRequest=" + Guid.NewGuid().ToString("N");
-                    using (var request = new UnityWebRequest(url, "POST"))
-                    {
-                        activeRequest = request;
-                        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
-                        request.downloadHandler = new DownloadHandlerBuffer();
-                        request.SetRequestHeader("Content-Type", "application/json");
-                        request.SetRequestHeader("Cache-Control", "no-cache");
-                        request.timeout = 45;
-                        request.redirectLimit = 5;
-                        yield return request.SendWebRequest();
-                        acknowledged = request.result == UnityWebRequest.Result.Success &&
-                            SessionUploadStore.Acknowledged(request.downloadHandler.text);
-                        activeRequest = null;
-                    }
-                    if (!acknowledged) { failed++; continue; }
-                    try { SessionUploadStore.MarkSent(path, hash); sent++; }
-                    catch (Exception error) when (IsFileError(error)) { failed++; }
+                    yield return UploadFile(path);
+                    // Includes skipped, migrated, oversized, and failed files.
+                    yield return null;
                 }
                 lastResult = $"Uploaded {sent}; failed {failed}; pending {PendingCount}.";
             }
@@ -165,6 +132,67 @@ namespace PsycheVR.Data
                 rerunWanted = false;
                 UploadPending();
             }
+        }
+
+        private IEnumerator UploadFile(string path)
+        {
+            string hash = null, body = null;
+            bool wasActive = SessionUploadStore.IsActive(path, SessionDataLogger.CurrentLogPath);
+            try
+            {
+                string content = SessionUploadStore.Read(path);
+                hash = SessionUploadStore.Hash(content);
+                if (SessionUploadStore.MigrateLegacy(path, SessionDataLogger.CurrentLogPath, hash))
+                {
+                    // Only older builds write receipts beside pending logs. Validate
+                    // the hash because a previously active log may have grown.
+                    // Migration is complete; this file needs no network request.
+                }
+                else if (config != null && !(wasActive && path == acknowledgedActivePath && hash == acknowledgedActiveHash))
+                    body = JsonUtility.ToJson(SessionUploadStore.Payload(path, content, config.token, SessionDeviceName.Current));
+            }
+            catch (SessionUploadStore.OversizedLogException)
+            {
+                try { SessionUploadStore.Archive(path, SessionDataLogger.CurrentLogPath, true); }
+                catch (Exception error) when (IsFileError(error)) { failed++; }
+            }
+            catch (Exception error) when (IsFileError(error) || error is ArgumentException) { failed++; }
+            if (body == null) yield break;
+
+            lastResult = "Uploading " + Path.GetFileName(path);
+            bool acknowledged;
+            string response;
+            string url = config.endpointUrl + (config.endpointUrl.Contains("?") ? "&" : "?") +
+                "uploadRequest=" + Guid.NewGuid().ToString("N");
+            using (var request = new UnityWebRequest(url, "POST"))
+            {
+                activeRequest = request;
+                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.SetRequestHeader("Cache-Control", "no-cache");
+                request.timeout = 45;
+                request.redirectLimit = 5;
+                yield return request.SendWebRequest();
+                response = request.downloadHandler.text;
+                acknowledged = request.result == UnityWebRequest.Result.Success &&
+                    SessionUploadStore.Acknowledged(response);
+                activeRequest = null;
+            }
+            if (!acknowledged) { failed++; yield break; }
+            try
+            {
+                if (wasActive)
+                {
+                    // It may have ended or grown while the request was in flight.
+                    // Leave it pending for a complete final upload on the next pass.
+                    acknowledgedActivePath = path;
+                    acknowledgedActiveHash = hash;
+                }
+                else SessionUploadStore.ArchiveAcknowledged(path, SessionDataLogger.CurrentLogPath, response, hash);
+                sent++;
+            }
+            catch (Exception error) when (IsFileError(error)) { failed++; }
         }
 
         private void OnDestroy()

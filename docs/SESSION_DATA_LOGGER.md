@@ -2,8 +2,7 @@
 
 The Unity logger (TG-263) starts automatically after the first scene loads; no
 scene or prefab setup is needed. The Apps Script receiver (TG-280/281) stores
-uploaded logs in Drive and summaries in Sheets. Automatic headset upload is
-separate work (TG-283); the current logger writes locally without deleting logs.
+uploaded logs in Drive and summaries in Sheets. The headset uploader (TG-283/TG-314) sends pending logs and archives them locally without deleting log data.
 
 ## Logging behavior
 
@@ -70,6 +69,68 @@ The Sheet gets a row for every upload, and a session is uploaded again whenever 
 file has grown, so use the latest row per `sessionId` (the Drive file is always the
 latest copy).
 
+## Local storage and offline collection (TG-314)
+
+`SessionLogs/` contains pending `.jsonl` files, including the current session.
+After a finished log receives `{"ok":true}`, it and its `.sent` receipt go into
+`SessionLogs/Sent/`. Logs over 1,000,000 characters go into `SessionLogs/Rejected/`
+when inactive, so they are preserved for manual collection instead of retried.
+An active log never moves, even when oversized or acknowledged. The uploader
+only enumerates the top-level pending folder; it never opens archived logs.
+Each processed file is followed by a frame break, including failed/skipped files.
+Upload triggers and the three-minute interval are unchanged.
+
+A crash after server confirmation but before moving a log leaves it pending;
+the next run uploads it again. Duplicate summary rows are possible. New receipts
+are written inside `Sent/`, so an interrupted move cannot accidentally suppress
+that retry. Existing 0.9.0 `.sent` receipts next to pending logs are migrated on
+the first startup pass, even without upload configuration, only when their hash
+matches the whole current file. A stale receipt never hides newly appended data.
+
+Each session records `storage_status` immediately after `session_start`, using
+the existing `details` field:
+
+```text
+freeBytes=123456789;waiting=3;sent=42;rejected=1
+```
+
+Counts include only session `.jsonl` files directly in each folder, not receipts.
+Waiting includes the new active session. This is a snapshot before startup
+migration/upload finishes. Free bytes refer to the filesystem holding the logs;
+`-1` means a measurement was unavailable, and missing folders count as zero.
+
+### Copy logs from a headset without Wi-Fi
+
+Use a USB data cable, enable developer mode/USB debugging on the Quest, and
+accept its USB debugging authorization prompt. Install Android SDK Platform-Tools
+on the computer, then run:
+
+```sh
+adb devices
+adb shell am force-stop com.missiontopsyche.psyche20d
+adb pull /sdcard/Android/data/com.missiontopsyche.psyche20d/files/SessionLogs ./headset-session-logs
+```
+
+Stop the experience between visitors before collecting, so files cannot change
+during the copy. Force-stop may leave the last log without `session_end`; its
+already flushed events remain available. The pull copies pending logs, `Sent/`,
+and `Rejected/` together and does not remove anything from the headset. Confirm
+the copied files are present before disconnecting. If `adb devices` reports
+`unauthorized`, unlock the headset and accept the prompt. For multiple headsets,
+add `-s <serial>` after `adb` to select one. If the build's Android package ID
+changes, replace `com.missiontopsyche.psyche20d` in both commands. No network or
+upload credentials are needed for this USB export.
+
+### EditMode regression tests
+
+Open **Window → General → Test Runner → EditMode**, then run
+`PsycheVR.Tests.SessionUploadTests`. Each test creates and removes a unique
+temporary folder; no headset data or upload server is touched. Tests cover
+archived-file exclusion, strict server acknowledgment, active-log protection,
+interrupted-move recovery, legacy/stale receipts, the size boundary and rejection,
+and storage counts. The tests resolve the runtime types from `Assembly-CSharp`
+because Unity test assembly definitions cannot directly reference that assembly.
+The existing **Tools → Session Logs → Check Upload Storage** checks remain available.
 ## Reports
 Run `python3 tools/session-log-report/report.py /path/to/logs [--build STAMP] [--since YYYY-MM-DD]` to print all four quality-plan metrics and write `sessions.csv`.
 See [report usage and data rules](../tools/session-log-report/README.md); source logs are read-only, and unreadable files are named in the output.

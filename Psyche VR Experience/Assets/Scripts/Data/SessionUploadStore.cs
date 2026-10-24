@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace PsycheVR.Data
 {
-    /// <summary>Content-based receipts let a growing active file become pending again.</summary>
+    /// <summary>Pending log enumeration, legacy receipts, and closed-log archival.</summary>
     public static class SessionUploadStore
     {
         public const int MaxContentCharacters = 1000000;
@@ -14,7 +14,7 @@ namespace PsycheVR.Data
         public static string[] Files(string directory)
         {
             if (!Directory.Exists(directory)) return Array.Empty<string>();
-            var files = Directory.GetFiles(directory, "session_*.jsonl");
+            var files = Directory.GetFiles(directory, "session_*.jsonl", SearchOption.TopDirectoryOnly);
             Array.Sort(files, StringComparer.Ordinal);
             return files;
         }
@@ -24,13 +24,13 @@ namespace PsycheVR.Data
             // Unity writes on the main thread and flushes every event. Capture once,
             // before yielding, then send those exact bytes even if the session grows.
             if (new FileInfo(path).Length > MaxContentCharacters * 4L)
-                throw new InvalidDataException("Session exceeds the receiver's size limit.");
+                throw new OversizedLogException();
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = new StreamReader(stream, Encoding.UTF8, true))
             {
                 var content = reader.ReadToEnd();
                 if (content.Length > MaxContentCharacters)
-                    throw new InvalidDataException("Session exceeds the receiver's size limit.");
+                    throw new OversizedLogException();
                 return content;
             }
         }
@@ -52,6 +52,46 @@ namespace PsycheVR.Data
             // A crash between delete/move can only cause a retry, never false success.
             if (File.Exists(marker)) File.Delete(marker);
             File.Move(marker + ".tmp", marker);
+        }
+
+        public sealed class OversizedLogException : IOException
+        {
+            public OversizedLogException() : base("Session exceeds the receiver's size limit.") { }
+        }
+
+        public static bool IsActive(string path, string activePath) =>
+            activePath != null && string.Equals(Path.GetFullPath(path), Path.GetFullPath(activePath),
+                StringComparison.Ordinal);
+
+        /// <summary>Validate an older build's receipt against the complete current file.</summary>
+        public static bool MigrateLegacy(string path, string activePath, string hash) =>
+            !IsActive(path, activePath) && IsSent(path, hash) && Archive(path, activePath, false);
+
+        /// <summary>Archive a closed snapshot only after a successful server response.</summary>
+        public static bool ArchiveAcknowledged(string path, string activePath, string response, string hash) =>
+            Acknowledged(response) && Archive(path, activePath, false, hash);
+
+        /// <summary>Move only closed logs; never overwrite an existing archive.</summary>
+        public static bool Archive(string path, string activePath, bool rejected, string hash = null)
+        {
+            if (IsActive(path, activePath)) return false;
+            string directory = Path.Combine(Path.GetDirectoryName(path), rejected ? "Rejected" : "Sent");
+            Directory.CreateDirectory(directory);
+            string destination = Path.Combine(directory, Path.GetFileName(path));
+            if (File.Exists(destination) || File.Exists(destination + ".sent"))
+                destination = Path.Combine(directory, Path.GetFileNameWithoutExtension(path) + "_" +
+                    Guid.NewGuid().ToString("N") + Path.GetExtension(path));
+
+            // New confirmations live only in the archive. If interrupted before the
+            // log move, the pending log has no new receipt and will be uploaded again.
+            if (!rejected && hash != null) MarkSent(destination, hash);
+            File.Move(path, destination);
+            if (File.Exists(path + ".sent"))
+            {
+                if (File.Exists(destination + ".sent")) File.Delete(path + ".sent");
+                else File.Move(path + ".sent", destination + ".sent");
+            }
+            return true;
         }
 
         public static UploadPayload Payload(string path, string content, string token, string deviceName)
