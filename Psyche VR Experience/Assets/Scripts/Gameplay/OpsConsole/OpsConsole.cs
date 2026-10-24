@@ -117,7 +117,9 @@ namespace PsycheVR.Gameplay
             if (!(_tabs[DsnIndex] is DsnTab dsn) || !dsn.CanPing) return;
             if (!_state.StartPing(DsnIndex)) return;
             SessionEvents.Interaction("ping_sent", this);
-            _pingSentAt = System.DateTime.Now;
+            // local time only for the arrival line: Android loads its time-zone data on the first
+            // DateTime.Now of a launch, which stalled the first ping of every session by about 130 ms
+            if (!string.IsNullOrEmpty(content.pingArrivalFormat)) _pingSentAt = System.DateTime.Now;
             _pingResult = null;
             SetPingKeyLocked(true);
             // a slide in progress still has a ShowCurrent pending: route through a new slide so the

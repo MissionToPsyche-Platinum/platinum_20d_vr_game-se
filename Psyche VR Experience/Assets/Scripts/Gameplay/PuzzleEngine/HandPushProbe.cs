@@ -53,8 +53,9 @@ namespace PsycheVR.Gameplay
 
         private static bool Touching(Collider hand, IReadOnlyList<Collider> parts)
         {
-            foreach (var part in parts)
+            for (int i = 0; i < parts.Count; i++)   // indexed: foreach over the IReadOnlyList allocates
             {
+                var part = parts[i];
                 if (part == null || !part.enabled) continue;
                 if (Physics.ComputePenetration(hand, hand.transform.position, hand.transform.rotation,
                         part, part.transform.position, part.transform.rotation, out _, out _))
@@ -67,8 +68,9 @@ namespace PsycheVR.Gameplay
         {
             b = default;
             bool any = false;
-            foreach (var part in parts)
+            for (int i = 0; i < parts.Count; i++)   // indexed: foreach over the IReadOnlyList allocates
             {
+                var part = parts[i];
                 if (part == null || !part.enabled) continue;
                 if (!any) { b = part.bounds; any = true; } else b.Encapsulate(part.bounds);
             }

@@ -36,6 +36,10 @@ namespace PsycheVR.Gameplay
         private readonly HashSet<PsycheGrabbable> _held = new HashSet<PsycheGrabbable>();
         private readonly Dictionary<PsycheGrabbable, float> _restingSince = new Dictionary<PsycheGrabbable, float>();
         private readonly HashSet<PsycheGrabbable> _seen = new HashSet<PsycheGrabbable>();
+        // reused every scan: the case is checked five times a second, so nothing here allocates
+        private readonly List<PsycheGrabbable> _inCase = new List<PsycheGrabbable>();
+        private readonly HashSet<PsycheGrabbable> _found = new HashSet<PsycheGrabbable>();
+        private readonly List<PsycheGrabbable> _gone = new List<PsycheGrabbable>();
         private float _nextScan;
 
         /// <summary>The enabled bookcase whose box holds the point, or null.</summary>
@@ -113,7 +117,7 @@ namespace PsycheVR.Gameplay
         private void Start()
         {
             foreach (var g in GrabbablesInCase())
-                Hold(g);
+                Hold(g);   // GrabbablesInCase returns the reused list
         }
 
         private void FixedUpdate()
@@ -122,7 +126,7 @@ namespace PsycheVR.Gameplay
             _nextScan = Time.time + ScanInterval;
 
             _seen.Clear();
-            foreach (var g in GrabbablesInCase())
+            foreach (var g in GrabbablesInCase())   // a List: its foreach does not allocate
             {
                 _seen.Add(g);
                 var rb = g.GetComponent<Rigidbody>();
@@ -133,9 +137,9 @@ namespace PsycheVR.Gameplay
                 else if (Time.time - since >= SettleSeconds) Hold(g);
             }
             // forget bodies that left the case before settling
-            var gone = new List<PsycheGrabbable>();
-            foreach (var g in _restingSince.Keys) if (!_seen.Contains(g)) gone.Add(g);
-            foreach (var g in gone) _restingSince.Remove(g);
+            _gone.Clear();
+            foreach (var g in _restingSince.Keys) if (!_seen.Contains(g)) _gone.Add(g);
+            foreach (var g in _gone) _restingSince.Remove(g);
         }
 
         private void Hold(PsycheGrabbable g)
@@ -152,21 +156,23 @@ namespace PsycheVR.Gameplay
             _restingSince.Remove(g);
         }
 
-        /// <summary>Grabbables whose centre of mass is inside the case's box.</summary>
-        private IEnumerable<PsycheGrabbable> GrabbablesInCase()
+        /// <summary>Grabbables whose centre of mass is inside the case's box, in a list reused by every call.</summary>
+        private List<PsycheGrabbable> GrabbablesInCase()
         {
             Vector3 centre = transform.TransformPoint(_box.center);
             Vector3 halfExtents = Vector3.Scale(_box.extents, transform.lossyScale);
             int count = Physics.OverlapBoxNonAlloc(centre, halfExtents, _overlaps, transform.rotation,
                                                    Physics.AllLayers, QueryTriggerInteraction.Ignore);
-            var found = new HashSet<PsycheGrabbable>();
+            _inCase.Clear();
+            _found.Clear();
             for (int i = 0; i < count; i++)
             {
                 var rb = _overlaps[i].attachedRigidbody;
                 var g = rb != null ? rb.GetComponent<PsycheGrabbable>() : null;
-                if (g != null && Contains(rb.worldCenterOfMass) && found.Add(g))
-                    yield return g;
+                if (g != null && Contains(rb.worldCenterOfMass) && _found.Add(g))
+                    _inCase.Add(g);
             }
+            return _inCase;
         }
     }
 }

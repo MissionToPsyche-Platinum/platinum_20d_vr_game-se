@@ -144,8 +144,10 @@ namespace PsycheVR.Kiosk
                 if (hit.transform.IsChildOf(head.root) || !IsBlocker(hit.collider)) continue;
                 distance = Mathf.Min(distance, hit.distance - ClearancePadding);
             }
-            foreach (var model in FloatingModel.Active)
+            var models = FloatingModel.Active;
+            for (int i = 0; i < models.Count; i++)   // indexed: foreach over the IReadOnlyList allocates every frame
             {
+                var model = models[i];
                 if (model == null || model.Radius <= 0f) continue;
                 if (RayHitsSphere(origin, direction, model.Home, model.Radius + sweepRadius, out float t) && t < distance + ClearancePadding)
                     distance = Mathf.Min(distance, t - ClearancePadding);

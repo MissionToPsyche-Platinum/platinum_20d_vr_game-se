@@ -212,8 +212,10 @@ namespace PsycheVR.Gameplay
             Vector3 p = hitBy.bounds.center;
             GrabTargeting nearest = null;
             float best = float.MaxValue;
-            foreach (var hand in GrabTargeting.Active)
+            var hands = GrabTargeting.Active;
+            for (int i = 0; i < hands.Count; i++)   // indexed: foreach over the IReadOnlyList allocates
             {
+                var hand = hands[i];
                 if (hand.GrabCentre == null) continue;
                 float d = (hand.GrabCentre.position - p).sqrMagnitude;
                 if (d < best) { best = d; nearest = hand; }

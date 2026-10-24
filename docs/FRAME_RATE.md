@@ -37,3 +37,14 @@ Each Event session logs a `perf_sample` every 60 s (`fps`, `overrunPct`, `worstM
 Four Event sessions on the Quest 3 with the full-resolution bake: 71.3 fps on average and 0.89% of frames over budget, under the 1% target (Quality Plan). Worst cold load 4.8 s. The Oct 13 sponsor build ran 61-68 fps with 8-34% of frames over budget.
 
 Still open: one 290-380 ms frame at the start of every session, and a few 60-100 ms frames every couple of minutes.
+
+## On-device profile (Oct 24)
+
+A development build wrote the Unity Profiler to a file on the headset for the first 25 s and 90 s of play.
+
+| Finding | Status |
+| --- | --- |
+| The first ping of each session stalled 133 ms: the ping read local time, and Android loads its time-zone data on the first read after launch. | Fixed: local time is read only for the arrival line, which is off |
+| Steady garbage every frame: loops over the hand list through its interface type allocate an enumerator, and floor hover does it for every grabbable each frame; the bookshelf built a list and an iterator five times a second. | Fixed: indexed loops and reused lists |
+| The 60-100 ms frames every couple of minutes: the session-log uploader read every pending log on the main thread in one frame (14 MB). | Fixed on develop by the TG-314 uploader (one file per frame, sent logs archived) |
+| The start frame (383 ms) is the scene load: the room's scripts waking up (the monitor's code-built screen is 61 ms), the first UI build and the first render. 59 ms of it was the XR Device Simulator prefab, shipped because its settings asset sits in Resources. | Builds now leave the simulator out; the rest is accepted, it happens before the visitor starts |
