@@ -6684,10 +6684,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7200000000000000005, guid: 22d14562bf68402b8fc035e832d36658, type: 3}
       propertyPath: messageText
-      value: 'Thanks for exploring the Psyche VR Experience.
-
-        Please hand
-        the headset to the event team.'
+      value: "Thanks for playing \u201CT-Minus Psyche\u201D\nPlease hand the headset
+        to the event team."
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

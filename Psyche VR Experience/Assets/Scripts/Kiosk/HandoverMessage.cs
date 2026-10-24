@@ -158,7 +158,7 @@ namespace PsycheVR.Kiosk
         }
 
         /// <summary>Fades the card in, holds it, fades it out, then destroys this object.</summary>
-        /// <param name="text">The first line is the title (Thanks for playing “Mission Control: Psyche VR”); the rest is the call to action, shown in capitals.</param>
+        /// <param name="text">The first line is the title (Thanks for playing “T-Minus Psyche”); the rest is the call to action, shown in capitals.</param>
         /// <param name="fadeSeconds">Seconds for each fade, in and out.</param>
         /// <param name="holdSeconds">Seconds the text stays fully visible between the fades.</param>
         public void Show(string text, float fadeSeconds, float holdSeconds)

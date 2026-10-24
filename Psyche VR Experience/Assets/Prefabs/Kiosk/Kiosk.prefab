@@ -80,8 +80,8 @@ MonoBehaviour:
   launchVideo: {fileID: 0}
   puzzle: {fileID: 7200000000000000004}
   cameraTransform: {fileID: 0}
-  messageText: "Thanks for playing \u201CMission Control: Psyche VR\u201D\nPlease
-    hand the headset to the event team."
+  messageText: "Thanks for playing \u201CT-Minus Psyche\u201D\nPlease hand
+    the headset to the event team."
   messageHoldSeconds: 12
   messageFadeSeconds: 1
   messageDistance: 1.35
