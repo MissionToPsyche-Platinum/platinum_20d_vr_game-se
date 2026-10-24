@@ -299,10 +299,12 @@ namespace PsycheVR.Gameplay
             if (timeline == null) return;
             string result = string.Format(CultureInfo.InvariantCulture, content.pingResultFormat,
                 timeline.RoundTripMinutes, timeline.WaitedSeconds);
-            string arrival = string.Format(CultureInfo.InvariantCulture, content.pingArrivalFormat,
-                PingTimeline.ArrivalClock(_pingSentAt, timeline.RealRoundTripSeconds * 0.5));
-            if (_shownTab == DsnIndex) SetFooterOverride(result + "\n" + arrival);
-            else _pingResult = result + "\n" + arrival;   // landed in the background: shown on the next DSN visit
+            // an empty arrival format leaves the clock-time line out (the real time depends on where Earth and Psyche are)
+            if (!string.IsNullOrEmpty(content.pingArrivalFormat))
+                result += "\n" + string.Format(CultureInfo.InvariantCulture, content.pingArrivalFormat,
+                    PingTimeline.ArrivalClock(_pingSentAt, timeline.RealRoundTripSeconds * 0.5));
+            if (_shownTab == DsnIndex) SetFooterOverride(result);
+            else _pingResult = result;   // landed in the background: shown on the next DSN visit
         }
 
         /// <summary>

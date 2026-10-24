@@ -53,12 +53,17 @@ namespace PsycheVR.OpsConsole.Core
         }
 
         public string buildDate;
+        /// <summary>Last day JPL navigation tracked the spacecraft (Horizons: "data through", prediction after); empty for older snapshots.</summary>
+        public string trackedThrough;
         public double earthDistanceKm;
         public double oneWayLightSeconds;
         public Track[] bodies;
 
         /// <summary><see cref="buildDate"/> as a date.</summary>
         public DateTime BuildDate => ParseDate(buildDate);
+
+        /// <summary><see cref="trackedThrough"/> as a date, or <see cref="BuildDate"/> when the snapshot has none.</summary>
+        public DateTime TrackedThrough => string.IsNullOrEmpty(trackedThrough) ? BuildDate : ParseDate(trackedThrough);
 
         /// <summary>Reads a snapshot from its JSON text.</summary>
         public static MonitorSnapshot Parse(string json) => JsonUtility.FromJson<MonitorSnapshot>(json);
