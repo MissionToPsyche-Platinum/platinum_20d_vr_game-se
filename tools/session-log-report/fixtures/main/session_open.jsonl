@@ -1,0 +1,2 @@
+{"schemaVersion":1,"sessionId":"open","sequence":0,"timestampUtc":"2026-10-04T00:00:00Z","elapsedSeconds":0,"eventName":"session_start","mode":"Event","scene":"Fixture","details":"","applicationVersion":"test","platform":"Android","buildStamp":"fixture-v2","deviceName":"Fixture A"}
+{"schemaVersion":1,"sessionId":"open","sequence":1,"timestampUtc":"2026-10-04T00:00:00Z","elapsedSeconds":10,"eventName":"object_grabbed","mode":"Event","scene":"Fixture","details":"","applicationVersion":"test","platform":"Android","buildStamp":"fixture-v2","deviceName":"Fixture A"}
