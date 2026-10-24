@@ -142,11 +142,11 @@ namespace PsycheVR.Data
             {
                 string content = SessionUploadStore.Read(path);
                 hash = SessionUploadStore.Hash(content);
-                if (!wasActive && SessionUploadStore.IsSent(path, hash))
+                if (SessionUploadStore.MigrateLegacy(path, SessionDataLogger.CurrentLogPath, hash))
                 {
                     // Only older builds write receipts beside pending logs. Validate
                     // the hash because a previously active log may have grown.
-                    SessionUploadStore.Archive(path, SessionDataLogger.CurrentLogPath, false);
+                    // Migration is complete; this file needs no network request.
                 }
                 else if (config != null && !(wasActive && path == acknowledgedActivePath && hash == acknowledgedActiveHash))
                     body = JsonUtility.ToJson(SessionUploadStore.Payload(path, content, config.token, SessionDeviceName.Current));
@@ -161,6 +161,7 @@ namespace PsycheVR.Data
 
             lastResult = "Uploading " + Path.GetFileName(path);
             bool acknowledged;
+            string response;
             string url = config.endpointUrl + (config.endpointUrl.Contains("?") ? "&" : "?") +
                 "uploadRequest=" + Guid.NewGuid().ToString("N");
             using (var request = new UnityWebRequest(url, "POST"))
@@ -173,8 +174,9 @@ namespace PsycheVR.Data
                 request.timeout = 45;
                 request.redirectLimit = 5;
                 yield return request.SendWebRequest();
+                response = request.downloadHandler.text;
                 acknowledged = request.result == UnityWebRequest.Result.Success &&
-                    SessionUploadStore.Acknowledged(request.downloadHandler.text);
+                    SessionUploadStore.Acknowledged(response);
                 activeRequest = null;
             }
             if (!acknowledged) { failed++; yield break; }
@@ -187,7 +189,7 @@ namespace PsycheVR.Data
                     acknowledgedActivePath = path;
                     acknowledgedActiveHash = hash;
                 }
-                else SessionUploadStore.Archive(path, SessionDataLogger.CurrentLogPath, false, hash);
+                else SessionUploadStore.ArchiveAcknowledged(path, SessionDataLogger.CurrentLogPath, response, hash);
                 sent++;
             }
             catch (Exception error) when (IsFileError(error)) { failed++; }

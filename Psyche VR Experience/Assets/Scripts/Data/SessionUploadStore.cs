@@ -63,6 +63,14 @@ namespace PsycheVR.Data
             activePath != null && string.Equals(Path.GetFullPath(path), Path.GetFullPath(activePath),
                 StringComparison.Ordinal);
 
+        /// <summary>Validate an older build's receipt against the complete current file.</summary>
+        public static bool MigrateLegacy(string path, string activePath, string hash) =>
+            !IsActive(path, activePath) && IsSent(path, hash) && Archive(path, activePath, false);
+
+        /// <summary>Archive a closed snapshot only after a successful server response.</summary>
+        public static bool ArchiveAcknowledged(string path, string activePath, string response, string hash) =>
+            Acknowledged(response) && Archive(path, activePath, false, hash);
+
         /// <summary>Move only closed logs; never overwrite an existing archive.</summary>
         public static bool Archive(string path, string activePath, bool rejected, string hash = null)
         {
