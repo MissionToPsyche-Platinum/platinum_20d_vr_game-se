@@ -412,6 +412,7 @@ MonoBehaviour:
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
   profile: 2
+  holdWhereGrabbed: 0
 --- !u!114 &8405481435526097473
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -497,7 +498,6 @@ MonoBehaviour:
   releaseThreshold: 0.35
   crumpleHapticIntensity: 0.3
   crumpleHapticDuration: 0.05
-  crumpleAudio: {fileID: 0}
 --- !u!114 &661891691710307417
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -822,6 +822,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 7cca2fcb887d40e9a7d0af95ec66d857, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 89397dd299ab6a3f7bdba1456076def1, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 15326f9a58f0604ceb3fee95cb8c3a8a, type: 2}
     - target: {fileID: 919132149155446097, guid: 89397dd299ab6a3f7bdba1456076def1, type: 3}
       propertyPath: m_Name
       value: Sheet

@@ -385,7 +385,6 @@ GameObject:
   - component: {fileID: 2085499195117409759}
   - component: {fileID: 2595638502274190103}
   - component: {fileID: 4068538660143650918}
-  - component: {fileID: 8086228796151614172}
   m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -557,23 +556,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 2595638502274190103}
   m_maskType: 0
---- !u!114 &8086228796151614172
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2332454633412482525}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7811b77c5eea46338780e837a3dc5aab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Seagull.Interior_I1.SceneProps.GlowLight
-  lightSources:
-  - {fileID: 2018213987398980610}
-  activeLightSourceSurfaceColor: {r: 0.73260057, g: 0.8794823, b: 0.9528302, a: 0}
-  inactiveLightSourceSurfaceColor: {r: 0.6862745, g: 0.87360775, b: 0.93333334, a: 1}
-  lightEmissionColor: {r: 1, g: 1, b: 1, a: 0}
 --- !u!1 &2365359556999341052
 GameObject:
   m_ObjectHideFlags: 0
@@ -702,7 +684,6 @@ GameObject:
   - component: {fileID: 7907633953616478421}
   - component: {fileID: 7592782122770556724}
   - component: {fileID: 5001753685269322345}
-  - component: {fileID: 7989976594616997582}
   m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -874,23 +855,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 7592782122770556724}
   m_maskType: 0
---- !u!114 &7989976594616997582
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3705680965581485789}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7811b77c5eea46338780e837a3dc5aab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Seagull.Interior_I1.SceneProps.GlowLight
-  lightSources:
-  - {fileID: 2248153673012027702}
-  activeLightSourceSurfaceColor: {r: 0.73260057, g: 0.8794823, b: 0.9528302, a: 0}
-  inactiveLightSourceSurfaceColor: {r: 0.6862745, g: 0.87360775, b: 0.93333334, a: 1}
-  lightEmissionColor: {r: 1, g: 1, b: 1, a: 0}
 --- !u!1 &4002095106434467624
 GameObject:
   m_ObjectHideFlags: 0
@@ -1364,7 +1328,6 @@ GameObject:
   - component: {fileID: 8081342377277146587}
   - component: {fileID: 1278418150743649833}
   - component: {fileID: 2346145331899556840}
-  - component: {fileID: 4955797493667030215}
   m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -1536,23 +1499,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 1278418150743649833}
   m_maskType: 0
---- !u!114 &4955797493667030215
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6413163216992201685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7811b77c5eea46338780e837a3dc5aab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Seagull.Interior_I1.SceneProps.GlowLight
-  lightSources:
-  - {fileID: 1572167278087644419}
-  activeLightSourceSurfaceColor: {r: 0.73260057, g: 0.8794823, b: 0.9528302, a: 0}
-  inactiveLightSourceSurfaceColor: {r: 0.6862745, g: 0.87360775, b: 0.93333334, a: 1}
-  lightEmissionColor: {r: 1, g: 1, b: 1, a: 0}
 --- !u!1 &6712765436747873794
 GameObject:
   m_ObjectHideFlags: 0
@@ -1877,7 +1823,6 @@ GameObject:
   - component: {fileID: 2105260770307268818}
   - component: {fileID: 7369803011838861264}
   - component: {fileID: 9173599615559270260}
-  - component: {fileID: 5575808734410975779}
   m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -2049,23 +1994,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 7369803011838861264}
   m_maskType: 0
---- !u!114 &5575808734410975779
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7279740225584927990}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7811b77c5eea46338780e837a3dc5aab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Seagull.Interior_I1.SceneProps.GlowLight
-  lightSources:
-  - {fileID: 1503111335411627939}
-  activeLightSourceSurfaceColor: {r: 0.73260057, g: 0.8794823, b: 0.9528302, a: 0}
-  inactiveLightSourceSurfaceColor: {r: 0.6862745, g: 0.87360775, b: 0.93333334, a: 1}
-  lightEmissionColor: {r: 1, g: 1, b: 1, a: 0}
 --- !u!1 &7703561904420081308
 GameObject:
   m_ObjectHideFlags: 0

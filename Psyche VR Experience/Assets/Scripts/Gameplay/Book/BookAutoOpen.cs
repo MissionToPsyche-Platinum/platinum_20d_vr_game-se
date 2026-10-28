@@ -29,7 +29,7 @@ namespace PsycheVR.Gameplay
 
         [Header("Animation")]
         [Tooltip("SmoothDamp smooth time in seconds. Lower = faster animation.")]
-        [SerializeField] private float smoothTime = 0.25f;
+        [SerializeField] private float smoothTime = 0.45f;
 
         private const float ConvergenceThreshold = 0.5f;
 

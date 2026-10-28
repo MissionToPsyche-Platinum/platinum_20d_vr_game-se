@@ -77,5 +77,10 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c65b803cf0feee853a51cc15734573e1, type: 3}
     volume: 0.3
     pitchJitter: 0.05
+  - sound: 10
+    clips:
+    - {fileID: 8300000, guid: 817783d5e92945abb8665a011d02b849, type: 3}
+    volume: 0.85
+    pitchJitter: 0
   minDistance: 0.5
   maxDistance: 6

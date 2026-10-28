@@ -16,8 +16,9 @@ namespace PsycheVR.Gameplay
     /// This reads the two analog inputs rather than the interactor's activate event.
     /// The project's digital Select action is bound to both the grip button and the
     /// trigger button, so it cannot tell them apart, and the digital Activate action
-    /// has no bindings at all. The analog readers can: the interactor's select input
-    /// is bound only to the grip axis and its activate input only to the trigger axis.
+    /// has no bindings at all. It reads the controller's own grip and trigger axes
+    /// (<see cref="HeldControllerAxes"/>): the rig's select value is the Select button too,
+    /// so it read "grip held" whenever the trigger held the pen.
     ///
     /// The button at the top dips and springs back on every click; the nib stays where
     /// the click left it. Both are driven by offsets from wherever the model author
@@ -111,10 +112,7 @@ namespace PsycheVR.Gameplay
             if (_holder == null)
                 return;
 
-            float grip = _holder.selectInput.ReadValue();
-            float trigger = _holder.activateInput.ReadValue();
-
-            _clickIsTrigger = grip >= trigger;
+            _clickIsTrigger = HeldControllerAxes.Grip(_holder) >= HeldControllerAxes.Trigger(_holder);
             _clickHeld = ReadClickValue() >= pressThreshold;
         }
 
@@ -148,9 +146,7 @@ namespace PsycheVR.Gameplay
             if (_holder == null)
                 return 0f;
 
-            return _clickIsTrigger
-                ? _holder.activateInput.ReadValue()
-                : _holder.selectInput.ReadValue();
+            return _clickIsTrigger ? HeldControllerAxes.Trigger(_holder) : HeldControllerAxes.Grip(_holder);
         }
 
         /// <summary>

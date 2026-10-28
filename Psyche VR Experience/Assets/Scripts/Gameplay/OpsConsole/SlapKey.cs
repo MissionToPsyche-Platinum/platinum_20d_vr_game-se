@@ -19,7 +19,7 @@ namespace PsycheVR.Gameplay
     /// or faster. After a press, and after the component is re-enabled, the key arms only once every
     /// hand has left the box, so a hand resting on it does not fire it again.
     ///
-    /// While <see cref="blockWhileHeld"/> is held, slaps are ignored.
+    /// While <see cref="blockWhileHeld"/> is held, or while <see cref="Blocked"/> is set, slaps are ignored.
     ///
     /// Keys that share an <see cref="exclusiveGroup"/> (the keyboard's Esc, Enter and Space) count one
     /// slap between them: when one fires, the others in the group are disarmed until every hand has
@@ -81,6 +81,13 @@ namespace PsycheVR.Gameplay
         /// <summary>Fires once per slap.</summary>
         public UnityEvent OnPressed => onPressed;
 
+        /// <summary>
+        /// True: slaps are ignored, but a press already under way still sinks and springs back. Use this, not
+        /// disabling the component, to lock a key from its own press handler: disabling snaps the cap home
+        /// at once, so the press never shows.
+        /// </summary>
+        public bool Blocked { get; set; }
+
         private const int MaxOverlaps = 16;
 
         private static readonly List<SlapKey> s_Keys = new List<SlapKey>();
@@ -135,6 +142,14 @@ namespace PsycheVR.Gameplay
 
         private void FixedUpdate()
         {
+            if (Blocked)
+            {
+                // as after a re-enable: arm again only once every hand has left, so a hand resting on the
+                // key while it was blocked (waiting out a ping) does not fire it
+                _lastDepth.Clear();
+                _armed = false;
+                return;
+            }
             if (blockWhileHeld != null && blockWhileHeld.isSelected)
             {
                 _lastDepth.Clear();
@@ -197,8 +212,10 @@ namespace PsycheVR.Gameplay
             Vector3 p = hitBy.bounds.center;
             GrabTargeting nearest = null;
             float best = float.MaxValue;
-            foreach (var hand in GrabTargeting.Active)
+            var hands = GrabTargeting.Active;
+            for (int i = 0; i < hands.Count; i++)   // indexed: foreach over the IReadOnlyList allocates
             {
+                var hand = hands[i];
                 if (hand.GrabCentre == null) continue;
                 float d = (hand.GrabCentre.position - p).sqrMagnitude;
                 if (d < best) { best = d; nearest = hand; }

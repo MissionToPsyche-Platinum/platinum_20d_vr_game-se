@@ -10,11 +10,11 @@ namespace PsycheVR.Gameplay
     /// <summary>
     /// The ping over the DSN main illustration (TG-227): a glowing Gold dot runs along the X-band link from
     /// the dish to the spacecraft, blinks there with a ring burst, and runs back, on a
-    /// <see cref="PingTimeline"/>. A large counter top-left shows the simulated real time and a status line
-    /// names the phase. The link's two ends come from the content (normalised image coordinates) and are
+    /// <see cref="PingTimeline"/>. A status line top-left names the phase. It shows no clock: the real
+    /// round trip changes with where Earth and Psyche are, so the screen gives no minutes for it. The link's two ends come from the content (normalised image coordinates) and are
     /// placed through <see cref="PhotoPanel.TryImageToLocal"/>, so the photo's cover crop is allowed for;
     /// without a photo they span the panel itself. Hidden until <see cref="Begin"/>; advances only
-    /// through <see cref="Tick"/>. After landing the counter and status stay until <see cref="Stop"/>.
+    /// through <see cref="Tick"/>. After landing the status stays until <see cref="Stop"/>.
     /// </summary>
     public class PingView : MonoBehaviour
     {
@@ -22,21 +22,17 @@ namespace PsycheVR.Gameplay
         private const float Pad = 8f;
         private const float DotSize = 8f, CoreSize = 3f, GlowSize = 30f, GlowAlpha = 0.7f;
         private const float BurstStartSize = 6f, BurstEndSize = 30f;
-        private const float LabelSize = 7f, LabelHeight = 9f;
-        private const float CounterSize = 34f, CounterHeight = 40f;
         private const float StatusSize = 8f, StatusHeight = 11f;
         private const float BlockWidth = 120f;
-        private const float Backing = 0.55f;          // alpha of the dark backing behind the counter block
+        private const float Backing = 0.55f;          // alpha of the dark backing behind the status block
         private const int BlinkCount = 3;             // on/off cycles while at the spacecraft
 
-        private const string LabelText = "REAL SIGNAL TIME";
-        private const string CounterFormat = "{0}:{1:00}";   // TMP SetText: {1:00} = two digits, zero padded
         private static readonly string[] StatusText =
             { "Ping going out to Psyche", "Psyche answers", "Reply coming home", "Reply received" };
 
         [SerializeField] private RectTransform dot;
         [SerializeField] private Image glow, burst;
-        [SerializeField] private TMP_Text counter, status;
+        [SerializeField] private TMP_Text status;
 
         private PhotoPanel _photo;
         private Vector2 _start, _end;   // normalised image coordinates
@@ -44,7 +40,6 @@ namespace PsycheVR.Gameplay
         private Action _onLanded;
         private float _clock;
         private bool _running;
-        private long _shownSecond = -1;
         private PingPhase _shownPhase = (PingPhase)(-1);
 
         /// <summary>The ping on screen, or null when none has started since the last <see cref="Stop"/>.</summary>
@@ -67,7 +62,6 @@ namespace PsycheVR.Gameplay
             view._photo = photo;
             view._start = content != null ? content.pingLinkStart : Vector2.zero;
             view._end = content != null ? content.pingLinkEnd : Vector2.one;
-            var titleFont = content != null ? content.titleFont : null;
             var bodyFont = content != null ? content.bodyFont : null;
 
             view.burst = Dot(rt, "Burst", MonitorPalette.Gold, BurstStartSize).GetComponent<Image>();
@@ -76,18 +70,15 @@ namespace PsycheVR.Gameplay
             view.dot = Dot(view.glow.rectTransform, "Dot", MonitorPalette.Gold, DotSize);
             Dot(view.dot, "Core", MonitorPalette.White, CoreSize);
 
-            // counter block, top-left over the illustration's empty sky
-            var block = Child(rt, "Counter");
+            // status block, top-left over the illustration's empty sky
+            var block = Child(rt, "Status");
             block.anchorMin = block.anchorMax = block.pivot = new Vector2(0f, 1f);
-            block.sizeDelta = new Vector2(BlockWidth, LabelHeight + CounterHeight + StatusHeight + Pad);
+            block.sizeDelta = new Vector2(BlockWidth, StatusHeight + Pad);
             block.anchoredPosition = new Vector2(Pad, -Pad);
             var back = block.gameObject.AddComponent<Image>();
             back.color = WithAlpha(MonitorPalette.Black, Backing); back.raycastTarget = false;
 
-            var label = TextRow(block, "Label", bodyFont, LabelSize, MonitorPalette.Mustard, 0f, LabelHeight);
-            label.text = LabelText;
-            view.counter = TextRow(block, "Clock", titleFont, CounterSize, MonitorPalette.White, LabelHeight, CounterHeight);
-            view.status = TextRow(block, "Status", bodyFont, StatusSize, MonitorPalette.White, LabelHeight + CounterHeight, StatusHeight);
+            view.status = TextRow(block, "Line", bodyFont, StatusSize, MonitorPalette.White, Pad * 0.5f, StatusHeight);
 
             rt.gameObject.SetActive(false);
             return view;
@@ -99,7 +90,6 @@ namespace PsycheVR.Gameplay
             _timeline = timeline;
             _onLanded = onLanded;
             _clock = 0f;
-            _shownSecond = -1;
             _shownPhase = (PingPhase)(-1);
             _running = timeline != null;
             gameObject.SetActive(_running);
@@ -153,13 +143,6 @@ namespace PsycheVR.Gameplay
                 SetAlpha(burst, 1f - f);
             }
 
-            long second = (long)Math.Floor(_timeline.RealSecondsAt(t));
-            if (second != _shownSecond)
-            {
-                _shownSecond = second;
-                PingTimeline.ClockParts(second, out long minutes, out int rest);
-                counter.SetText(CounterFormat, minutes, rest);   // "m:ss" without allocating
-            }
             if (phase != _shownPhase)
             {
                 _shownPhase = phase;

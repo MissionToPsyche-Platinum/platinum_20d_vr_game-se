@@ -15,6 +15,9 @@ public class SnapZone : MonoBehaviour
 
     private XRGrabInteractable currentObject;
 
+    /// <summary>The piece this zone took, once it has snapped (the pedestal turntable picks it up from here).</summary>
+    public SnappableObject Placed { get; private set; }
+
     /// <summary>Raised when any snap zone accepts its piece. Static so listeners need no reference to each zone.</summary>
     public static event System.Action<SnapZone> Snapped;
 
@@ -116,6 +119,7 @@ public class SnapZone : MonoBehaviour
         }
 
         hasSnapped = true;
+        Placed = snapState;
 
         if (zoneRenderer != null)
             zoneRenderer.enabled = false;

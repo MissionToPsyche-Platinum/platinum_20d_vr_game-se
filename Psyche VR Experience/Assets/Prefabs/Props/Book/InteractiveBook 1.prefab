@@ -164,7 +164,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3536610743796242370}
-  m_Material: {fileID: 13400000, guid: e6f6f62e09f73bc41802e5e9eb145faf, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -467,6 +467,7 @@ MonoBehaviour:
   m_MaxAngularVelocityDelta: 20
   grabSettings: {fileID: 11400000, guid: d224529470e8b024d8a5ff0c6bad924d, type: 2}
   profile: 3
+  holdWhereGrabbed: 0
 --- !u!114 &2056802826079476148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -530,7 +531,7 @@ MonoBehaviour:
   - {fileID: 947128904534596991}
   forwardAngle: 70
   backwardAngle: -70
-  smoothTime: 0.25
+  smoothTime: 0.45
 --- !u!114 &3013354957409255187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -844,7 +845,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7262836386615708526}
-  m_Material: {fileID: 13400000, guid: e6f6f62e09f73bc41802e5e9eb145faf, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1045,7 +1046,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7453229995206531612}
-  m_Material: {fileID: 13400000, guid: e6f6f62e09f73bc41802e5e9eb145faf, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1246,7 +1247,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7525685893001388099}
-  m_Material: {fileID: 13400000, guid: e6f6f62e09f73bc41802e5e9eb145faf, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1643,7 +1644,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8663335957257537496}
-  m_Material: {fileID: 13400000, guid: e6f6f62e09f73bc41802e5e9eb145faf, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
