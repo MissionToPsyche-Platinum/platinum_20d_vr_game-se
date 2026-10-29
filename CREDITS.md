@@ -57,8 +57,16 @@ The three-site Deep Space Network diagram on the same tab was drawn by the team.
 | --- | --- | --- | --- | --- |
 | UI Audio | Kenney | [kenney.nl/assets/ui-audio](https://kenney.nl/assets/ui-audio) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Button and key clicks, puzzle snap click |
 | Interface Sounds | Kenney | [kenney.nl/assets/interface-sounds](https://kenney.nl/assets/interface-sounds) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Puzzle success tone |
-| Basketball Hits (pack) | zmobie | [freesound.org/people/zmobie/packs/17904](https://freesound.org/people/zmobie/packs/17904/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Basketball bounces |
 | Office Drawer | bokal | [freesound.org/s/414819](https://freesound.org/s/414819/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Drawer open and close stops |
+| Page Turn Sounds | Psyche Gold Team | Made for this project | Used for Page turning in books
+| Paper Crumple Sounds | Psyche Gold Team | Made for this project | Used for functionality in creating a paper ball to throw in VR
+| Book Open Sounds | Psyche Gold Team | Made for this project | Used for opening books
+| Book Close Sounds | Psyche Gold Team | Made for this project | Used for closing books
+| Background Noise | Psyche Gold Team | Made for this project | Empty noise used for generic background noise while in-game
+| Ball Bounce Sounds| zmobie | [freesound.org/people/zmobie/packs/17904](https://freesound.org/people/zmobie/packs/17904/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Basketball bounces |
+| Countdown Audio | NASA | [nasa.gov - Historical Sounds](https://www.nasa.gov/wp-content/uploads/2015/01/590318main_ringtone_135_launch.mp3) | Public Domain | Countdown |
+| Shuttle Launch Audio | NASA | [nasa.gov - Historical Sounds](https://www.nasa.gov/wp-content/uploads/2015/01/590189main_ringtone_131_launchNats.mp3) | Public Domain | Spacecraft launch sound | 
+
 
 The clips above are trimmed and level-matched. The mission headset's radio signal (Quindar
 tones and static) is synthesized by the team. The book, page and paper sounds were recorded or
