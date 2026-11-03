@@ -59,6 +59,11 @@ The three-site Deep Space Network diagram on the same tab was drawn by the team.
 | Interface Sounds | Kenney | [kenney.nl/assets/interface-sounds](https://kenney.nl/assets/interface-sounds) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Puzzle success tone |
 | Basketball Hits (pack) | zmobie | [freesound.org/people/zmobie/packs/17904](https://freesound.org/people/zmobie/packs/17904/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Basketball bounces |
 | Office Drawer | bokal | [freesound.org/s/414819](https://freesound.org/s/414819/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Drawer open and close stops |
+| Bedroom Ambience | mernantau | [freesound.org](https://freesound.org/people/mernantau/sounds/766159/) | [CC0 1.0 0](https://creativecommons.org/publicdomain/zero/1.0/) | Used as background for Bedroom scene |
+| Synth Texture 3 | nomiqbomi | [freesound.org](https://freesound.org/people/nomiqbomi/sounds/578802/) | [CC0 1.0 0](https://creativecommons.org/publicdomain/zero/1.0/) | Used as a sting for when date-cards appear |
+| Nemorum | Vrymaa | [freesound.org](https://freesound.org/people/Vrymaa/sounds/770064/) | [CC0 1.0 0](https://creativecommons.org/publicdomain/zero/1.0/) | Clipped and used as a transition between scenes |
+
+
 
 The clips above are trimmed and level-matched. The mission headset's radio signal (Quindar
 tones and static) is synthesized by the team. The book, page and paper sounds were recorded or
