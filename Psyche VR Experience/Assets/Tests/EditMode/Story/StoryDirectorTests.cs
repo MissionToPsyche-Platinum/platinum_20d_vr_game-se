@@ -98,5 +98,64 @@ namespace PsycheVR.Story.Tests
             Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch));
         }
 
+        private Component Presentation(string typeName, string field)
+        {
+            var component = owner.AddComponent(Type.GetType($"PsycheVR.Story.{typeName}, Assembly-CSharp", true));
+            directorType.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(director, component);
+            return component;
+        }
+
+        private object Property(Component component, string name) => component.GetType().GetProperty(name).GetValue(component);
+
+        [Test]
+        public void IntroShowsResourceTextAndTargetThenHidesBothOnExit()
+        {
+            var card = Presentation("StoryDateCard", "dateCard");
+            var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
+            directorType.GetField("introSpacecraft", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(director, owner.transform);
+            StartStory();
+            var text = Resources.Load("StoryText");
+            Assert.That(Property(card, "CurrentText"), Is.EqualTo(text.GetType().GetProperty("IntroDateText").GetValue(text)));
+            Assert.That(Property(card, "IsVisible"), Is.True);
+            Assert.That(Property(highlight, "Target"), Is.EqualTo(owner.transform));
+            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.True);
+
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
+            Call("Advance");
+            Assert.That(Property(card, "IsVisible"), Is.False);
+            Assert.That(Property(highlight, "Target"), Is.Null);
+            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.False);
+
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Intro.");
+            Call("GoTo", StoryPhase.Intro);
+            Assert.That(Property(card, "IsVisible"), Is.True);
+            Assert.That(Property(highlight, "Target"), Is.EqualTo(owner.transform));
+        }
+
+        [Test]
+        public void EventModeLeavesPresentationUntouched()
+        {
+            var card = Presentation("StoryDateCard", "dateCard");
+            var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
+            Mode("Event");
+            Call("Start");
+            Assert.That(Property(card, "CurrentText"), Is.Null);
+            Assert.That(Property(card, "IsVisible"), Is.False);
+            Assert.That(Property(highlight, "Target"), Is.Null);
+            Assert.That(owner.transform.childCount, Is.Zero);
+        }
+
+        [Test]
+        public void UnassignedSpacecraftStillAllowsIntroDateCard()
+        {
+            var card = Presentation("StoryDateCard", "dateCard");
+            var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
+            StartStory();
+            Assert.That(Property(card, "IsVisible"), Is.True);
+            Assert.That(Property(highlight, "Target"), Is.Null);
+            Assert.That(owner.GetComponentInChildren<LineRenderer>(), Is.Null);
+        }
+
     }
 }

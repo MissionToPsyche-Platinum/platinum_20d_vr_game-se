@@ -8,11 +8,16 @@ namespace PsycheVR.Story
 {
     /// <summary>
     /// Scene-local story coordinator. Mode switches reload Bedroom, creating a
-    /// fresh sequence. Phase presentation is added by the Phase 1 integration.
+    /// fresh sequence. Intro delegates presentation to the date card and highlight.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StoryDirector : MonoBehaviour
     {
+        [SerializeField] private StoryText storyText;
+        [SerializeField] private StoryDateCard dateCard;
+        [SerializeField] private ObjectiveHighlight objectiveHighlight;
+        [Tooltip("Assign the model spacecraft when the story target is finalized.")]
+        [SerializeField] private Transform introSpacecraft;
         private readonly StoryPhaseSequence sequence = new StoryPhaseSequence();
         private bool started;
 
@@ -24,6 +29,8 @@ namespace PsycheVR.Story
                 return;
 
             started = true;
+            if (storyText == null)
+                storyText = Resources.Load<StoryText>(StoryText.AssetName);
             sequence.PhaseChanged += EnterPhase;
             // Intro is the initial state, so it does not raise PhaseChanged.
             EnterPhase(sequence.CurrentPhase);
@@ -44,6 +51,36 @@ namespace PsycheVR.Story
         private void EnterPhase(StoryPhase phase)
         {
             Debug.Log($"[StoryDirector] Entering {phase}.", this);
+            PresentPhase(phase);
+        }
+
+        private void PresentPhase(StoryPhase phase)
+        {
+            if (phase == StoryPhase.Intro)
+            {
+                if (dateCard != null && storyText != null)
+                    dateCard.Show(storyText.IntroDateText);
+                if (objectiveHighlight != null)
+                    objectiveHighlight.Show(introSpacecraft);
+            }
+            else
+            {
+                if (dateCard != null) dateCard.Hide();
+                if (objectiveHighlight != null) objectiveHighlight.Hide();
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (!started) return;
+            if (dateCard != null) dateCard.Hide();
+            if (objectiveHighlight != null) objectiveHighlight.Hide();
+        }
+
+        private void OnEnable()
+        {
+            if (started && GameModeManager.IsStory)
+                PresentPhase(sequence.CurrentPhase);
         }
 
         private void OnDestroy()
