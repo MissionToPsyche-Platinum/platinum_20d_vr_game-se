@@ -305,8 +305,12 @@ namespace PsycheVR.Gameplay
         /// </summary>
         private bool HandNear(Vector3 point)
         {
-            foreach (var hand in GrabTargeting.Active)
+            // indexed, not foreach: foreach over the IReadOnlyList boxes an enumerator, and this runs for
+            // every grabbable every frame (the profile's biggest steady garbage, 2026-10-24)
+            var hands = GrabTargeting.Active;
+            for (int i = 0; i < hands.Count; i++)
             {
+                var hand = hands[i];
                 if (!hand.IsHolding && hand.GrabCentre != null && HandReaches(hand, point)) return true;
             }
             return false;

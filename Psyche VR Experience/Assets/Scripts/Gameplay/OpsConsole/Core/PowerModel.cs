@@ -3,7 +3,7 @@ namespace PsycheVR.OpsConsole.Core
     /// <summary>
     /// Psyche's array power against distance from the Sun: our fit through NASA's two design points
     /// (21 kW at 1 AU, 2.3 kW at 3.33 AU), P = 21 * r^-1.838. The thruster draws up to ~4.9 kW input.
-    /// Shown on screen as "approx.".
+    /// It only shapes the thruster bar: the screen shows no number from it, only NASA's two figures.
     /// </summary>
     public static class PowerModel
     {

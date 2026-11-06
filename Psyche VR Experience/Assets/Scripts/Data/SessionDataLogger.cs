@@ -51,6 +51,7 @@ namespace PsycheVR.Data
         private int perfFrames;
         private int perfOverruns;
         private float perfWorstFrame;
+        private bool perfSkipFrame;     // the first frame after a resume spans the pause
 
         /// <summary>Current session identifier, or null when logging is unavailable.</summary>
         public static string CurrentSessionId => instance != null ? instance.session?.SessionId : null;
@@ -193,6 +194,7 @@ namespace PsycheVR.Data
                 // Time with the headset off is neither idling nor a frame-rate sample.
                 SessionEvents.MarkActive(SessionEvents.LastActivity);
                 ResetPerfWindow();
+                perfSkipFrame = true;
             }
         }
 
@@ -298,6 +300,13 @@ namespace PsycheVR.Data
 
         private void TrackFrames()
         {
+            if (perfSkipFrame)
+            {
+                // its delta is the whole time the headset was off: neither a frame nor part of the window
+                perfSkipFrame = false;
+                ResetPerfWindow();
+                return;
+            }
             float frame = Time.unscaledDeltaTime;
             perfFrames++;
             if (frame > OverrunFrameSeconds) perfOverruns++;

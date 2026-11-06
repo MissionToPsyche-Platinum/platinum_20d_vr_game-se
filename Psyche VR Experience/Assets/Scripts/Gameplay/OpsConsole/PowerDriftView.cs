@@ -8,8 +8,9 @@ namespace PsycheVR.Gameplay
 {
     /// <summary>
     /// Solar Power main panel: the spacecraft drifts along a 0 to 3.4 AU track (Sun, Earth, Mars, the
-    /// asteroid's orbit) from 1 AU out to 3.4 AU while the array power readout falls and the thruster bar
-    /// empties (<see cref="PowerModel"/>). Advances only through <see cref="Tick"/>, which the tab calls
+    /// asteroid's orbit) from 1 AU out to 3.4 AU while the thruster bar empties (<see cref="PowerModel"/>).
+    /// The readout shows only NASA's two published figures, 21 kW near Earth and about 2.3 kW at the
+    /// asteroid's farthest point (press kit), and nothing in between: no numbers worked out by us. Advances only through <see cref="Tick"/>, which the tab calls
     /// while shown.
     /// </summary>
     public class PowerDriftView : MonoBehaviour
@@ -37,7 +38,9 @@ namespace PsycheVR.Gameplay
         private const float LineYMax = 0.13f;
         private const float FullShare = 1f;
 
-        private const string ReadoutFormat = "{0:1} kW approx.";   // TMP SetText: {0:1} = one decimal
+        private const string NearEarthReadout = "21 kW";       // NASA press kit: near Earth
+        private const string AsteroidReadout = "about 2.3 kW"; // NASA press kit: the asteroid's farthest point from the Sun
+        private const float NearEarthMaxAu = 1.05f, AsteroidMinAu = 3.3f;
         private const string FullLine = "Plenty: thruster at full power.";
         private const string WeakLine = "Less sunlight, gentler push.";
 
@@ -49,7 +52,7 @@ namespace PsycheVR.Gameplay
 
         private readonly Vector2[] _trackPoints = new Vector2[2];
         private float _clock;
-        private int _shownTenths = -1;
+        private string _shownReadout;
         private int _shownFull = -1;
 
         /// <summary>
@@ -173,12 +176,11 @@ namespace PsycheVR.Gameplay
             float x = au / ScaleAu;
             spacecraft.anchorMin = spacecraft.anchorMax = new Vector2(x, 0.5f);
 
-            float kw = PowerModel.ArrayKw(au);
-            int tenths = Mathf.RoundToInt(kw * 10f);
-            if (tenths != _shownTenths)
+            string shown = au <= NearEarthMaxAu ? NearEarthReadout : au >= AsteroidMinAu ? AsteroidReadout : string.Empty;
+            if (!ReferenceEquals(shown, _shownReadout))
             {
-                _shownTenths = tenths;
-                readout.SetText(ReadoutFormat, tenths / 10f);   // SetText formats without allocating
+                _shownReadout = shown;
+                readout.text = shown;
             }
             float share = PowerModel.ThrusterShare(au);
             barFill.anchorMax = new Vector2(share, 1f);

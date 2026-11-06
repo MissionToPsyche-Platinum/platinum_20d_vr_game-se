@@ -29,6 +29,7 @@ Original assets created using Blender by the [Blender Foundation](https://www.bl
 | Ultimate Interior Furniture Pack | Fries and Seagull | [Unity Asset Store](https://assetstore.unity.com/packages/3d/props/interior/ultimate-interior-furniture-pack-low-poly-household-kitchen-prop-316897) | [Standard Unity Asset Store EULA](https://unity.com/legal/as-terms) | Assorted furniture assets |
 | Cute Furniture FREE - Low Poly 3D | ithappy | [Unity Asset Store](https://assetstore.unity.com/packages/3d/props/furniture/cute-furniture-free-low-poly-3d-models-pack-260522) | [Standard Unity Asset Store EULA](https://unity.com/legal/as-terms) | Assorted furniture assets |
 | Nature Starter Kit 1 | Shapes | [Unity Asset Store](https://assetstore.unity.com/packages/3d/environments/nature-starter-kit-1-49962) | [Standard Unity Asset Store EULA](https://unity.com/legal/as-terms) | Assorted outdoor assets |
+| Meta Quest Touch Plus controller | Copyright (c) 2019 Amazon ([WebXR Input Profiles](https://github.com/immersive-web/webxr-input-profiles)) | [npm @webxr-input-profiles/assets 1.0.20](https://www.npmjs.com/package/@webxr-input-profiles/assets) | [MIT](https://opensource.org/license/mit) | Rendered as the controller picture on the first Event screen; not shipped as a model |
 
  
 ## Images
@@ -51,6 +52,20 @@ NASA/JPL-Caltech permission.
 
 The three-site Deep Space Network diagram on the same tab was drawn by the team.
 
+The bookcase books print these images on their pages, each with its credit line on the page.
+
+| Image | Credit | Book |
+| --- | --- | --- |
+| Taters test video, first 13 seconds ([NASA SVS 31275](https://svs.gsfc.nasa.gov/31275)), and stills from it | NASA/JPL-Caltech | The Cat Who Crossed the Solar System |
+| PIA26145 (DSOC team watching the video arrive) | NASA/JPL-Caltech | The Cat Who Crossed the Solar System |
+| PIA26750, PIA26586, PIA26771, PIA26749, PIA26773, PIA26775, PIA26772 (Mars flyby images) | NASA/JPL-Caltech/ASU | Psyche at Mars |
+| PIA17790 (Goldstone 70 m antenna), PIA17791 (Goldstone 34 m beam waveguide antenna), PIA23795 (Canberra 70 m antenna) | NASA/JPL-Caltech | Calling Psyche |
+| PIA25138 (spacecraft), PIA24471 (asteroid Psyche), both illustrations | NASA/JPL-Caltech/ASU | Journey to a Metal World |
+| PIA24930 (mission plan), PIA26102 (orbital operations) | NASA/JPL-Caltech | Journey to a Metal World |
+
+The turntable and laser-link illustrations, the Mars flyby and three-site diagrams and the
+round-trip chart in the books were drawn by the team. The video is cropped below the NASA logo.
+
 ## Sounds
 
 | Asset | Author | Source | Licence | Used for |
@@ -71,3 +86,4 @@ made by the team, with some clips from [NASA's historical sounds](https://www.na
 | --- | --- | --- |
 | Barlow Condensed SemiBold | [Google Fonts](https://fonts.google.com/specimen/Barlow+Condensed) | [SIL Open Font License 1.1](https://openfontlicense.org) (text in `Assets/Fonts/OFL-BarlowCondensed.txt`) |
 | Inter Regular | [Google Fonts](https://fonts.google.com/specimen/Inter) | [SIL Open Font License 1.1](https://openfontlicense.org) (text in `Assets/Fonts/OFL-Inter.txt`) |
+| Barlow Condensed Bold, Barlow SemiBold (printed in the book page images) | [Google Fonts](https://fonts.google.com/specimen/Barlow) | [SIL Open Font License 1.1](https://openfontlicense.org) |

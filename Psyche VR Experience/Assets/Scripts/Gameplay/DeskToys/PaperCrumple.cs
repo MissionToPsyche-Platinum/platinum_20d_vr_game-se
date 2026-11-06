@@ -10,8 +10,9 @@ namespace PsycheVR.Gameplay
     /// <summary>
     /// Crumples a held sheet of paper into a ball. Squeeze whichever hand control is
     /// <em>not</em> holding the sheet: grab with the grip and the trigger crumples, grab
-    /// with the trigger and the grip crumples (the PenClicker pattern, reading the analog
-    /// inputs because the project's digital Select action is bound to both controls).
+    /// with the trigger and the grip crumples. It reads the controller's own grip and trigger
+    /// axes (<see cref="HeldControllerAxes"/>): the rig's select value is the Select button,
+    /// which is bound to both controls, so it read "grip held" whenever the trigger held the sheet.
     ///
     /// Crumpling is one-way. It swaps the visual children, swaps which root collider is
     /// enabled, and hands the Rigidbody from the Paper grab profile (drops near the hand)
@@ -126,10 +127,7 @@ namespace PsycheVR.Gameplay
 
             LastHolder = _holder;
 
-            float grip = _holder.selectInput.ReadValue();
-            float trigger = _holder.activateInput.ReadValue();
-
-            _squeezeIsTrigger = grip >= trigger;
+            _squeezeIsTrigger = Grip() >= Trigger();
 
             // If the free control is already squeezed on pickup, demand a release first,
             // so grabbing with both fingers clenched does not crumple by itself.
@@ -165,10 +163,11 @@ namespace PsycheVR.Gameplay
             if (_holder == null)
                 return 0f;
 
-            return _squeezeIsTrigger
-                ? _holder.activateInput.ReadValue()
-                : _holder.selectInput.ReadValue();
+            return _squeezeIsTrigger ? Trigger() : Grip();
         }
+
+        private float Grip() => HeldControllerAxes.Grip(_holder);
+        private float Trigger() => HeldControllerAxes.Trigger(_holder);
 
         /// <summary>
         /// Turns the sheet into a ball. Public so a designer event or test can force it.

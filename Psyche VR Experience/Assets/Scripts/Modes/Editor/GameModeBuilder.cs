@@ -88,6 +88,7 @@ namespace PsycheVR.Modes.Editor
                 return false;
 
             var outputPath = OutputPathFor(mode);
+            var simulator = SimulatorReference.Detach();
 
             try
             {
@@ -119,8 +120,54 @@ namespace PsycheVR.Modes.Editor
             }
             finally
             {
+                simulator.Restore();
                 if (!TryWriteDefaultMode(originalMode))
                     Debug.LogError($"{LogPrefix} Could not restore {ConfigAssetPath} to {originalMode}; revert it with git before committing.");
+            }
+        }
+
+        /// <summary>
+        /// Keeps the XR Device Simulator out of player builds. Its settings asset sits in a Resources folder, so a
+        /// simulator prefab assigned there (a machine set up for keyboard testing) ships in the APK and loads at
+        /// startup even though it only ever runs in the editor: 59 ms of the start freeze on the Quest (profile,
+        /// 2026-10-24). The prefab reference and auto-instantiate are cleared for the build and put back after.
+        /// </summary>
+        private sealed class SimulatorReference
+        {
+            private const string SettingsPath = "Assets/XRI/Settings/Resources/XRDeviceSimulatorSettings.asset";
+            private UnityEngine.Object _prefab;
+            private bool _instantiate, _changed;
+
+            public static SimulatorReference Detach()
+            {
+                var held = new SimulatorReference();
+                var settings = AssetDatabase.LoadAssetAtPath<ScriptableObject>(SettingsPath);
+                if (settings == null) return held;
+                var so = new SerializedObject(settings);
+                var prefab = so.FindProperty("m_SimulatorPrefab");
+                var instantiate = so.FindProperty("m_AutomaticallyInstantiateSimulatorPrefab");
+                if (prefab == null || instantiate == null || (prefab.objectReferenceValue == null && !instantiate.boolValue)) return held;
+                held._prefab = prefab.objectReferenceValue;
+                held._instantiate = instantiate.boolValue;
+                held._changed = true;
+                prefab.objectReferenceValue = null;
+                instantiate.boolValue = false;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssets();
+                Debug.Log($"{LogPrefix} XR Device Simulator left out of the build (restored afterwards).");
+                return held;
+            }
+
+            public void Restore()
+            {
+                if (!_changed) return;
+                var settings = AssetDatabase.LoadAssetAtPath<ScriptableObject>(SettingsPath);
+                if (settings == null) return;
+                var so = new SerializedObject(settings);
+                so.FindProperty("m_SimulatorPrefab").objectReferenceValue = _prefab;
+                so.FindProperty("m_AutomaticallyInstantiateSimulatorPrefab").boolValue = _instantiate;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssets();
             }
         }
 

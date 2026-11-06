@@ -117,7 +117,9 @@ namespace PsycheVR.Gameplay
             if (!(_tabs[DsnIndex] is DsnTab dsn) || !dsn.CanPing) return;
             if (!_state.StartPing(DsnIndex)) return;
             SessionEvents.Interaction("ping_sent", this);
-            _pingSentAt = System.DateTime.Now;
+            // local time only for the arrival line: Android loads its time-zone data on the first
+            // DateTime.Now of a launch, which stalled the first ping of every session by about 130 ms
+            if (!string.IsNullOrEmpty(content.pingArrivalFormat)) _pingSentAt = System.DateTime.Now;
             _pingResult = null;
             SetPingKeyLocked(true);
             // a slide in progress still has a ShowCurrent pending: route through a new slide so the
@@ -299,10 +301,12 @@ namespace PsycheVR.Gameplay
             if (timeline == null) return;
             string result = string.Format(CultureInfo.InvariantCulture, content.pingResultFormat,
                 timeline.RoundTripMinutes, timeline.WaitedSeconds);
-            string arrival = string.Format(CultureInfo.InvariantCulture, content.pingArrivalFormat,
-                PingTimeline.ArrivalClock(_pingSentAt, timeline.RealRoundTripSeconds * 0.5));
-            if (_shownTab == DsnIndex) SetFooterOverride(result + "\n" + arrival);
-            else _pingResult = result + "\n" + arrival;   // landed in the background: shown on the next DSN visit
+            // an empty arrival format leaves the clock-time line out (the real time depends on where Earth and Psyche are)
+            if (!string.IsNullOrEmpty(content.pingArrivalFormat))
+                result += "\n" + string.Format(CultureInfo.InvariantCulture, content.pingArrivalFormat,
+                    PingTimeline.ArrivalClock(_pingSentAt, timeline.RealRoundTripSeconds * 0.5));
+            if (_shownTab == DsnIndex) SetFooterOverride(result);
+            else _pingResult = result;   // landed in the background: shown on the next DSN visit
         }
 
         /// <summary>
@@ -327,7 +331,7 @@ namespace PsycheVR.Gameplay
 
         private void SetPingKeyLocked(bool locked)
         {
-            if (pingKey != null) pingKey.enabled = !locked;
+            if (pingKey != null) pingKey.Blocked = locked;   // not enabled: disabling it snaps the dome back mid-press
         }
 
         private bool Fail(string message)

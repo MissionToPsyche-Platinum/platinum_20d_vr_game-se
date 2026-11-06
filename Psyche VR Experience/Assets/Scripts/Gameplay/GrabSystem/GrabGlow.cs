@@ -31,11 +31,19 @@ namespace PsycheVR.Gameplay
         private float _current;
         private float _target;
 
-        /// <summary>Wires the glow to its grabbable. Called by PsycheGrabbable in Awake.</summary>
-        public void Init(XRBaseInteractable interactable, GrabSettings settings)
+        private bool _enabledOnly;
+
+        /// <summary>
+        /// Wires the glow to its grabbable. Called by PsycheGrabbable in Awake. With
+        /// <paramref name="enabledRenderersOnly"/>, renderers that are off at Init get no glow: for a group made
+        /// of other grabbables (the floating spacecraft model, TG-297), whose hidden snap volumes and own glow
+        /// overlays must not light up.
+        /// </summary>
+        public void Init(XRBaseInteractable interactable, GrabSettings settings, bool enabledRenderersOnly = false)
         {
             _interactable = interactable;
             _settings = settings;
+            _enabledOnly = enabledRenderersOnly;
             _block = new MaterialPropertyBlock();
             CollectRenderers();
         }
@@ -48,6 +56,8 @@ namespace PsycheVR.Gameplay
                 if (r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer)
                     continue;
                 if (r.GetComponent<TMPro.TMP_Text>() != null)
+                    continue;
+                if (_enabledOnly && (!r.enabled || !r.gameObject.activeInHierarchy))
                     continue;
 
                 var overlay = BuildOverlay(r);

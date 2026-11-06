@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee843b0d76cd6784f8d09f89d20b83a9, type: 3}
+  m_Name: CallingPsyche
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BookContent
+  cover: {fileID: 2100000, guid: 153f880e85d802569b4aa87b8107a8f7, type: 2}
+  coverPage: {fileID: 2100000, guid: a9dc8ebaabf3c42d2961599de2c713d8, type: 2}
+  spineFace: {fileID: 2100000, guid: 5900105223752b4fbbdf74f7ce9a165f, type: 2}
+  spineText: {fileID: 2100000, guid: 624e02b3a048e5ad8b11d0005df5f936, type: 2}
+  pageEdges: {fileID: 2100000, guid: c6b91e3888fa7ed1aa4de6173bb2b2ce, type: 2}
+  pages:
+  - front: {fileID: 2100000, guid: 1d62bb39c5601d5d4a8e236657fd58b3, type: 2}
+    back: {fileID: 2100000, guid: 13408f6f9ec1979648be7ac447aa3b71, type: 2}
+  - front: {fileID: 2100000, guid: 0cb6593b2370319ce8dad8e8b7e0b810, type: 2}
+    back: {fileID: 2100000, guid: 5b4a67b9a1aa7b82f867017f8ad01fe5, type: 2}
+  - front: {fileID: 2100000, guid: 488e69ec042104a639b455250adda763, type: 2}
+    back: {fileID: 2100000, guid: 337cfd35756881b77acc9a294c1ddc7d, type: 2}
+  - front: {fileID: 2100000, guid: a4e0f95d7f6daf396b4658b64b94f2c5, type: 2}
+    back: {fileID: 2100000, guid: ad9f7dcfc365bf0f586f301c2f148bb9, type: 2}
+  pageVideo: {fileID: 0}
+  videoPage: 1
+  videoOnFront: 1
+  videoWindow:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
