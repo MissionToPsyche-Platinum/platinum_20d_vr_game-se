@@ -4120,14 +4120,6 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483645
       objectReference: {fileID: 0}
-    - target: {fileID: 1880071032914199558, guid: 1400b70628163c245b6759197c71882d, type: 3}
-      propertyPath: m_SelectEntered.m_PersistentCalls.m_Calls.Array.data[1].m_Target
-      value: 
-      objectReference: {fileID: 1549005417}
-    - target: {fileID: 1880071032914199558, guid: 1400b70628163c245b6759197c71882d, type: 3}
-      propertyPath: m_SelectEntered.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
-      value: StartVideo
-      objectReference: {fileID: 0}
     - target: {fileID: 3308799993606683656, guid: 1400b70628163c245b6759197c71882d, type: 3}
       propertyPath: m_IsActive
       value: 1
