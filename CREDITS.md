@@ -72,7 +72,6 @@ round-trip chart in the books were drawn by the team. The video is cropped below
 | --- | --- | --- | --- | --- |
 | UI Audio | Kenney | [kenney.nl/assets/ui-audio](https://kenney.nl/assets/ui-audio) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Button and key clicks, puzzle snap click |
 | Interface Sounds | Kenney | [kenney.nl/assets/interface-sounds](https://kenney.nl/assets/interface-sounds) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Puzzle success tone |
-| Basketball Hits (pack) | zmobie | [freesound.org/people/zmobie/packs/17904](https://freesound.org/people/zmobie/packs/17904/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Basketball bounces |
 | Office Drawer | bokal | [freesound.org/s/414819](https://freesound.org/s/414819/) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Drawer open and close stops |
 | Bedroom Ambience | mernantau | [freesound.org](https://freesound.org/people/mernantau/sounds/766159/) | [CC0 1.0 0](https://creativecommons.org/publicdomain/zero/1.0/) | Used as background for Bedroom scene |
 | Synth Texture 3 | nomiqbomi | [freesound.org](https://freesound.org/people/nomiqbomi/sounds/578802/) | [CC0 1.0 0](https://creativecommons.org/publicdomain/zero/1.0/) | Used as a sting for when date-cards appear |
