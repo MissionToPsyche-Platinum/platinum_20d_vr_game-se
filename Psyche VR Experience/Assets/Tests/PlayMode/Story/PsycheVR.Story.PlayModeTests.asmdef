@@ -1,0 +1,21 @@
+{
+    "name": "PsycheVR.Story.PlayModeTests",
+    "rootNamespace": "PsycheVR.Story.PlayModeTests",
+    "references": [
+        "PsycheVR.Story.Core",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "UNITY_EDITOR"
+    ]
+}
