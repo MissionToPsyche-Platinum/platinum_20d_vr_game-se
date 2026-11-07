@@ -1,0 +1,14 @@
+{
+    "name": "PsycheVR.Story.Core",
+    "rootNamespace": "PsycheVR.Story",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
