@@ -8,9 +8,9 @@ namespace PsycheVR.Story
     {
         public const string AssetName = "StoryText";
 
-        [Tooltip("Date displayed on entering Intro. Replace the placeholder with approved story copy.")]
+        [Tooltip("Date displayed on entering Intro, set on Psyche's launch day.")]
         [TextArea(2, 4)]
-        [SerializeField] private string introDateText = "[Intro date pending]";
+        [SerializeField] private string introDateText = "October 13, 2023";
 
         public string IntroDateText => introDateText;
     }

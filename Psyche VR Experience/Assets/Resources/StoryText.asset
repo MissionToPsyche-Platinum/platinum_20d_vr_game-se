@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fab298d9c98a4f6785d4a0ec71a40102, type: 3}
   m_Name: StoryText
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Story.StoryText
-  introDateText: '[Intro date pending]'
+  introDateText: October 13, 2023

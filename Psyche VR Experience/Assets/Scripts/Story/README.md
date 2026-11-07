@@ -3,8 +3,9 @@
 Bedroom contains StoryDirector, StoryDateCard, and ObjectiveHighlight on the
 StoryDirector object. The director only starts in Story mode.
 
-- Edit Intro Date Text in `Assets/Resources/StoryText.asset`. The current text,
-  `[Intro date pending]`, is intentionally a placeholder.
+- Edit Intro Date Text in `Assets/Resources/StoryText.asset`. The date is
+  `October 13, 2023`: the launch-day setting in the repository's `Script.txt`,
+  using the actual launch date confirmed by [NASA](https://science.nasa.gov/mission/psyche/mission-overview/).
 - Intro Spacecraft is assigned to `StorySpacecraftDisplay`, a static display
   assembled from the four existing spacecraft meshes beside the launch button.
   Its ModeGate hides it in Event mode; the puzzle assemblies are unchanged.
