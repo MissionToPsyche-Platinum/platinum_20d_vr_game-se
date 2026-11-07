@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7200000000000000004}
   - component: {fileID: 7200000000000000005}
   - component: {fileID: 7200000000000000006}
+  - component: {fileID: 3897808059334426237}
   m_Layer: 0
   m_Name: Kiosk
   m_TagString: Untagged
@@ -79,8 +80,9 @@ MonoBehaviour:
   launchVideo: {fileID: 0}
   puzzle: {fileID: 7200000000000000004}
   cameraTransform: {fileID: 0}
-  messageText: "Thanks for exploring Psyche.\nPlease hand the headset to the event team."
-  messageHoldSeconds: 6
+  messageText: "Thanks for playing \u201CT-Minus Psyche\u201D\nPlease hand
+    the headset to the event team."
+  messageHoldSeconds: 12
   messageFadeSeconds: 1
   messageDistance: 1.35
   videoPrepareTimeoutSeconds: 5
@@ -98,3 +100,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Kiosk.KioskResetListener
   holdSeconds: 4
+  indicatorDelaySeconds: 1
+  cameraTransform: {fileID: 0}
+--- !u!114 &3897808059334426237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7200000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 765b4dc00d8d424e4b6af31ca7716831, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Kiosk.ControllerGuide
+  session: {fileID: 7200000000000000005}
+  titleFont: {fileID: 11400000, guid: a3346420fb0a28dfcb6c21d8182b9db0, type: 2}
+  bodyFont: {fileID: 11400000, guid: fb256d38635300cb1814b5de8d4561bd, type: 2}
+  grabPicture: {fileID: 21300000, guid: 2bdfca233455b8bb9bb29bc0a26fe298, type: 3}
+  slapPicture: {fileID: 21300000, guid: 0dbca3cd95cbafd3cbcbbd8fb2a9ab60, type: 3}
+  distance: 0.55

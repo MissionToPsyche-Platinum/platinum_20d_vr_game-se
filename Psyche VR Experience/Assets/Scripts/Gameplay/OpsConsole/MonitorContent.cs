@@ -76,12 +76,16 @@ namespace PsycheVR.Gameplay
         [Tooltip("Footer while the ping is in flight.")]
         public string pingSentLine = "Ping sent. Waiting for Psyche to answer.";
         [Tooltip("Footer when the reply lands: {0} = real round trip in whole minutes, {1} = seconds the visitor waited.")]
-        public string pingResultFormat = "Round trip: {0} min. You waited {1} seconds. NASA waits the full {0}.";
-        [Tooltip("Second footer line when the reply lands: {0} = local clock time a signal sent now reaches Psyche.")]
-        public string pingArrivalFormat = "Signal arrives at Psyche at {0}.";
+        public string pingResultFormat = "Psyche answered. You waited {1} seconds.\nThe real reply can take over an hour.";
+        [Tooltip("Second footer line when the reply lands: {0} = local clock time a signal sent now reaches Psyche. Empty leaves the line out (the default: the real time depends on where Earth and Psyche are).")]
+        public string pingArrivalFormat = "";
 
         [Header("Kiosk")]
         public string attractPrompt = "Slap ENTER";
+
+        [Header("Power off")]
+        [Tooltip("Shown on the black screen while the computer's power button has it off; visitors turned it off by accident on Oct 13.")]
+        [TextArea] public string powerOffMessage = "NO POWER\nCheck the computer's power button";
 
         /// <summary>Tabs in screen order.</summary>
         public Tab[] Tabs => new[] { marsFlyby, deepSpaceNetwork, solarPower, thruster };

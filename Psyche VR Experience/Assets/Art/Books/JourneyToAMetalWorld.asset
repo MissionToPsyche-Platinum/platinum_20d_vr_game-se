@@ -26,3 +26,12 @@ MonoBehaviour:
     back: {fileID: 2100000, guid: f6bfac3b37cd26144b6c1122def5a3f3, type: 2}
   - front: {fileID: 2100000, guid: 0f6b750fb011edc49ba771450a6d6764, type: 2}
     back: {fileID: 2100000, guid: 39a9d0f5ed399714bb4e20f1f1d27461, type: 2}
+  pageVideo: {fileID: 0}
+  videoPage: 1
+  videoOnFront: 1
+  videoWindow:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0

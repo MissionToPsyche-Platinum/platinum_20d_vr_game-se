@@ -10,12 +10,12 @@ using static PsycheVR.Gameplay.MonitorUi;
 namespace PsycheVR.Gameplay
 {
     /// <summary>
-    /// Mars Flyby main panel: Psyche's route to scale from the build-date JPL Horizons snapshot. Faint
+    /// Mars Flyby main panel: Psyche's route to scale from the JPL Horizons snapshot. Faint
     /// orbits of Earth, Mars and the asteroid around the Sun; the spacecraft's path drawn over 10 s from
-    /// launch (2023-10-14) to arrival (2029-08-01; after the snapshot's last spacecraft sample it follows
-    /// the asteroid); a Mustard ring flash and the flyby speed boost (the content's Mars Flyby stat) as the timeline passes the Mars flyby; the
-    /// trail solid up to the build date and dashed after; "Location as of" the build date at the build-date
-    /// position during a 3 s hold (a snapshot, not a live position), then it starts again. Each dot carries
+    /// launch (2023-10-14) to JPL's last spacecraft sample (no later than arrival, 2029-08-01; the route is
+    /// JPL's only, nothing filled in by us); a Mustard ring flash and the flyby speed boost (the content's Mars Flyby stat) as the timeline passes the Mars flyby; the
+    /// trail solid up to the last day JPL navigation tracked the spacecraft and dashed after (JPL's
+    /// prediction); "Last tracked" with that date at that position during a 3 s hold, then it starts again. Each dot carries
     /// its name beside it. Advances only through <see cref="Tick"/>, which the tab
     /// calls while shown. Everything that moves sits under its own nested canvas, so the per-frame redraw
     /// does not rebuild the rest of the monitor.
@@ -48,9 +48,9 @@ namespace PsycheVR.Gameplay
         private const string MonthFormat = "MMM yyyy";
         private const string CaptionDateFormat = "MMM d, yyyy";
         private const string DateFormat = "yyyy-MM-dd";
-        private const string CaptionFormat = "Positions: JPL Horizons, as of {0}. Dots not to scale.";
+        private const string CaptionFormat = "Positions: JPL Horizons. Tracked to {0}; dashed: JPL's planned route. Dots not to scale.";
         private const int FlybyBoostStat = 1;    // marsFlyby.stats[1] is the flyby speed boost ("+1,000 mph")
-        private const string TagFormat = "Location as of {0}";   // the snapshot's date: the screen has no live feed
+        private const string TagFormat = "Last tracked {0}";   // JPL navigation's last tracked day: the screen has no live feed
 
         [SerializeField] private RectTransform plot;
         [SerializeField] private UIPolyline earthOrbit, marsOrbit, asteroidOrbit, trailSolid, trailDashed;
@@ -61,13 +61,13 @@ namespace PsycheVR.Gameplay
         private MonitorSnapshot.Track _earth, _mars, _asteroid;
         private OrbitProjection _projection;
         private OrbitProjection.Timeline _timeline;
-        private DateTime _buildDate;
+        private DateTime _trackedDate;
         private DateTime[] _pathDates;
         private Vector2[] _pathAu, _pathPanel;
         private Vector2[] _earthOrbitAu, _marsOrbitAu, _asteroidOrbitAu;
         private Vector2[] _solid, _dashed;       // preallocated trail buffers, refilled per frame
-        private int _buildIndex;                 // path samples dated before the build date
-        private Vector2 _buildPanel, _flybyPanel;
+        private int _trackedIndex;                 // path samples dated before the build date
+        private Vector2 _trackedPanel, _flybyPanel;
         private float _flybySeconds;
         private string[] _monthLabels;
         private int _shownMonth = -1;
@@ -94,10 +94,10 @@ namespace PsycheVR.Gameplay
             rt.offsetMin = Vector2.one * Pad; rt.offsetMax = -Vector2.one * Pad;
             var view = rt.gameObject.AddComponent<TrajectoryView>();
             view._earth = earth; view._mars = mars; view._asteroid = asteroid;
-            view._buildDate = snapshot.BuildDate;
-            view._timeline = new OrbitProjection.Timeline(LaunchDate, ArrivalDate, AnimSeconds);
+            view._trackedDate = snapshot.TrackedThrough;
+            view.BuildPath(spacecraftTrack);
+            view._timeline = new OrbitProjection.Timeline(LaunchDate, view._pathDates[view._pathDates.Length - 1], AnimSeconds);
             view._flybySeconds = view._timeline.SecondsAt(FlybyDate);
-            view.BuildPath(spacecraftTrack, asteroid);
             view._earthOrbitAu = OneOrbit(earth);
             view._marsOrbitAu = OneOrbit(mars);
             view._asteroidOrbitAu = OneOrbit(asteroid);
@@ -108,7 +108,7 @@ namespace PsycheVR.Gameplay
 
             var caption = MonitorScreen.Text(rt, "Caption", bodyFont, CaptionSize, TextAlignmentOptions.BottomLeft, MonitorPalette.LightGrey);
             caption.text = string.Format(CultureInfo.InvariantCulture, CaptionFormat,
-                snapshot.BuildDate.ToString(CaptionDateFormat, CultureInfo.InvariantCulture));
+                snapshot.TrackedThrough.ToString(CaptionDateFormat, CultureInfo.InvariantCulture));
             caption.textWrappingMode = TextWrappingModes.NoWrap;
             var crt = caption.rectTransform;
             crt.anchorMin = Vector2.zero; crt.anchorMax = new Vector2(1f, 0f);
@@ -167,7 +167,7 @@ namespace PsycheVR.Gameplay
             view.tagRing.sprite = MonitorSprites.Ring();
             view.tagLabel = MonitorScreen.Text(view.tagRing.rectTransform, "Label", bodyFont, TagSize, TextAlignmentOptions.Bottom, MonitorPalette.White);
             view.tagLabel.text = string.Format(CultureInfo.InvariantCulture, TagFormat,
-                snapshot.BuildDate.ToString(CaptionDateFormat, CultureInfo.InvariantCulture));
+                snapshot.TrackedThrough.ToString(CaptionDateFormat, CultureInfo.InvariantCulture));
             view.tagLabel.textWrappingMode = TextWrappingModes.NoWrap;
             var trt = view.tagLabel.rectTransform;
             trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 0.5f); trt.pivot = new Vector2(0.5f, 0f);
@@ -222,7 +222,7 @@ namespace PsycheVR.Gameplay
             DateTime now = _timeline.At(t);
 
             Vector2 head = _projection.ToPanel(PathAt(now, out int passed));
-            if (now < _buildDate)
+            if (now < _trackedDate)
             {
                 _solidComplete = false;
                 Array.Copy(_pathPanel, _solid, passed);
@@ -235,13 +235,13 @@ namespace PsycheVR.Gameplay
                 if (!_solidComplete)
                 {
                     _solidComplete = true;
-                    Array.Copy(_pathPanel, _solid, _buildIndex);
-                    _solid[_buildIndex] = _buildPanel;
-                    trailSolid.SetPoints(_solid, _buildIndex + 1);
+                    Array.Copy(_pathPanel, _solid, _trackedIndex);
+                    _solid[_trackedIndex] = _trackedPanel;
+                    trailSolid.SetPoints(_solid, _trackedIndex + 1);
                 }
-                int after = passed - _buildIndex;
-                _dashed[0] = _buildPanel;
-                Array.Copy(_pathPanel, _buildIndex, _dashed, 1, after);
+                int after = passed - _trackedIndex;
+                _dashed[0] = _trackedPanel;
+                Array.Copy(_pathPanel, _trackedIndex, _dashed, 1, after);
                 _dashed[after + 1] = head;
                 trailDashed.SetPoints(_dashed, after + 2);
             }
@@ -283,18 +283,18 @@ namespace PsycheVR.Gameplay
             marsOrbit.SetPoints(Project(_marsOrbitAu));
             asteroidOrbit.SetPoints(Project(_asteroidOrbitAu));
             _pathPanel = Project(_pathAu);
-            _buildPanel = _projection.ToPanel(PathAt(_buildDate, out _));
+            _trackedPanel = _projection.ToPanel(PathAt(_trackedDate, out _));
             _flybyPanel = _projection.ToPanel(PathAt(FlybyDate, out _));
             Place(sun, _projection.ToPanel(Vector2.zero));
             Place(flashRing.rectTransform, _flybyPanel);
-            Place(tagRing.rectTransform, _buildPanel);
+            Place(tagRing.rectTransform, _trackedPanel);
             _appliedProgress = -1f;
             _solidComplete = false;
             Apply(_progress);
         }
 
-        // the route: spacecraft samples to the end of its track, then the asteroid's samples up to arrival
-        private void BuildPath(MonitorSnapshot.Track spacecraft, MonitorSnapshot.Track asteroid)
+        // the route: JPL's spacecraft samples only, up to arrival; nothing past the end of its track
+        private void BuildPath(MonitorSnapshot.Track spacecraft)
         {
             var dates = new List<DateTime>();
             var au = new List<Vector2>();
@@ -304,24 +304,15 @@ namespace PsycheVR.Gameplay
                 if (d > ArrivalDate) break;
                 dates.Add(d); au.Add(new Vector2(p.x, p.y));
             }
-            DateTime last = dates[dates.Count - 1];
-            foreach (var p in asteroid.points)
-            {
-                var d = ParseDate(p.date);
-                if (d <= last) continue;
-                if (d >= ArrivalDate) break;
-                dates.Add(d); au.Add(new Vector2(p.x, p.y));
-            }
-            if (dates[dates.Count - 1] < ArrivalDate) { dates.Add(ArrivalDate); au.Add(asteroid.At(ArrivalDate)); }
             _pathDates = dates.ToArray();
             _pathAu = au.ToArray();
-            if (_buildDate < LaunchDate) _buildDate = LaunchDate;
-            if (_buildDate > ArrivalDate) _buildDate = ArrivalDate;
-            _buildIndex = 0;
-            while (_buildIndex < _pathDates.Length && _pathDates[_buildIndex] < _buildDate) _buildIndex++;
+            if (_trackedDate < LaunchDate) _trackedDate = LaunchDate;
+            if (_trackedDate > _pathDates[_pathDates.Length - 1]) _trackedDate = _pathDates[_pathDates.Length - 1];
+            _trackedIndex = 0;
+            while (_trackedIndex < _pathDates.Length && _pathDates[_trackedIndex] < _trackedDate) _trackedIndex++;
             int n = _pathDates.Length;
-            _solid = new Vector2[_buildIndex + 1];
-            _dashed = new Vector2[n - _buildIndex + 2];
+            _solid = new Vector2[_trackedIndex + 1];
+            _dashed = new Vector2[n - _trackedIndex + 2];
         }
 
         // position on the route at when (linear between samples), and how many samples are dated on or before it

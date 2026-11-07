@@ -10,9 +10,10 @@ namespace PsycheVR.VR
     /// Job Simulator hands: the hand disappears while it holds an object, and so does its
     /// collider. The rule is by type. Selecting any
     /// <see cref="XRGrabInteractable"/> (every PsycheGrabbable, the book spine, the mug)
-    /// hides the hand. A drawer handle keeps the hand in its normal fist. Selecting anything
-    /// else (today only <c>BookPage</c>) keeps the hand and drives the pinch pose, and the hand model slides so its pinch sits on the middle
-    /// of the page's outer edge, so a page flip reads as the hand turning it. When the
+    /// hides the hand. A book page (<c>BookPage</c>) keeps the hand and drives the pinch pose, and the hand
+    /// model slides so its pinch sits on the middle of the page's outer edge, so a page flip reads as the
+    /// hand turning it. Anything else (a drawer handle, the puzzle turntable, the floating model) keeps the
+    /// hand in its normal grip-driven fist. When the
     /// interactor's last selection ends everything comes back. The dwell line belongs to
     /// <see cref="GrabTargeting"/>, which hides it whenever the
     /// hand holds or pinches something.
@@ -129,11 +130,11 @@ namespace PsycheVR.VR
                 _hidePending = true;
                 _grabTime = Time.time;
             }
-            // A drawer handle keeps the visible hand in its normal grip-driven fist, not the pinch.
-            else if (DrawerSlide.ForHandle(args.interactableObject) == null)
+            // Only a page pinches; a drawer handle, the turntable or the floating model keep the fist.
+            else if (args.interactableObject is BookPage page)
             {
                 SetPinch(1f);
-                _pinchedPage = args.interactableObject as BookPage;
+                _pinchedPage = page;
             }
         }
 

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee843b0d76cd6784f8d09f89d20b83a9, type: 3}
+  m_Name: TheCatWhoCrossedTheSolarSystem
+  m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Gameplay.BookContent
+  cover: {fileID: 2100000, guid: 208b499a1875bbdad8303ad94150888f, type: 2}
+  coverPage: {fileID: 2100000, guid: a6d8c0464afb6da759779c5b0c814086, type: 2}
+  spineFace: {fileID: 2100000, guid: 7e60a6e6a6247a83cb9caf5fefbfac97, type: 2}
+  spineText: {fileID: 2100000, guid: 8d0478b17b136236e808a24a293e491c, type: 2}
+  pageEdges: {fileID: 2100000, guid: 6c3c628a91cf64043adf39b45069f2bd, type: 2}
+  pages:
+  - front: {fileID: 2100000, guid: 766e2eea307aaa7759a4ce34bacfb57b, type: 2}
+    back: {fileID: 2100000, guid: c2f88f6db24f99d0b9c512c203a668d1, type: 2}
+  - front: {fileID: 2100000, guid: 03c1d643d39d57d8b9b02a83c0f850d8, type: 2}
+    back: {fileID: 2100000, guid: 38f931bde8a2dbf3b8d57b105c6a06eb, type: 2}
+  - front: {fileID: 2100000, guid: e1a28eced9802e5088c802f102b7d8af, type: 2}
+    back: {fileID: 2100000, guid: e5cee1d98f9063c99a8968593b41ddca, type: 2}
+  - front: {fileID: 2100000, guid: e4db7f3cc2dc2e2c39e782735b2c0df2, type: 2}
+    back: {fileID: 2100000, guid: 7f1540413b701abe18d14e5f84a2a0be, type: 2}
+  pageVideo: {fileID: 32900000, guid: c393e28748330a6d0ac74e3271cc06e0, type: 3}
+  videoPage: 1
+  videoOnFront: 1
+  videoWindow:
+    serializedVersion: 2
+    x: 0.07324
+    y: 0.52266
+    width: 0.85352
+    height: 0.31992

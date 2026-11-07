@@ -95,6 +95,9 @@ namespace PsycheVR.Data
         /// <summary>Starts an asynchronous pass; returns false if disabled or already busy.</summary>
         public static bool UploadPending()
         {
+            // Edit mode (editor checks, batch tools) never runs Awake, so there would be
+            // no instance or config to use; uploads only happen in Play mode and on device.
+            if (!Application.isPlaying) return false;
             EnsureCreated();
             if (instance.config == null || instance.busy) return false;
             instance.attemptedUpload = true;

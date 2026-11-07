@@ -2,107 +2,129 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using PsycheVR.Gameplay;
 
 namespace PsycheVR.Kiosk
 {
     /// <summary>
-    /// A head-locked dark panel with bold white text that fades in, holds, fades out and
-    /// destroys itself. Built in code under the camera at the moment it is needed, so no
-    /// prefab has to carry it and it cannot exist in Story mode by accident. Sized like
-    /// the pause menu so it reads the same on the headset and on the cast screen.
+    /// The end-of-session card: "Thanks for playing" with the game's title in quotes and a Mustard call to
+    /// action to hand the headset back, in the controller guide's palette and fonts
+    /// (<see cref="KioskMessageStyle"/>). It fades in, holds, fades out and destroys itself. Built in code at
+    /// the moment it is needed, so no prefab has to carry it and it cannot exist in Story mode by accident.
     ///
-    /// The panel is not optional: the message follows the launch video, so the visitor is
-    /// usually looking straight at the bright wall screen, where bare white text vanishes.
+    /// The card is opaque on purpose: the message follows the launch video, so the visitor is usually
+    /// looking straight at the bright wall screen, where bare white text vanishes.
     ///
-    /// The panel is fully head-locked -- pitch and roll as well as yaw -- exactly like the
-    /// pause menu, so it stays centred in view however the visitor is looking.
-    ///
-    /// It also sweeps for clearance before it is placed: the pause menu once materialised
-    /// inside a bedroom wall and the depth test hid it completely, so the panel is pulled
-    /// in to whatever the camera actually has room for.
+    /// It floats rather than being locked to the camera (TG-322): <see cref="HeadFollow"/> holds it at
+    /// eye height ahead, lets small head movements pass, glides it back after a large turn or step, keeps
+    /// it upright and keeps it out of walls. Camera-locked, it jerked with every head movement and could
+    /// sink into a wall the visitor stood near.
     /// </summary>
     public sealed class HandoverMessage : MonoBehaviour
     {
         private const string LogPrefix = "[HandoverMessage]";
         private const string ObjectName = "Handover Message";
-        private const float CanvasScale = 0.0011f;
+        private const float MillimetresPerMetre = 1000f;
+        /// <summary>The card is drawn in millimetres at this distance and scaled with it, so it keeps its size in view.</summary>
         private const float ReferenceDistance = 1.35f;
-        private const float MinDistance = 0.45f;
-        private const float ClearancePadding = 0.12f;
-        private static readonly Vector2 PanelSize = new Vector2(1200f, 280f);
-        private const float Padding = 40f;
-        private const float MaxFontSize = 44f;
-        private const float MinFontSize = 28f;
-        private static readonly Color PanelTint = new Color(0.03f, 0.04f, 0.06f, 0.82f);
-        private static readonly Color TextTint = Color.white;
+        private const float Width = 960f, Height = 380f;          // mm
+        private const float Margin = 60f;                          // mm, left and right of the text
+        private const float KickerSize = 18f, TitleSize = 66f, CtaSize = 26f;
+        private const string Kicker = "END OF YOUR SESSION";
 
         private CanvasGroup _group;
-        private TMP_Text _text;
+        private TMP_Text _title;
+        private TMP_Text _action;
         private Material _materialInstance;
 
         /// <summary>
-        /// Creates the message as a child of <paramref name="cameraTransform"/>, invisible.
+        /// Creates the message floating in front of <paramref name="cameraTransform"/>, invisible.
         /// </summary>
-        /// <param name="cameraTransform">The headset camera; the panel is locked to it.</param>
-        /// <param name="distance">Metres in front of the camera, before the clearance sweep. Scale follows the final distance so the apparent size is constant.</param>
+        /// <param name="cameraTransform">The headset camera; the card follows it lazily.</param>
+        /// <param name="distance">Metres in front of the camera when nothing is in the way. Scale follows the distance so the apparent size is constant.</param>
         public static HandoverMessage Spawn(Transform cameraTransform, float distance)
         {
-            float requestedDistance = distance;
-            distance = ClearDistance(cameraTransform, requestedDistance);
+            var style = KioskMessageStyle.Load();
+            TMP_FontAsset titleFont = style != null ? style.TitleFont : null;
+            TMP_FontAsset bodyFont = style != null ? style.BodyFont : null;
 
             var root = new GameObject(ObjectName, typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup));
-            root.transform.SetParent(cameraTransform, false);
             root.layer = cameraTransform.gameObject.layer;
-            root.transform.localPosition = new Vector3(0f, 0f, distance);
-            root.transform.localRotation = Quaternion.identity;
-            root.transform.localScale = Vector3.one * (CanvasScale * (distance / ReferenceDistance));
-
+            root.transform.localScale = Vector3.one * (distance / ReferenceDistance / MillimetresPerMetre);
             var canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             // Above the pause menu, which sits at the same distance in front of the camera.
             canvas.sortingOrder = 1;
-            var rect = root.GetComponent<RectTransform>();
-            rect.sizeDelta = PanelSize;
+            var rect = (RectTransform)root.transform;
+            rect.sizeDelta = new Vector2(Width, Height);
 
-            var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-            panel.transform.SetParent(root.transform, false);
-            panel.layer = root.layer;
-            var panelRect = panel.GetComponent<RectTransform>();
-            panelRect.anchorMin = Vector2.zero;
-            panelRect.anchorMax = Vector2.one;
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
-            var image = panel.GetComponent<Image>();
-            image.color = PanelTint;
-            image.raycastTarget = false;
+            Fill(rect, "Background", MonitorPalette.Black);
+            var band = Fill(rect, "Band", MonitorPalette.DarkPurple);
+            Place(band.rectTransform, 0f, Height - 12f, Width, 12f);
 
-            var label = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-            label.transform.SetParent(root.transform, false);
-            label.layer = root.layer;
-            var labelRect = label.GetComponent<RectTransform>();
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(Padding, Padding);
-            labelRect.offsetMax = new Vector2(-Padding, -Padding);
-            var text = label.GetComponent<TextMeshProUGUI>();
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = TextTint;
-            text.raycastTarget = false;
-            // Long hand-over text shrinks rather than overflowing the panel.
-            text.enableAutoSizing = true;
-            text.fontSizeMin = MinFontSize;
-            text.fontSizeMax = MaxFontSize;
-            text.fontStyle = FontStyles.Bold;
-            Material materialInstance = ApplyPlainWhite(text);
+            const float left = Margin;
+            const float column = Width - 2f * Margin;
+
+            var kicker = Text(rect, "Kicker", bodyFont, KickerSize, TextAlignmentOptions.BottomLeft, MonitorPalette.Mustard, Kicker);
+            kicker.characterSpacing = 6f;
+            Place(kicker.rectTransform, left, 290f, column, 30f);
+
+            var title = Text(rect, "Title", titleFont, TitleSize, TextAlignmentOptions.BottomLeft, MonitorPalette.White, "");
+            title.enableAutoSizing = true; title.fontSizeMin = TitleSize * 0.6f; title.fontSizeMax = TitleSize;
+            Place(title.rectTransform, left, 175f, column, 112f);
+
+            var rule = Fill(rect, "Rule", MonitorPalette.Mustard);
+            Place(rule.rectTransform, left, 160f, column, 3f);
+
+            var pill = Fill(rect, "Action", MonitorPalette.Mustard);
+            Place(pill.rectTransform, left, 58f, column, 72f);
+            var action = Text(pill.rectTransform, "Text", titleFont, CtaSize, TextAlignmentOptions.Center, MonitorPalette.Black, "");
+            action.enableAutoSizing = true; action.fontSizeMin = CtaSize * 0.6f; action.fontSizeMax = CtaSize;
+            MonitorUi.Stretch(action.rectTransform);
+            action.rectTransform.offsetMin = new Vector2(16f, 0f); action.rectTransform.offsetMax = new Vector2(-16f, 0f);
+
+            // No project font found: the default font's shared material is black-faced (see ApplyPlainWhite).
+            Material materialInstance = titleFont == null ? ApplyPlainWhite(title) : null;
+
+            // Half the card's short edge: a wall that would cover the card is caught without a
+            // full-width sweep snagging on desks and floors the card clears anyway.
+            root.AddComponent<HeadFollow>().Init(cameraTransform, distance, Height * 0.5f / MillimetresPerMetre * (distance / ReferenceDistance));
 
             var message = root.AddComponent<HandoverMessage>();
             message._group = root.GetComponent<CanvasGroup>();
             message._group.alpha = 0f;
             message._group.interactable = false;
             message._group.blocksRaycasts = false;
-            message._text = text;
+            message._title = title;
+            message._action = action;
             message._materialInstance = materialInstance;
             return message;
+        }
+
+        /// <summary>Bottom-left anchored rectangle in card millimetres.</summary>
+        private static void Place(RectTransform rt, float x, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = Vector2.zero;
+            rt.pivot = Vector2.zero;
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static Image Fill(RectTransform parent, string name, Color c)
+        {
+            var rt = MonitorUi.Child(parent, name);
+            MonitorUi.Stretch(rt);
+            var img = rt.gameObject.AddComponent<Image>(); img.color = c; img.raycastTarget = false;
+            return img;
+        }
+
+        private static TMP_Text Text(RectTransform parent, string name, TMP_FontAsset font, float size, TextAlignmentOptions align, Color colour, string text)
+        {
+            var t = MonitorUi.Child(parent, name).gameObject.AddComponent<TextMeshProUGUI>();
+            if (font != null) t.font = font;
+            t.fontSize = size; t.alignment = align; t.color = colour; t.raycastTarget = false; t.text = text;
+            t.textWrappingMode = TextWrappingModes.Normal;
+            return t;
         }
 
         /// <summary>
@@ -116,7 +138,7 @@ namespace PsycheVR.Kiosk
         private static Material ApplyPlainWhite(TMP_Text text)
         {
             Material material = text.fontMaterial;
-            material.SetColor(ShaderUtilities.ID_FaceColor, TextTint);
+            material.SetColor(ShaderUtilities.ID_FaceColor, MonitorPalette.White);
             material.SetFloat(ShaderUtilities.ID_FaceDilate, 0f);
             material.SetFloat(ShaderUtilities.ID_OutlineWidth, 0f);
             material.SetFloat(ShaderUtilities.ID_OutlineSoftness, 0f);
@@ -135,55 +157,23 @@ namespace PsycheVR.Kiosk
                 Destroy(_materialInstance);
         }
 
-        /// <summary>
-        /// Metres the panel can actually sit in front of the camera: the requested distance
-        /// pulled in to the nearest blocker. Ported from the pause menu so both panels
-        /// behave the same. Hits on the rig itself are skipped -- the sweep starts inside
-        /// the player's own collider, which would otherwise read as a blocker at zero
-        /// distance.
-        /// </summary>
-        private static float ClearDistance(Transform cameraTransform, float requestedDistance)
-        {
-            // Half the panel's short edge, so a wall that covers the panel is caught without
-            // a full-width sweep snagging on desks and floors the panel would clear anyway.
-            float sweepRadius = PanelSize.y * CanvasScale * 0.5f;
-            float distance = requestedDistance;
-
-            RaycastHit[] hits = Physics.SphereCastAll(
-                cameraTransform.position,
-                sweepRadius,
-                cameraTransform.forward,
-                requestedDistance,
-                Physics.DefaultRaycastLayers,
-                QueryTriggerInteraction.Ignore);
-
-            for (int i = 0; i < hits.Length; i++)
-            {
-                // The rig must stay at the scene root: nesting it under a container would
-                // make .root that container and silently exclude every hit.
-                if (hits[i].transform.IsChildOf(cameraTransform.root))
-                    continue;
-
-                distance = Mathf.Min(distance, hits[i].distance - ClearancePadding);
-            }
-
-            return Mathf.Clamp(distance, MinDistance, requestedDistance);
-        }
-
-        /// <summary>Fades the text in, holds it, fades it out, then destroys this object.</summary>
-        /// <param name="text">The line to show.</param>
+        /// <summary>Fades the card in, holds it, fades it out, then destroys this object.</summary>
+        /// <param name="text">The first line is the title (Thanks for playing “T-Minus Psyche”); the rest is the call to action, shown in capitals.</param>
         /// <param name="fadeSeconds">Seconds for each fade, in and out.</param>
         /// <param name="holdSeconds">Seconds the text stays fully visible between the fades.</param>
         public void Show(string text, float fadeSeconds, float holdSeconds)
         {
             // Null unless this instance came from Spawn, which is the only supported way in.
-            if (_text == null || _group == null)
+            if (_title == null || _action == null || _group == null)
             {
                 Debug.LogError($"{LogPrefix} Show called on an instance not created by Spawn.", this);
                 return;
             }
 
-            _text.text = text;
+            string[] lines = (text ?? "").Split(new[] { '\n' }, 2);
+            _title.text = lines[0].Trim().TrimEnd('.');
+            _action.text = lines.Length > 1 ? lines[1].Replace('\n', ' ').Trim().TrimEnd('.').ToUpperInvariant() : "";
+            _action.transform.parent.gameObject.SetActive(_action.text.Length > 0);
             Debug.Log($"{LogPrefix} Showing for {holdSeconds:0.#}s.", this);
             StartCoroutine(Run(Mathf.Max(0f, fadeSeconds), Mathf.Max(0f, holdSeconds)));
         }

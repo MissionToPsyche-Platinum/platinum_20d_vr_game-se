@@ -29,6 +29,10 @@ namespace PsycheVR.Gameplay
         // centred, with the title's purple on its left and a purple strip as wide on its right (the dots)
         private const float PopupSize = 20f, PopupMinSize = 8f;
         private const float PopupTitleGap = Pad, PopupTextPad = 1.5f;   // mm: clear of the title; inside the bar
+        // the same Mustard card twice the size, centred on the screen, for a moment that must not be missed
+        // while the visitor's attention is in their hand (the Thruster push while the mouse is held)
+        private const float CalloutShare = HeaderShare * 2f, CalloutSize = PopupSize * 2f, CalloutInset = 0.1f;
+        private const float PowerOffMinSize = 12f, PowerOffMaxSize = 40f, PowerOffInset = 0.15f;   // mm; share of each side left clear
         private const float BannerSpeed = 40f;        // mm per second
         private const float SlideSeconds = 0.1f;
         private const float SlideDrift = Pad * 0.5f;   // mm: inside the panel margin, never past the screen edge
@@ -55,11 +59,11 @@ namespace PsycheVR.Gameplay
         /// <summary>The content asset this screen was built from.</summary>
         public MonitorContent Content { get; private set; }
 
-        private RectTransform _root, _body, _bannerMask, _attract, _popup;
+        private RectTransform _root, _body, _bannerMask, _attract, _popup, _callout;
         private CanvasGroup _bodyGroup;
         private Image[] _dots;
         private Image _black;
-        private TMP_Text _attractText, _popupText;
+        private TMP_Text _attractText, _popupText, _calloutText;
         private Coroutine _slide;
         private string _fittedFooter;
 
@@ -172,7 +176,23 @@ namespace PsycheVR.Gameplay
             AutoSize(_popupText, PopupMinSize, PopupSize);
             _popup.gameObject.SetActive(false);
 
+            // over the body, under the power-off black
+            _callout = MonitorUi.Child(_root, "Callout");
+            Stretch(_callout, CalloutInset, 0.5f - CalloutShare * 0.5f, 1f - CalloutInset, 0.5f + CalloutShare * 0.5f);
+            var calloutCard = _callout.gameObject.AddComponent<Image>(); calloutCard.color = MonitorPalette.Mustard; calloutCard.raycastTarget = false;
+            _calloutText = Text(_callout, "Text", content.titleFont, CalloutSize, TextAlignmentOptions.Center, MonitorPalette.Black);
+            MonitorUi.Stretch(_calloutText.rectTransform);
+            _calloutText.rectTransform.offsetMin = Vector2.one * PopupTextPad * 2f;
+            _calloutText.rectTransform.offsetMax = -Vector2.one * PopupTextPad * 2f;
+            AutoSize(_calloutText, PopupMinSize, CalloutSize);
+            _callout.gameObject.SetActive(false);
+
             _black = Fill(_root, "PowerOff", Color.black);
+            // dim text on the black, so a visitor who hit the power button knows how to bring the screen back
+            var powerOff = Text(_black.rectTransform, "Message", content.titleFont, PowerOffMaxSize, TextAlignmentOptions.Center, MonitorPalette.Grey);
+            Stretch(powerOff.rectTransform, PowerOffInset, PowerOffInset, 1f - PowerOffInset, 1f - PowerOffInset);
+            AutoSize(powerOff, PowerOffMinSize, PowerOffMaxSize);
+            powerOff.text = content.powerOffMessage;
             _black.gameObject.SetActive(false);
         }
 
@@ -193,6 +213,20 @@ namespace PsycheVR.Gameplay
         public void HidePopup()
         {
             if (_popup != null) _popup.gameObject.SetActive(false);
+        }
+
+        /// <summary>Shows <paramref name="text"/> on a Mustard card twice the pop-up bar's size, centred on the screen.</summary>
+        public void ShowCallout(string text)
+        {
+            if (_callout == null || string.IsNullOrEmpty(text)) return;
+            _calloutText.text = text;
+            _callout.gameObject.SetActive(true);
+        }
+
+        /// <summary>Hides the centred card.</summary>
+        public void HideCallout()
+        {
+            if (_callout != null) _callout.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -286,7 +320,7 @@ namespace PsycheVR.Gameplay
             }
         }
 
-        /// <summary>Power off: everything black.</summary>
+        /// <summary>Power off: everything black, with the content's power-off message.</summary>
         public void SetBlack(bool black) { if (Built) _black.gameObject.SetActive(black); }
 
         /// <summary>Shows the Mustard kiosk banner over the header with <paramref name="text"/>.</summary>

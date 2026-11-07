@@ -6,9 +6,15 @@ using UnityEngine.Events;
 namespace PsycheVR.Kiosk
 {
     /// <summary>
-    /// Watches every active <see cref="SnapZone"/> in the scene and raises <see cref="Completed"/>
-    /// once each one has accepted its piece. A zone that is inactive at Start (for example
-    /// under a ModeGate that is off for this mode) is left out of the set, not counted against it.
+    /// Watches the scene's spacecraft puzzles and raises <see cref="Completed"/> the first
+    /// time every zone of any one puzzle has accepted its piece. Zones are grouped into
+    /// puzzles by the instruction board they report to (each Snappable puzzle has its own),
+    /// so the story room's copy of the puzzle, which stays loaded in Event mode, never holds
+    /// the event room's completion back.
+    /// Two kinds of zone are left out rather than counted against completion: a zone that is
+    /// inactive at Start (for example under a ModeGate that is off for this mode), and a zone
+    /// with no required tag, which can never accept a piece (the Snappable prefab carries one,
+    /// Bus_Snap_Zone).
     /// Fires once per scene load; the reload a mode switch or kiosk reset performs starts
     /// it fresh.
     /// </summary>
@@ -17,12 +23,12 @@ namespace PsycheVR.Kiosk
     {
         private const string LogPrefix = "[PuzzleCompletion]";
 
-        [Tooltip("Invoked once when the last snap zone is filled.")]
+        [Tooltip("Invoked once when the last snap zone of any one puzzle is filled.")]
         [SerializeField] private UnityEvent onCompleted = new UnityEvent();
 
-        private SnapZone[] _zones = Array.Empty<SnapZone>();
+        private SnapZone[][] _puzzles = Array.Empty<SnapZone[]>();
 
-        /// <summary>Raised once when every snap zone has snapped.</summary>
+        /// <summary>Raised once when every zone of one puzzle has snapped.</summary>
         public event Action Completed;
 
         /// <summary>
@@ -36,7 +42,7 @@ namespace PsycheVR.Kiosk
             SnapZone.Snapped += HandleSnapped;
 
             // Catch up on any snap that landed while this component was disabled.
-            // No-ops before Start, when _zones is still empty.
+            // No-ops before Start, when _puzzles is still empty.
             CheckCompletion();
         }
 
@@ -52,58 +58,87 @@ namespace PsycheVR.Kiosk
             // under a ModeGate that is off for this mode can never snap, and counting it
             // would make completion unreachable with no log line saying why.
             SnapZone[] found = FindObjectsByType<SnapZone>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            List<SnapZone> active = new List<SnapZone>(found.Length);
-            int skipped = 0;
+            var groups = new Dictionary<UnityEngine.Object, List<SnapZone>>();
+            int inactive = 0;
+            int untagged = 0;
             foreach (var zone in found)
             {
-                if (zone != null && zone.gameObject.activeInHierarchy)
-                    active.Add(zone);
-                else
-                    skipped++;
+                if (zone == null || !zone.gameObject.activeInHierarchy)
+                {
+                    inactive++;
+                    continue;
+                }
+                if (string.IsNullOrEmpty(zone.requiredTag))
+                {
+                    untagged++;
+                    continue;
+                }
+
+                UnityEngine.Object key = zone.textManager != null ? zone.textManager : zone.transform.root;
+                if (!groups.TryGetValue(key, out var zones))
+                    groups.Add(key, zones = new List<SnapZone>());
+                zones.Add(zone);
             }
 
-            _zones = active.ToArray();
-            if (_zones.Length == 0)
+            _puzzles = new SnapZone[groups.Count][];
+            int index = 0;
+            foreach (var zones in groups.Values)
+                _puzzles[index++] = zones.ToArray();
+
+            if (_puzzles.Length == 0)
             {
-                Debug.LogWarning($"{LogPrefix} No active SnapZone in '{gameObject.scene.name}' ({skipped} inactive); the puzzle can never complete here.");
+                Debug.LogWarning($"{LogPrefix} No usable SnapZone in '{gameObject.scene.name}' ({inactive} inactive, {untagged} without a required tag); the puzzle can never complete here.");
                 return;
             }
 
-            Debug.Log(skipped > 0
-                ? $"{LogPrefix} Watching {_zones.Length} snap zones ({skipped} skipped as inactive)."
-                : $"{LogPrefix} Watching {_zones.Length} snap zones.");
+            Debug.Log($"{LogPrefix} Watching {_puzzles.Length} puzzle(s) of {string.Join(", ", Array.ConvertAll(_puzzles, p => p.Length.ToString()))} zones ({inactive} inactive and {untagged} untagged zones skipped).");
             CheckCompletion();
         }
 
         /// <summary>
         /// Handles a snap from any zone in the scene. Zones this watcher does not track
-        /// (spawned late, or gated away for this mode) are ignored.
+        /// (spawned late, gated away for this mode, or untagged) are ignored.
         /// </summary>
         private void HandleSnapped(SnapZone zone)
         {
-            if (Array.IndexOf(_zones, zone) < 0)
-                return;
-
-            CheckCompletion();
+            foreach (var puzzle in _puzzles)
+            {
+                if (Array.IndexOf(puzzle, zone) >= 0)
+                {
+                    CheckCompletion();
+                    return;
+                }
+            }
         }
 
         private void CheckCompletion()
         {
-            if (IsComplete || _zones.Length == 0)
+            if (IsComplete)
                 return;
 
-            foreach (var zone in _zones)
+            foreach (var puzzle in _puzzles)
             {
-                // A destroyed zone means the puzzle cannot complete this session:
+                if (!IsSolved(puzzle))
+                    continue;
+
+                IsComplete = true;
+                Debug.Log($"{LogPrefix} Puzzle complete ({puzzle.Length} zones).");
+                Completed?.Invoke();
+                onCompleted.Invoke();
+                return;
+            }
+        }
+
+        private static bool IsSolved(SnapZone[] puzzle)
+        {
+            foreach (var zone in puzzle)
+            {
+                // A destroyed zone means this puzzle cannot complete this session:
                 // fail closed on purpose rather than treat it as satisfied.
                 if (zone == null || !zone.hasSnapped)
-                    return;
+                    return false;
             }
-
-            IsComplete = true;
-            Debug.Log($"{LogPrefix} Puzzle complete.");
-            Completed?.Invoke();
-            onCompleted.Invoke();
+            return true;
         }
     }
 }

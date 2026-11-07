@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.XR;
 
 namespace PsycheVR.VR
 {
@@ -8,6 +10,11 @@ namespace PsycheVR.VR
     /// parameter for the open-to-fist pose (either control grabs). The Pinch layer,
     /// weighted only by <see cref="Pinch"/>, overrides that with the page-turning
     /// pinch while HandPresence reports a page in the hand.
+    ///
+    /// Only physical controller axes count. The XRI grip action is also bound to Meta hand tracking's
+    /// pinch strength, and when the headset stops tracking bare hands that pinch value freezes; the
+    /// action then falls back to it on every grip release and the glove stays curled (seen after
+    /// resets, when the controllers are put down and picked up again).
     /// </summary>
     public class HandAnimator : MonoBehaviour
     {
@@ -54,8 +61,8 @@ namespace PsycheVR.VR
         {
             if (_animator == null) return;
 
-            float grip = gripAction?.action?.ReadValue<float>() ?? 0f;
-            float trigger = triggerAction?.action?.ReadValue<float>() ?? 0f;
+            float grip = ControllerValue(gripAction);
+            float trigger = ControllerValue(triggerAction);
 
             float target = Mathf.Max(grip, trigger);
 
@@ -68,6 +75,18 @@ namespace PsycheVR.VR
                 _currentPinch = Mathf.Lerp(_currentPinch, Pinch, step);
                 _animator.SetLayerWeight(_pinchLayer, _currentPinch);
             }
+        }
+
+        /// <summary>The highest value among the action's controls on an XR controller; hand-tracking inputs are left out.</summary>
+        private static float ControllerValue(InputActionReference reference)
+        {
+            var action = reference != null ? reference.action : null;
+            if (action == null) return 0f;
+            float value = 0f;
+            foreach (var control in action.controls)
+                if (control.device is XRController && control is AxisControl axis)
+                    value = Mathf.Max(value, axis.ReadValue());
+            return value;
         }
     }
 }

@@ -26,5 +26,7 @@ namespace PsycheVR.Audio
         DrawerStopOpen,
         /// <summary>A drawer shutting against the desk.</summary>
         DrawerStopClosed,
+        /// <summary>The last spacecraft piece placed: a click and a rising chime that rings on (TG-297).</summary>
+        PuzzleComplete,
     }
 }
