@@ -45,11 +45,11 @@ namespace PsycheVR.Story
         private float _shownAt = -1f;
         private bool _hiding;
 
-        /// <summary>True from <see cref="Show"/> until the card has fully faded out.</summary>
-        public bool IsShowing => gameObject.activeSelf;
+        /// <summary>True from <see cref="Show"/> until <see cref="Hide"/> or the end of the hold; false while fading out.</summary>
+        public bool IsVisible => _shownAt >= 0f && !_hiding && gameObject.activeSelf;
 
-        /// <summary>The text currently on the card.</summary>
-        public string Text => dateText != null ? dateText.text : string.Empty;
+        /// <summary>The text passed to the last <see cref="Show"/>, or null before the first one.</summary>
+        public string CurrentText { get; private set; }
 
         private void Awake()
         {
@@ -68,6 +68,7 @@ namespace PsycheVR.Story
         public void Show(string text)
         {
             if (_group == null) Awake();
+            CurrentText = text;
             if (dateText != null) dateText.text = text;
 
             bool wasHidden = !gameObject.activeSelf || _alpha <= 0f;

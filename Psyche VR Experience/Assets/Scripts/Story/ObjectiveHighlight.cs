@@ -10,7 +10,8 @@ namespace PsycheVR.Story
     ///
     /// The StoryDirector calls <see cref="Show"/> with the target and <see cref="Hide"/> when the player has
     /// used it. Put the ObjectiveHighlight prefab (Assets/Prefabs/Story) in the scene once. It starts hidden,
-    /// is never parented to the target, and only reads the target's renderers to find its top.
+    /// is never parented to the target, and only reads the target's mesh renderers to find its top. It centres
+    /// over the meshes, not the target's pivot, because a model's pivot can sit well off the model.
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class ObjectiveHighlight : MonoBehaviour
@@ -32,15 +33,15 @@ namespace PsycheVR.Story
 
         private CanvasGroup _group;
         private Transform _target;
-        private float _topOffset;
+        private Vector3 _localTop;
         private float _alpha;
         private bool _hiding;
 
-        /// <summary>The object being marked, or null when hidden.</summary>
-        public Transform Target => _target;
+        /// <summary>The object being marked, or null once <see cref="Hide"/> is called.</summary>
+        public Transform Target => _hiding ? null : _target;
 
-        /// <summary>True from <see cref="Show"/> until the chevron has fully faded out.</summary>
-        public bool IsShowing => gameObject.activeSelf;
+        /// <summary>True from <see cref="Show"/> until <see cref="Hide"/>; false while fading out.</summary>
+        public bool IsVisible => gameObject.activeSelf && _target != null && !_hiding;
 
         private void Awake()
         {
@@ -58,7 +59,7 @@ namespace PsycheVR.Story
             if (target == null) { Hide(); return; }
 
             _target = target;
-            _topOffset = TopOffset(target);
+            _localTop = target.InverseTransformPoint(TopCentre(target));
             _hiding = false;
             gameObject.SetActive(true);
             Follow();
@@ -81,11 +82,11 @@ namespace PsycheVR.Story
             Follow();
         }
 
-        /// <summary>Hovers above the target's top and turns about the vertical toward the head.</summary>
+        /// <summary>Hovers above the centre of the target's top and turns about the vertical toward the head.</summary>
         private void Follow()
         {
             float bob = bobHeight * 0.5f * (1f + Mathf.Sin(Time.time * bobRate * 2f * Mathf.PI));
-            transform.position = _target.position + Vector3.up * (_topOffset + hoverHeight + bob);
+            transform.position = _target.TransformPoint(_localTop) + Vector3.up * (hoverHeight + bob);
 
             Transform camera = ResolveHead();
             if (camera == null) return;
@@ -95,19 +96,22 @@ namespace PsycheVR.Story
             if (away.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(away, Vector3.up);
         }
 
-        /// <summary>Height of the top of the target's renderers above its pivot, in metres; 0 with no renderers.</summary>
-        public static float TopOffset(Transform target)
+        /// <summary>
+        /// World point at the top centre of the target's visible meshes (text and effects are ignored); the
+        /// target's own position when it has none.
+        /// </summary>
+        public static Vector3 TopCentre(Transform target)
         {
-            var renderers = target.GetComponentsInChildren<Renderer>();
             bool found = false;
-            float top = 0f;
-            foreach (var r in renderers)
+            Bounds bounds = default;
+            foreach (var r in target.GetComponentsInChildren<Renderer>())
             {
-                if (!r.enabled) continue;
-                top = found ? Mathf.Max(top, r.bounds.max.y) : r.bounds.max.y;
+                if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+                if (!(r is MeshRenderer || r is SkinnedMeshRenderer) || r.GetComponent<TMPro.TMP_Text>() != null) continue;
+                if (found) bounds.Encapsulate(r.bounds); else bounds = r.bounds;
                 found = true;
             }
-            return found ? top - target.position.y : 0f;
+            return found ? new Vector3(bounds.center.x, bounds.max.y, bounds.center.z) : target.position;
         }
 
         private Transform ResolveHead()
