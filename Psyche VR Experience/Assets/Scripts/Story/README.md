@@ -5,12 +5,16 @@ StoryDirector object. The director only starts in Story mode.
 
 - Edit Intro Date Text in `Assets/Resources/StoryText.asset`. The current text,
   `[Intro date pending]`, is intentionally a placeholder.
-- Assign the model spacecraft Transform to StoryDirector's Intro Spacecraft
-  field. It is intentionally unassigned until the target is confirmed.
+- Intro Spacecraft is assigned to `StorySpacecraftDisplay`, a static display
+  assembled from the four existing spacecraft meshes beside the launch button.
+  Its ModeGate hides it in Event mode; the puzzle assemblies are unchanged.
 - StoryDateCard is a temporary world-space TextMeshPro label. With no custom
-  label assigned, it creates one in front of Camera.main on first Show.
+  label assigned, it creates one at `StoryIntroDateAnchor`. The anchor is above
+  the desk in the starting view. Each Show reapplies the position; scenes without
+  an anchor use the current camera position.
 - ObjectiveHighlight is a temporary cyan ring centered on the assigned target.
-  No target means no ring. This is not Zach's final glow prefab.
+  It fits the visible mesh bounds and follows the model; no target means no ring.
+  This is not Zach's final glow prefab.
 - Entering Intro calls both Show methods. Leaving Intro hides both. Re-entering
   Intro shows them again. Replace the temporary presentations with the final
   visuals while preserving Show(string)/Show(Transform) and Hide().
@@ -32,11 +36,13 @@ Verified in Unity 6000.3.8f1 on November 6, 2026: all three PlayMode tests passe
 
 ## Scene and headset check still required
 
-Open Bedroom in Story mode, verify the date label, and assign a spacecraft to
-verify its ring. Focus the Game view and press F8 five times to reach FreePlay;
+Open Bedroom in Story mode and verify the date label and display spacecraft ring. Focus the Game view and press F8 five times to reach FreePlay;
 another press should do nothing. Each phase should log once. Event mode should
 show neither presentation. Restore any temporary mode/target settings afterward.
 
 Story EditMode tests cover the phase sequence, mode gating, editable resource,
 Intro Show/Hide/re-entry, and an unassigned target. Automated tests do not verify
-the final spacecraft assignment or the presentation's readability in the headset.
+the presentation's readability in the headset. The scene references and a render
+from the starting view were checked locally; missing unrelated room assets limit
+the completeness of that desktop preview. Fetch the spacecraft FBX through Git
+LFS before opening the scene if it is still a pointer in a fresh checkout.

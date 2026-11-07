@@ -108,6 +108,45 @@ namespace PsycheVR.Story.Tests
         private object Property(Component component, string name) => component.GetType().GetProperty(name).GetValue(component);
 
         [Test]
+        public void DateCardUsesSceneAnchorOnEveryIntroEntry()
+        {
+            var card = Presentation("StoryDateCard", "dateCard");
+            var anchor = new GameObject("Date anchor");
+            anchor.transform.SetParent(owner.transform);
+            anchor.transform.position = new Vector3(2, 3, 4);
+            card.GetType().GetField("placementAnchor", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(card, anchor.transform);
+            StartStory();
+            var label = (Component)card.GetType().GetField("label", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(card);
+            Assert.That(label.transform.position, Is.EqualTo(anchor.transform.position));
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
+            Call("Advance");
+            anchor.transform.position += Vector3.right;
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Intro.");
+            Call("GoTo", StoryPhase.Intro);
+            Assert.That(label.transform.position, Is.EqualTo(anchor.transform.position));
+        }
+
+        [Test]
+        public void HighlightFitsMeshBoundsInsteadOfTheTargetPivot()
+        {
+            var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
+            var target = new GameObject("Target");
+            target.transform.SetParent(owner.transform);
+            var mesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            mesh.transform.SetParent(target.transform);
+            mesh.transform.localPosition = new Vector3(2, 1, 3);
+            mesh.transform.localScale = new Vector3(2, 1, 4);
+            highlight.GetType().GetMethod("Show").Invoke(highlight, new object[] { target.transform });
+            var ring = owner.GetComponentInChildren<LineRenderer>();
+            Assert.That(ring.transform.position.x, Is.EqualTo(2).Within(0.001f));
+            Assert.That(ring.transform.position.z, Is.EqualTo(3).Within(0.001f));
+            Assert.That(ring.transform.position.y, Is.EqualTo(0.51f).Within(0.001f));
+            Assert.That(ring.GetPosition(0).x, Is.GreaterThan(1));
+            Assert.That(ring.GetPosition(12).z, Is.GreaterThan(2));
+        }
+
+        [Test]
         public void IntroShowsResourceTextAndTargetThenHidesBothOnExit()
         {
             var card = Presentation("StoryDateCard", "dateCard");
