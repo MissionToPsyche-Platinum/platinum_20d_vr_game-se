@@ -56,8 +56,8 @@ MonoBehaviour:
     title: Deep Space Network
     banner: "Goldstone \xB7 Madrid \xB7 Canberra: three Deep Space Communications
       Complexes about 120\xB0 apart, so as Earth turns, one always faces Psyche."
-    footer: A radio signal to Psyche and back can take over an hour, depending on
-      where Earth and Psyche are.
+    footer: A radio signal to Psyche can take over an hour round-trip, depending
+      on where Earth and Psyche are.
     mainPhotos:
     - sprite: {fileID: 21300000, guid: 066707e2a9ec61cbf9079c5e316c9a27, type: 3}
       caption: Big dishes on Earth talk to Psyche's 2-meter antenna by radio.
@@ -118,6 +118,6 @@ MonoBehaviour:
   pingLinkEnd: {x: 0.6887255, y: 0.62666667}
   pingSentLine: Ping sent. Waiting for Psyche to answer.
   pingResultFormat: "Psyche answered. You waited {1} seconds.\nThe real reply can take
-    over an hour."
+    over an hour round-trip."
   pingArrivalFormat: 
   attractPrompt: Slap ENTER

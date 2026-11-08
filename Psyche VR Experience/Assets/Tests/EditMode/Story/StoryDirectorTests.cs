@@ -98,9 +98,13 @@ namespace PsycheVR.Story.Tests
             Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch));
         }
 
+        // Each presentation gets its own child object, as the prefabs do in Bedroom: the card and the highlight
+        // switch their own object off when hidden, which would switch the director off with them.
         private Component Presentation(string typeName, string field)
         {
-            var component = owner.AddComponent(Type.GetType($"PsycheVR.Story.{typeName}, Assembly-CSharp", true));
+            var child = new GameObject(typeName);
+            child.transform.SetParent(owner.transform);
+            var component = child.AddComponent(Type.GetType($"PsycheVR.Story.{typeName}, Assembly-CSharp", true));
             directorType.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(director, component);
             return component;
         }
@@ -108,27 +112,7 @@ namespace PsycheVR.Story.Tests
         private object Property(Component component, string name) => component.GetType().GetProperty(name).GetValue(component);
 
         [Test]
-        public void DateCardUsesSceneAnchorOnEveryIntroEntry()
-        {
-            var card = Presentation("StoryDateCard", "dateCard");
-            var anchor = new GameObject("Date anchor");
-            anchor.transform.SetParent(owner.transform);
-            anchor.transform.position = new Vector3(2, 3, 4);
-            card.GetType().GetField("placementAnchor", BindingFlags.Instance | BindingFlags.NonPublic)
-                .SetValue(card, anchor.transform);
-            StartStory();
-            var label = (Component)card.GetType().GetField("label", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(card);
-            Assert.That(label.transform.position, Is.EqualTo(anchor.transform.position));
-            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
-            Call("Advance");
-            anchor.transform.position += Vector3.right;
-            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Intro.");
-            Call("GoTo", StoryPhase.Intro);
-            Assert.That(label.transform.position, Is.EqualTo(anchor.transform.position));
-        }
-
-        [Test]
-        public void HighlightFitsMeshBoundsInsteadOfTheTargetPivot()
+        public void HighlightHoversOverTheMeshInsteadOfTheTargetPivot()
         {
             var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
             var target = new GameObject("Target");
@@ -138,12 +122,11 @@ namespace PsycheVR.Story.Tests
             mesh.transform.localPosition = new Vector3(2, 1, 3);
             mesh.transform.localScale = new Vector3(2, 1, 4);
             highlight.GetType().GetMethod("Show").Invoke(highlight, new object[] { target.transform });
-            var ring = owner.GetComponentInChildren<LineRenderer>();
-            Assert.That(ring.transform.position.x, Is.EqualTo(2).Within(0.001f));
-            Assert.That(ring.transform.position.z, Is.EqualTo(3).Within(0.001f));
-            Assert.That(ring.transform.position.y, Is.EqualTo(0.51f).Within(0.001f));
-            Assert.That(ring.GetPosition(0).x, Is.GreaterThan(1));
-            Assert.That(ring.GetPosition(12).z, Is.GreaterThan(2));
+            // Centred over the cube (top at y 1.5), above it by the hover height plus at most one bob.
+            var position = highlight.transform.position;
+            Assert.That(position.x, Is.EqualTo(2).Within(0.001f));
+            Assert.That(position.z, Is.EqualTo(3).Within(0.001f));
+            Assert.That(position.y, Is.InRange(1.5f, 1.75f));
         }
 
         [Test]
@@ -158,13 +141,13 @@ namespace PsycheVR.Story.Tests
             Assert.That(Property(card, "CurrentText"), Is.EqualTo(text.GetType().GetProperty("IntroDateText").GetValue(text)));
             Assert.That(Property(card, "IsVisible"), Is.True);
             Assert.That(Property(highlight, "Target"), Is.EqualTo(owner.transform));
-            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.True);
+            Assert.That(Property(highlight, "IsVisible"), Is.True);
 
             LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
             Call("Advance");
             Assert.That(Property(card, "IsVisible"), Is.False);
             Assert.That(Property(highlight, "Target"), Is.Null);
-            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.False);
+            Assert.That(Property(highlight, "IsVisible"), Is.False);
 
             LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Intro.");
             Call("GoTo", StoryPhase.Intro);
@@ -181,8 +164,7 @@ namespace PsycheVR.Story.Tests
             Call("Start");
             Assert.That(Property(card, "CurrentText"), Is.Null);
             Assert.That(Property(card, "IsVisible"), Is.False);
-            Assert.That(Property(highlight, "Target"), Is.Null);
-            Assert.That(owner.transform.childCount, Is.Zero);
+            Assert.That(Property(highlight, "IsVisible"), Is.False);
         }
 
         [Test]
@@ -193,7 +175,7 @@ namespace PsycheVR.Story.Tests
             StartStory();
             Assert.That(Property(card, "IsVisible"), Is.True);
             Assert.That(Property(highlight, "Target"), Is.Null);
-            Assert.That(owner.GetComponentInChildren<LineRenderer>(), Is.Null);
+            Assert.That(Property(highlight, "IsVisible"), Is.False);
         }
 
     }

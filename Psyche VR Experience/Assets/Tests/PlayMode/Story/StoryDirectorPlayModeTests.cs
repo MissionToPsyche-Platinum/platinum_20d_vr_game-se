@@ -60,12 +60,20 @@ namespace PsycheVR.Story.PlayModeTests
             owner = new GameObject("Story PlayMode fixture");
             owner.SetActive(false);
             director = owner.AddComponent(RuntimeType("PsycheVR.Story.StoryDirector"));
-            card = owner.AddComponent(RuntimeType("PsycheVR.Story.StoryDateCard"));
-            highlight = owner.AddComponent(RuntimeType("PsycheVR.Story.ObjectiveHighlight"));
+            // Own child objects, as in Bedroom: both switch their object off when hidden.
+            card = Child("StoryDateCard");
+            highlight = Child("ObjectiveHighlight");
             Assign("dateCard", card);
             Assign("objectiveHighlight", highlight);
             Assign("introSpacecraft", owner.transform);
             owner.SetActive(true);
+        }
+
+        private Component Child(string typeName)
+        {
+            var child = new GameObject(typeName);
+            child.transform.SetParent(owner.transform);
+            return child.AddComponent(RuntimeType("PsycheVR.Story." + typeName));
         }
 
         [UnityTest]
@@ -78,7 +86,7 @@ namespace PsycheVR.Story.PlayModeTests
             var text = Resources.Load("StoryText");
             Assert.That(Read(card, "CurrentText"), Is.EqualTo(text.GetType().GetProperty("IntroDateText").GetValue(text)));
             Assert.That(Read(highlight, "Target"), Is.EqualTo(owner.transform));
-            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.True);
+            Assert.That(Read(highlight, "IsVisible"), Is.True);
 
             var expected = new List<string> { "[StoryDirector] Entering Intro." };
             foreach (var phase in new[] { StoryPhase.Memory, StoryPhase.Build,
@@ -97,7 +105,7 @@ namespace PsycheVR.Story.PlayModeTests
 
             Assert.That(Read(card, "IsVisible"), Is.False);
             Assert.That(Read(highlight, "Target"), Is.Null);
-            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.False);
+            Assert.That(Read(highlight, "IsVisible"), Is.False);
             Press(keyboard.f8Key, queueEventOnly: true);
             yield return null;
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
@@ -117,7 +125,7 @@ namespace PsycheVR.Story.PlayModeTests
             Assert.That(Read(card, "IsVisible"), Is.False);
             Assert.That(Read(card, "CurrentText"), Is.Null);
             Assert.That(Read(highlight, "Target"), Is.Null);
-            Assert.That(owner.transform.childCount, Is.Zero);
+            Assert.That(card.gameObject.activeSelf || highlight.gameObject.activeSelf, Is.False);
             Assert.That(phaseLogs, Is.Empty);
         }
 
