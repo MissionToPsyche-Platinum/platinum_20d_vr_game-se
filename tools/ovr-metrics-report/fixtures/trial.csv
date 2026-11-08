@@ -1,0 +1,8 @@
+Time Stamp,average_frame_rate,battery_temperature_celcius,stale_frame_count
+100000,80,30,0
+699000,60,31,1
+700000,10,32,10
+3700000,20,35,8
+6700000,10,34,10
+6701000,60,33,0
+7300000,52,32,0
