@@ -6,7 +6,7 @@ StoryDirector object. The director only starts in Story mode.
 - Edit Intro Date Text in `Assets/Resources/StoryText.asset`. The date is
   `October 13, 2023`: the launch-day setting in the repository's `Script.txt`,
   using the actual launch date confirmed by [NASA](https://science.nasa.gov/mission/psyche/mission-overview/).
-- Intro Spacecraft is assigned to `StorySpacecraftDisplay`, a static display
+- Intro Spacecraft is assigned to `StorySpacecraftDisplay`, a grabbable display
   assembled from the four existing spacecraft meshes beside the launch button.
   Its ModeGate hides it in Event mode; the puzzle assemblies are unchanged.
 - StoryDateCard is a temporary world-space TextMeshPro label. With no custom
@@ -47,3 +47,25 @@ the presentation's readability in the headset. The scene references and a render
 from the starting view were checked locally; missing unrelated room assets limit
 the completeness of that desktop preview. Fetch the spacecraft FBX through Git
 LFS before opening the scene if it is still a pointer in a fresh checkout.
+
+## US 361: Phase 2 — grab trigger and teleport timing support
+
+The Intro spacecraft uses PsycheGrabbable with the shared DeskToy profile and a
+box collider fitted to its meshes. Its rigidbody uses the normal DeskToy physics
+for grabbing and releasing. StoryDirector subscribes to selectEntered
+only during Intro, advances to Memory on grab, and hides the objective through
+its existing phase presentation. Disabling the director or leaving Intro removes
+the listener. Returning to Intro restores it. Event mode does not advance.
+
+BlinkTeleporter.TeleportTo(anchor, fadeOutDuration, holdDuration, fadeInDuration)
+accepts durations in unscaled seconds for one trip. The original one-argument
+method still uses its serialized settings (defaults: 0.35 / 0.05 / 0.35 seconds).
+A future memory trip can pass 1.5 / 0.8 / 1.5 without changing ordinary blinks.
+
+This implements tasks 1 and 2 only. The grab currently ends in Memory; the bedroom
+teleport, arrival date card, and automatic advance to Build are subsequent tasks.
+
+Regression coverage includes grab event wiring, repeated grabs, disabled and
+Event-mode guards, Intro re-entry, and a PlayMode custom teleport followed by an
+ordinary blink while timeScale is zero. Headset verification remains necessary
+for the display's reachability and grab feel.

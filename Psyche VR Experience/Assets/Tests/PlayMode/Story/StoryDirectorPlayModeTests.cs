@@ -133,4 +133,75 @@ namespace PsycheVR.Story.PlayModeTests
             Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro." }));
         }
     }
+
+    public class BlinkTeleporterPlayModeTests
+    {
+        private GameObject rig;
+        private GameObject destination;
+        private Material material;
+        private float previousTimeScale;
+
+        [SetUp]
+        public void RememberTimeScale() => previousTimeScale = Time.timeScale;
+
+        [UnityTearDown]
+        public IEnumerator Cleanup()
+        {
+            if (rig != null) UnityEngine.Object.Destroy(rig);
+            if (destination != null) UnityEngine.Object.Destroy(destination);
+            if (material != null) UnityEngine.Object.Destroy(material);
+            Time.timeScale = previousTimeScale;
+            yield return null;
+        }
+
+        private static Type RuntimeType(string name) => Type.GetType("PsycheVR.VR." + name + ", Assembly-CSharp", true);
+
+        [UnityTest]
+        public IEnumerator CustomTripUsesUnscaledDurationsAndPreservesNormalBlink()
+        {
+            rig = new GameObject("Blink timing test");
+            rig.SetActive(false);
+            var overlayObject = new GameObject("Overlay");
+            overlayObject.transform.SetParent(rig.transform);
+            material = new Material(Shader.Find("Sprites/Default"));
+            overlayObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+            var overlay = overlayObject.AddComponent(RuntimeType("BlinkFadeOverlay"));
+            var teleporterType = RuntimeType("BlinkTeleporter");
+            var teleporter = rig.AddComponent(teleporterType);
+            teleporterType.GetField("fadeOverlay", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(teleporter, overlay);
+            destination = new GameObject("Destination");
+            destination.transform.SetPositionAndRotation(new Vector3(5, 2, 3), Quaternion.Euler(0, 90, 0));
+            var anchorType = RuntimeType("BlinkTeleportAnchor");
+            var anchor = destination.AddComponent(anchorType);
+            rig.SetActive(true);
+            yield return null;
+            Time.timeScale = 0f;
+
+            var custom = teleporterType.GetMethod("TeleportTo", new[] { anchorType, typeof(float), typeof(float), typeof(float) });
+            float start = Time.realtimeSinceStartup;
+            custom.Invoke(teleporter, new object[] { anchor, 0.5f, 0.3f, 0.5f });
+            Assert.That(rig.transform.position, Is.EqualTo(Vector3.zero));
+            var routine = teleporterType.GetField("_activeRoutine", BindingFlags.Instance | BindingFlags.NonPublic);
+            while (routine.GetValue(teleporter) != null && Time.realtimeSinceStartup - start < 5f)
+                yield return null;
+            Assert.That(routine.GetValue(teleporter), Is.Null, "Teleport should finish while timeScale is zero.");
+            Assert.That(Time.realtimeSinceStartup - start, Is.GreaterThanOrEqualTo(1.2f));
+            Assert.That(rig.transform.position, Is.EqualTo(destination.transform.position));
+            Assert.That(Quaternion.Angle(rig.transform.rotation, destination.transform.rotation), Is.LessThan(0.01f));
+            Assert.That((float)overlay.GetType().GetProperty("CurrentAlpha").GetValue(overlay), Is.Zero);
+
+            foreach (var timing in new[] { ("fadeOutDuration", 0.35f), ("holdDuration", 0.05f), ("fadeInDuration", 0.35f) })
+                Assert.That((float)teleporterType.GetField(timing.Item1, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(teleporter), Is.EqualTo(timing.Item2));
+
+            destination.transform.position = Vector3.one;
+            start = Time.realtimeSinceStartup;
+            teleporterType.GetMethod("TeleportTo", new[] { anchorType }).Invoke(teleporter, new object[] { anchor });
+            while (routine.GetValue(teleporter) != null && Time.realtimeSinceStartup - start < 5f)
+                yield return null;
+            Assert.That(routine.GetValue(teleporter), Is.Null);
+            Assert.That(Time.realtimeSinceStartup - start, Is.GreaterThanOrEqualTo(0.65f));
+            Assert.That(rig.transform.position, Is.EqualTo(Vector3.one));
+        }
+    }
+
 }

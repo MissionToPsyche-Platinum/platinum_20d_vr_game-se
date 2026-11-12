@@ -1,5 +1,7 @@
 using PsycheVR.Modes;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 #if UNITY_EDITOR
 using UnityEngine.InputSystem;
 #endif
@@ -20,6 +22,7 @@ namespace PsycheVR.Story
         [SerializeField] private Transform introSpacecraft;
         private readonly StoryPhaseSequence sequence = new StoryPhaseSequence();
         private bool started;
+        private XRGrabInteractable introGrab;
 
         public StoryPhase CurrentPhase => sequence.CurrentPhase;
 
@@ -56,8 +59,13 @@ namespace PsycheVR.Story
 
         private void PresentPhase(StoryPhase phase)
         {
+            UnsubscribeFromGrab();
             if (phase == StoryPhase.Intro)
             {
+                introGrab = introSpacecraft != null
+                    ? introSpacecraft.GetComponent<XRGrabInteractable>() : null;
+                if (introGrab != null)
+                    introGrab.selectEntered.AddListener(OnIntroGrabbed);
                 if (dateCard != null && storyText != null)
                     dateCard.Show(storyText.IntroDateText);
                 if (objectiveHighlight != null)
@@ -72,6 +80,7 @@ namespace PsycheVR.Story
 
         private void OnDisable()
         {
+            UnsubscribeFromGrab();
             if (!started) return;
             if (dateCard != null) dateCard.Hide();
             if (objectiveHighlight != null) objectiveHighlight.Hide();
@@ -85,7 +94,25 @@ namespace PsycheVR.Story
 
         private void OnDestroy()
         {
+            UnsubscribeFromGrab();
             sequence.PhaseChanged -= EnterPhase;
+        }
+
+        private void OnIntroGrabbed(SelectEnterEventArgs args)
+        {
+            if (!started || !isActiveAndEnabled || !GameModeManager.IsStory ||
+                CurrentPhase != StoryPhase.Intro)
+                return;
+
+            // Entering Memory hides the objective and removes this listener.
+            Advance();
+        }
+
+        private void UnsubscribeFromGrab()
+        {
+            if (introGrab != null)
+                introGrab.selectEntered.RemoveListener(OnIntroGrabbed);
+            introGrab = null;
         }
 
 #if UNITY_EDITOR

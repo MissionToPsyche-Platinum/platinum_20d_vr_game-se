@@ -53,6 +53,16 @@ namespace PsycheVR.VR
 
         public void TeleportTo(BlinkTeleportAnchor anchor)
         {
+            TeleportTo(anchor, fadeOutDuration, holdDuration, fadeInDuration);
+        }
+
+        /// <summary>
+        /// Teleports with per-trip durations in unscaled seconds without changing
+        /// the normal blink settings. Non-positive durations skip that stage.
+        /// </summary>
+        public void TeleportTo(BlinkTeleportAnchor anchor, float fadeOutDuration,
+            float holdDuration, float fadeInDuration)
+        {
             if (anchor == null)
             {
                 Debug.LogWarning("BlinkTeleporter: TeleportTo called with null anchor; ignoring.", this);
@@ -63,10 +73,12 @@ namespace PsycheVR.VR
                 StopCoroutine(_activeRoutine);
 
             SessionEvents.Interaction("teleported", anchor);
-            _activeRoutine = StartCoroutine(TeleportRoutine(anchor));
+            _activeRoutine = StartCoroutine(TeleportRoutine(anchor,
+                fadeOutDuration, holdDuration, fadeInDuration));
         }
 
-        private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor)
+        private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor,
+            float fadeOutDuration, float holdDuration, float fadeInDuration)
         {
             ForceReleaseBothHands();
 

@@ -196,5 +196,71 @@ namespace PsycheVR.Story.Tests
             Assert.That(owner.GetComponentInChildren<LineRenderer>(), Is.Null);
         }
 
+        private object CreateGrabTarget()
+        {
+            var target = new GameObject("Grab target");
+            target.transform.SetParent(owner.transform);
+            target.SetActive(false);
+            target.AddComponent<BoxCollider>();
+            var grabType = Type.GetType("UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable, Unity.XR.Interaction.Toolkit", true);
+            var grab = target.AddComponent(grabType);
+            directorType.GetField("introSpacecraft", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(director, target.transform);
+            return grabType.GetProperty("selectEntered").GetValue(grab);
+        }
+
+        private static void Grab(object grabEvent)
+        {
+            var argsType = Type.GetType("UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs, Unity.XR.Interaction.Toolkit", true);
+            grabEvent.GetType().GetMethod("Invoke").Invoke(grabEvent, new[] { Activator.CreateInstance(argsType) });
+        }
+
+        [Test]
+        public void GrabEntersMemoryHidesHighlightAndDoesNotRepeat()
+        {
+            var grabEvent = CreateGrabTarget();
+            var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
+            StartStory();
+            Assert.That(Property(highlight, "Target"), Is.Not.Null);
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
+            Grab(grabEvent);
+            Grab(grabEvent);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Memory));
+            Assert.That(Property(highlight, "Target"), Is.Null);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void GrabSubscriptionRestoresAfterDisableAndIntroReentry()
+        {
+            var grabEvent = CreateGrabTarget();
+            StartStory();
+            director.enabled = false;
+            Grab(grabEvent);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Intro));
+            director.enabled = true;
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
+            Grab(grabEvent);
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Intro.");
+            Call("GoTo", StoryPhase.Intro);
+            LogAssert.Expect(LogType.Log, "[StoryDirector] Entering Memory.");
+            Grab(grabEvent);
+            Grab(grabEvent);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Memory));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void GrabDoesNothingInEventModeOrBeforeStartup()
+        {
+            var grabEvent = CreateGrabTarget();
+            Grab(grabEvent);
+            Mode("Event");
+            Call("Start");
+            Grab(grabEvent);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Intro));
+            LogAssert.NoUnexpectedReceived();
+        }
+
     }
 }
