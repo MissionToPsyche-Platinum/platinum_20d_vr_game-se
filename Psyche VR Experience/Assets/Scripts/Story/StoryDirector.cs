@@ -1,3 +1,5 @@
+using System.Collections;
+using PsycheVR.VR;
 using PsycheVR.Modes;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -20,6 +22,19 @@ namespace PsycheVR.Story
         [SerializeField] private ObjectiveHighlight objectiveHighlight;
         [Tooltip("Assign the model spacecraft when the story target is finalized.")]
         [SerializeField] private Transform introSpacecraft;
+        [Header("Memory transition")]
+        [SerializeField] private BlinkTeleporter teleporter;
+        [SerializeField] private BlinkTeleportAnchor bedroomArrival;
+        [Tooltip("Optional date placement in the bedroom. Empty uses the current camera view.")]
+        [SerializeField] private Transform memoryDateAnchor;
+        [SerializeField, Min(0f)] private float memoryFadeOutDuration = 1.5f;
+        [SerializeField, Min(0f)] private float memoryHoldDuration = 0.8f;
+        [SerializeField, Min(0f)] private float memoryFadeInDuration = 1.5f;
+        [SerializeField, Min(0f)] private float memoryDateDuration = 2.5f;
+        private Coroutine pendingMemoryTrip;
+        private Coroutine memoryTrip;
+        private Coroutine dateRoutine;
+        private bool showingMemoryDate;
         private readonly StoryPhaseSequence sequence = new StoryPhaseSequence();
         private bool started;
         private XRGrabInteractable introGrab;
@@ -53,6 +68,9 @@ namespace PsycheVR.Story
 
         private void EnterPhase(StoryPhase phase)
         {
+            CancelMemoryTrip();
+            if (phase != StoryPhase.Build || !showingMemoryDate)
+                ClearMemoryDate();
             Debug.Log($"[StoryDirector] Entering {phase}.", this);
             PresentPhase(phase);
         }
@@ -73,13 +91,70 @@ namespace PsycheVR.Story
             }
             else
             {
-                if (dateCard != null) dateCard.Hide();
+                if (dateCard != null && !(phase == StoryPhase.Build && showingMemoryDate))
+                    dateCard.Hide();
                 if (objectiveHighlight != null) objectiveHighlight.Hide();
+                if (phase == StoryPhase.Memory && Application.isPlaying)
+                {
+                    if (teleporter != null && bedroomArrival != null)
+                        pendingMemoryTrip = StartCoroutine(StartMemoryTrip());
+                    else
+                        Debug.LogWarning("[StoryDirector] Memory requires a teleporter and bedroom arrival anchor.", this);
+                }
             }
+        }
+
+        private IEnumerator StartMemoryTrip()
+        {
+            // Leave the XRI selectEntered dispatch before force-releasing the hands.
+            yield return null;
+            pendingMemoryTrip = null;
+            if (!GameModeManager.IsStory || teleporter == null || bedroomArrival == null || !teleporter.isActiveAndEnabled)
+                yield break;
+            memoryTrip = teleporter.TeleportTo(bedroomArrival, memoryFadeOutDuration,
+                memoryHoldDuration, memoryFadeInDuration, OnMemoryArrived);
+        }
+
+        private void OnMemoryArrived()
+        {
+            memoryTrip = null;
+            if (!isActiveAndEnabled || !GameModeManager.IsStory || CurrentPhase != StoryPhase.Memory)
+                return;
+
+            showingMemoryDate = true;
+            if (dateCard != null)
+                dateCard.Show(storyText != null ? storyText.MemoryDateText : "2003", memoryDateAnchor);
+            Advance(); // Memory is only the trip; keep its arrival card visible in Build.
+            dateRoutine = StartCoroutine(HideMemoryDate());
+        }
+
+        private IEnumerator HideMemoryDate()
+        {
+            yield return new WaitForSecondsRealtime(memoryDateDuration);
+            dateRoutine = null;
+            showingMemoryDate = false;
+            if (dateCard != null) dateCard.Hide();
+        }
+
+        private void CancelMemoryTrip()
+        {
+            if (pendingMemoryTrip != null) StopCoroutine(pendingMemoryTrip);
+            pendingMemoryTrip = null;
+            if (teleporter != null) teleporter.CancelTeleport(memoryTrip);
+            memoryTrip = null;
+        }
+
+        private void ClearMemoryDate()
+        {
+            if (dateRoutine != null) StopCoroutine(dateRoutine);
+            dateRoutine = null;
+            showingMemoryDate = false;
         }
 
         private void OnDisable()
         {
+            CancelMemoryTrip();
+            ClearMemoryDate();
             UnsubscribeFromGrab();
             if (!started) return;
             if (dateCard != null) dateCard.Hide();

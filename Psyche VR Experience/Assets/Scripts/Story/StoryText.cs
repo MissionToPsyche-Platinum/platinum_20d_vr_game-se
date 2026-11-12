@@ -12,6 +12,10 @@ namespace PsycheVR.Story
         [TextArea(2, 4)]
         [SerializeField] private string introDateText = "October 13, 2023";
 
+        [Tooltip("Date displayed on arrival in the childhood bedroom.")]
+        [SerializeField] private string memoryDateText = "2003";
+
+        public string MemoryDateText => memoryDateText;
         public string IntroDateText => introDateText;
     }
 }

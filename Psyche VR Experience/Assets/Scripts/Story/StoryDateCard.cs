@@ -15,6 +15,13 @@ namespace PsycheVR.Story
 
         public void Show(string text)
         {
+            Show(text, placementAnchor);
+        }
+
+        /// <summary>Shows a date at a per-call anchor, or in the current camera view
+        /// when anchor is null. Does not change the Intro placement anchor.</summary>
+        public void Show(string text, Transform anchor)
+        {
             CurrentText = text;
             if (label == null)
             {
@@ -27,8 +34,8 @@ namespace PsycheVR.Story
                 label.color = Color.white;
             }
             // Reposition on every entry, including after a teleport or restart.
-            if (placementAnchor != null)
-                label.transform.SetPositionAndRotation(placementAnchor.position, placementAnchor.rotation);
+            if (anchor != null)
+                label.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
             else if (Camera.main != null)
                 label.transform.SetPositionAndRotation(Camera.main.transform.TransformPoint(viewOffset), Camera.main.transform.rotation);
             label.text = text;

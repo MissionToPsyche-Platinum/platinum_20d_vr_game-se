@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -63,10 +64,18 @@ namespace PsycheVR.VR
         public void TeleportTo(BlinkTeleportAnchor anchor, float fadeOutDuration,
             float holdDuration, float fadeInDuration)
         {
+            TeleportTo(anchor, fadeOutDuration, holdDuration, fadeInDuration, null);
+        }
+
+        /// <summary>Runs a trip and invokes onArrived after the fade-in completes.
+        /// A cancelled or superseded trip never invokes its callback.</summary>
+        public Coroutine TeleportTo(BlinkTeleportAnchor anchor, float fadeOutDuration,
+            float holdDuration, float fadeInDuration, Action onArrived)
+        {
             if (anchor == null)
             {
                 Debug.LogWarning("BlinkTeleporter: TeleportTo called with null anchor; ignoring.", this);
-                return;
+                return null;
             }
 
             if (_activeRoutine != null)
@@ -74,11 +83,23 @@ namespace PsycheVR.VR
 
             SessionEvents.Interaction("teleported", anchor);
             _activeRoutine = StartCoroutine(TeleportRoutine(anchor,
-                fadeOutDuration, holdDuration, fadeInDuration));
+                fadeOutDuration, holdDuration, fadeInDuration, onArrived));
+            return _activeRoutine;
         }
 
+        /// <summary>Cancels only the specified active trip and clears its fade.</summary>
+        public void CancelTeleport(Coroutine trip)
+        {
+            if (trip == null || trip != _activeRoutine) return;
+            StopCoroutine(_activeRoutine);
+            _activeRoutine = null;
+            if (fadeOverlay != null) fadeOverlay.SetAlpha(0f);
+        }
+
+        private void OnDisable() => CancelTeleport(_activeRoutine);
+
         private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor,
-            float fadeOutDuration, float holdDuration, float fadeInDuration)
+            float fadeOutDuration, float holdDuration, float fadeInDuration, Action onArrived)
         {
             ForceReleaseBothHands();
 
@@ -92,6 +113,7 @@ namespace PsycheVR.VR
             yield return FadeTo(0f, fadeInDuration, 1f);
 
             _activeRoutine = null;
+            onArrived?.Invoke();
         }
 
         private void ForceReleaseBothHands()

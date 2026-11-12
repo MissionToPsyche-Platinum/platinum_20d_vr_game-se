@@ -48,7 +48,7 @@ from the starting view were checked locally; missing unrelated room assets limit
 the completeness of that desktop preview. Fetch the spacecraft FBX through Git
 LFS before opening the scene if it is still a pointer in a fresh checkout.
 
-## US 361: Phase 2 — grab trigger and teleport timing support
+## US 361: Phase 2 — memory transition
 
 The Intro spacecraft uses PsycheGrabbable with the shared DeskToy profile and a
 box collider fitted to its meshes. Its rigidbody uses the normal DeskToy physics
@@ -60,12 +60,30 @@ the listener. Returning to Intro restores it. Event mode does not advance.
 BlinkTeleporter.TeleportTo(anchor, fadeOutDuration, holdDuration, fadeInDuration)
 accepts durations in unscaled seconds for one trip. The original one-argument
 method still uses its serialized settings (defaults: 0.35 / 0.05 / 0.35 seconds).
-A future memory trip can pass 1.5 / 0.8 / 1.5 without changing ordinary blinks.
+The memory trip uses 1.5 / 0.8 / 1.5 without changing ordinary blinks.
 
-This implements tasks 1 and 2 only. The grab currently ends in Memory; the bedroom
-teleport, arrival date card, and automatic advance to Build are subsequent tasks.
+StoryDirector defers the trip until the next frame so the XRI grab event finishes
+before the teleporter releases both hands. The scene references the rig's existing
+BlinkTeleporter and a dedicated StoryBedroomArrival at the normal bedroom landing
+position and yaw. The per-trip completion callback runs only after fade-in finishes.
+On arrival, the director shows StoryText.MemoryDateText (2003), advances to Build,
+and keeps the date visible for memoryDateDuration (2.5 unscaled seconds by default).
+Memory therefore lasts only for the trip, not the date-card display time.
+
+The memory card uses the current camera view by default, rather than the Intro
+anchor back at mission control. Assign Memory Date Anchor to use a fixed bedroom
+placement. The Intro anchor is preserved for replay. Fade timings and date display
+duration are serialized on StoryDirector for headset tuning. Leaving Memory or
+disabling the director cancels its pending/active trip; leaving Build or disabling
+the director clears the card timer. Cancelled trips do not advance the story.
 
 Regression coverage includes grab event wiring, repeated grabs, disabled and
 Event-mode guards, Intro re-entry, and a PlayMode custom teleport followed by an
-ordinary blink while timeScale is zero. Headset verification remains necessary
-for the display's reachability and grab feel.
+ordinary blink while timeScale is zero. PlayMode coverage also checks the full
+grab → Memory → bedroom → 2003 → Build sequence, date placement and expiry,
+repeat-grab protection, and cancellation before arrival.
+
+Headset check: enter Story mode, grab the mission-control display, and confirm a
+slow fade into the bedroom with readable 2003 text. Expect one Memory log and one
+Build log. Verify the ordinary room-switch blink still feels unchanged. Headset
+verification of reachability, landing comfort, and date readability remains pending.
