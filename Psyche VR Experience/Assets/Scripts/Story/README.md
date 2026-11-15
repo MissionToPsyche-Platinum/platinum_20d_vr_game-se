@@ -26,7 +26,7 @@ In Unity's Test Runner, run `PsycheVR.Story.Tests` under EditMode and
 `PsycheVR.Story.PlayModeTests` under PlayMode. The PlayMode assembly is editor-only
 because the F8 shortcut is intentionally excluded from player builds.
 
-The three PlayMode tests use Unity's real Start/Update lifecycle and the Input
+The three original Phase 1 PlayMode tests use Unity's real Start/Update lifecycle and the Input
 System's isolated keyboard fixture. They verify Intro text and highlighting,
 F8 progression through all six phases, one transition per press (including a
 held-key check), stopping at FreePlay, Event-mode inactivity, and startup without
@@ -37,9 +37,12 @@ Verified in Unity 6000.3.8f1 on November 6, 2026: all three PlayMode tests passe
 
 ## Scene and headset check still required
 
-Open Bedroom in Story mode and verify the date label and display spacecraft ring. Focus the Game view and press F8 five times to reach FreePlay;
-another press should do nothing. Each phase should log once. Event mode should
-show neither presentation. Restore any temporary mode/target settings afterward.
+Open Bedroom in Story mode and verify the Intro date label and spacecraft ring.
+Grab the display to run Memory and automatically enter Build. Once Build appears
+in the Console, focus the Game view and press F8 three times to reach FreePlay;
+another press should do nothing. F8 is a debug phase skip, so do not press it during
+the memory trip when checking the normal flow. Event mode should show neither
+story presentation. Restore any temporary mode/target settings afterward.
 
 Story EditMode tests cover the phase sequence, mode gating, editable resource,
 Intro Show/Hide/re-entry, and an unassigned target. Automated tests do not verify
@@ -87,3 +90,39 @@ Headset check: enter Story mode, grab the mission-control display, and confirm a
 slow fade into the bedroom with readable 2003 text. Expect one Memory log and one
 Build log. Verify the ordinary room-switch blink still feels unchanged. Headset
 verification of reachability, landing comfort, and date readability remains pending.
+
+## TG-397: Bedroom scene integration verification
+
+`BedroomStoryIntegrationTests` opens the saved `Assets/Scenes/Bedroom.unity` in an
+Editor preview scene and closes it after the fixture. It does not save the scene,
+change game mode, or replace the user's open scenes. These tests inspect real scene
+objects and resolved prefab overrides; they complement the small PlayMode fixtures.
+
+The five scene checks cover:
+
+- One active story director and a grabbable Intro target with a rigidbody, shared
+  grab settings, enabled grab colliders, and Story-only visibility.
+- The live rig's teleporter, camera-mounted fade overlay, both hand interactors,
+  and the ordinary room-switch route sharing the same teleporter.
+- A dedicated StoryBedroomArrival near the normal bedroom landing pose, separate
+  from the ordinary anchor and away from mission control. Position/yaw tolerances
+  allow modest headset tuning without fixing every transform value in a test.
+- Resolved ordinary blink timings of 0.35 / 0.05 / 0.35 seconds, plus finite, slower
+  memory timings. This checks Bedroom's prefab overrides, not just C# defaults.
+- The 2003 text resource, date-card and highlight references, a positive finite
+  date display duration, and either a bedroom placement anchor or one active
+  MainCamera for camera-relative placement.
+
+Run `PsycheVR.Story.Tests` in Unity Test Runner's EditMode tab and
+`PsycheVR.Story.PlayModeTests` in its PlayMode tab. The latter covers the runtime
+sequence, repeat-grab protection, arrival card expiry, and cancellation.
+
+These automated checks do not simulate a physical controller grab in the full
+Bedroom scene or establish visual readability, obstacle clearance, or VR comfort.
+The scene/simulator walkthrough and headset tuning remain separate checks.
+
+Verified November 14, 2026, with Unity 6000.3.8f1 in batch mode:
+26/26 Story EditMode tests passed (including all five Bedroom scene checks), and
+6/6 Story PlayMode tests passed. No scene or gameplay configuration changes were
+needed. This records automated verification only; no manual simulator or headset
+walkthrough was performed as part of TG-397.
