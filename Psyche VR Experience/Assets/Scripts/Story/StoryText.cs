@@ -1,3 +1,4 @@
+using System.ComponentModel.Design.Serialization;
 using UnityEngine;
 
 namespace PsycheVR.Story
@@ -8,10 +9,31 @@ namespace PsycheVR.Story
     {
         public const string AssetName = "StoryText";
 
-        [Tooltip("Date displayed on entering Intro, set on Psyche's launch day.")]
+        [Header("Phase 1 - Introduction")]
         [TextArea(2, 4)]
         [SerializeField] private string introDateText = "October 13, 2023";
+        //fade in then...
+        [SerialzeField] private string introOpening = "I always knew I wanted to work at NASA..."
+        //fade out after completing goal
+        [SerialzeField] private string introEnding = "Ever since I was a little kid..."
+
+        //////////////////////////////////////
+
+        [Header("Phase 2 - Build")]
+        [SerializeField] private string buildDateText = "October, 2003";
+        //After finishing building model
+        [SerializeField] private string buildComplete = "Spacecraft Ready to Launch!";
+
+        //After pressing launchbutton on desk
+        [SerializeField] private string buildEnding = "Back then was just for fun... Now, I get to do the real thing";
+
+ 
+        /////////////////////////////////////
+
 
         public string IntroDateText => introDateText;
+        public string IntroOpening => introOpening;
+        public string IntroEnding => introEnding;
+
     }
 }
