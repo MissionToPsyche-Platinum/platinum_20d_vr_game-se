@@ -105,6 +105,41 @@ namespace PsycheVR.Story.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator BuildDetectsPuzzleSolvedBeforeWatcherStarts()
+        {
+            CreateDirector("Story");
+            var zone = owner.AddComponent(RuntimeType("SnapZone"));
+            zone.GetType().GetField("requiredTag").SetValue(zone, "Untagged");
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            yield return null;
+            director.GetType().GetMethod("GoTo").Invoke(director, new object[] { StoryPhase.Build });
+            yield return null; // The new watcher discovers already-snapped zones in Start.
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro.",
+                "[StoryDirector] Entering Build.", "[StoryDirector] Entering ChildLaunch." }));
+        }
+
+        [UnityTest]
+        public IEnumerator BuildAdvancesWhenTrackedZoneSnaps()
+        {
+            CreateDirector("Story");
+            var zone = owner.AddComponent(RuntimeType("SnapZone"));
+            zone.GetType().GetField("requiredTag").SetValue(zone, "Untagged");
+            yield return null;
+            director.GetType().GetMethod("GoTo").Invoke(director, new object[] { StoryPhase.Build });
+            yield return null;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            // Feed the same notification used by SnapNextFrame after a successful snap.
+            var snapped = (Delegate)zone.GetType().GetField("Snapped",
+                BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            snapped.DynamicInvoke(zone);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            yield return null;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+        }
+
+        [UnityTest]
         public IEnumerator EventModeIgnoresF8AndLeavesIntroPresentationInactive()
         {
             CreateDirector("Event");

@@ -63,6 +63,8 @@ namespace PsycheVR.Kiosk
             int untagged = 0;
             foreach (var zone in found)
             {
+                if (zone != null && zone.gameObject.scene != gameObject.scene)
+                    continue;
                 if (zone == null || !zone.gameObject.activeInHierarchy)
                 {
                     inactive++;
