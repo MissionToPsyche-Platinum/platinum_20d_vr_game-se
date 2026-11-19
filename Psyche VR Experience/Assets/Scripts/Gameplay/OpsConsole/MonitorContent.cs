@@ -76,7 +76,7 @@ namespace PsycheVR.Gameplay
         [Tooltip("Footer while the ping is in flight.")]
         public string pingSentLine = "Ping sent. Waiting for Psyche to answer.";
         [Tooltip("Footer when the reply lands: {0} = real round trip in whole minutes, {1} = seconds the visitor waited.")]
-        public string pingResultFormat = "Psyche answered. You waited {1} seconds.\nThe real reply can take over an hour.";
+        public string pingResultFormat = "Psyche answered. You waited {1} seconds.\nThe real reply can take over an hour round-trip.";
         [Tooltip("Second footer line when the reply lands: {0} = local clock time a signal sent now reaches Psyche. Empty leaves the line out (the default: the real time depends on where Earth and Psyche are).")]
         public string pingArrivalFormat = "";
 
