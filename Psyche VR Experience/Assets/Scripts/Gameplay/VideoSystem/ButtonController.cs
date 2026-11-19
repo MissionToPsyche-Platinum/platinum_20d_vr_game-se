@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -12,6 +13,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     public float pressSpeed = 5f;
 
     [Header("Press Action")]
+    [Tooltip("Invoked when a press is accepted, after the existing video and animation actions start.")]
+    public UnityEvent onPressed = new UnityEvent();
+
     [Tooltip("Video target started when the button is pressed. If unset, the first play_video component in the scene is used.")]
     [SerializeField] private play_video videoToStart;
 
@@ -158,6 +162,7 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
         SessionEvents.Interaction("video_button_pressed", this);
         StartVideo();
         StartCoroutine(AnimateButton());
+        onPressed.Invoke();
     }
 
     private void StartVideo()
