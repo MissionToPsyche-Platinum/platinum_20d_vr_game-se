@@ -1,4 +1,3 @@
-using System.ComponentModel.Design.Serialization;
 using UnityEngine;
 
 namespace PsycheVR.Story
@@ -9,7 +8,7 @@ namespace PsycheVR.Story
     {
         public const string AssetName = "StoryText";
 
-        [Header("Phase 1 - Introduction")]
+        [Header("Intro: launch day at the mission control desk")]
         [TextArea(2, 4)]
         [SerializeField] private string introDateText = "October 13, 2023";
 
@@ -21,47 +20,49 @@ namespace PsycheVR.Story
 
         //////////////////////////////////////
 
-        [Header("Phase 2 - Build")]
+        [Header("Memory: arriving in the childhood bedroom")]
         [SerializeField] private string buildDateText = "October, 2003";
 
+        [Header("Build: the bedroom puzzle")]
         //After finishing building model
         [SerializeField] private string buildComplete = "Spacecraft Ready to Launch!";
 
+        [Header("ChildLaunch: the bedroom desk button")]
         //After pressing launchbutton on desk
         [SerializeField] private string buildEnding = "Back then was just for fun... Now, I get to do the real thing";
 
         /////////////////////////////////////
 
-        [Header("Phase 3 - Launch")]
+        [Header("RealLaunch: back at the mission control desk")]
         [SerializeField] private string launchDateText = "October, 2023";
 
         /////////////////////////////////////
 
-        [Header("Phase 4 - Freeplay")]
+        [Header("FreePlay: after the launch video")]
         [TextArea(2, 4)]
         [SerializeField]
         private string freeplayMessage =
             "Thank you for playing our game!\n" +
-            "If you want to learn more about the PSYCHE Mission, please visit\n" +
+            "If you want to learn more about the Psyche mission, please visit\n" +
             "https://www.jpl.nasa.gov/missions/psyche/";
 
         /////////////////////////////////////
 
 
-        //Phase 1 getters
+        //Intro getters
         public string IntroDateText => introDateText;
         public string IntroOpening => introOpening;
         public string IntroEnding => introEnding;
 
-        //Phase 2 getters
+        //Memory, Build and ChildLaunch getters
         public string BuildDateText => buildDateText;
         public string BuildComplete => buildComplete;
         public string BuildEnding => buildEnding;
 
-        //Phase 3 getter
+        //RealLaunch getter
         public string LaunchDateText => launchDateText;
 
-        //Phase 4 getter
+        //FreePlay getter
         public string FreeplayMessage => freeplayMessage;
     }
 }
