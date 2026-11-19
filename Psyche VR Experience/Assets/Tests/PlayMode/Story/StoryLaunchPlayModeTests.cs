@@ -293,6 +293,29 @@ namespace PsycheVR.Story.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator HighlightMovesToEachLaunchButtonInTurn()
+        {
+            CreateReturnFixture();
+            owner.SetActive(false);
+            var marker = new GameObject("Objective highlight", typeof(CanvasGroup));
+            marker.transform.SetParent(owner.transform);
+            var highlight = marker.AddComponent(RuntimeType("PsycheVR.Story.ObjectiveHighlight"));
+            Assign(director, "objectiveHighlight", highlight);
+            owner.SetActive(true);
+            yield return null;
+            Func<Transform> target = () => (Transform)highlight.GetType().GetProperty("Target").GetValue(highlight);
+
+            Call(director, "GoTo", StoryPhase.ChildLaunch);
+            Assert.That(target(), Is.SameAs(childButton.transform), "ChildLaunch marks the bedroom button.");
+            Call(childButton, "PressButton");
+            Assert.That(target(), Is.Null, "No marker during the return trip.");
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.That(target(), Is.SameAs(button.transform), "After the return the real button is marked.");
+            ((UnityEvent)button.GetType().GetField("onPressed").GetValue(button)).Invoke();
+            Assert.That(target(), Is.Null, "Pressing the real button clears the marker.");
+        }
+
+        [UnityTest]
         public IEnumerator ReplacedDeskReturnStillUnlocksRealLaunch()
         {
             CreateReturnFixture();

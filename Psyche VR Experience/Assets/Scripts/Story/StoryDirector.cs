@@ -172,6 +172,7 @@ namespace PsycheVR.Story
             }
 
             UpdateLaunchButtons();
+            if (phase != StoryPhase.Intro) UpdateLaunchHighlight();
             if (phase == StoryPhase.RealLaunch && deskReturnComplete && !realLaunchPressed && dateCard != null)
                 dateCard.Show(storyText != null ? storyText.LaunchDateText : string.Empty);
         }
@@ -190,6 +191,19 @@ namespace PsycheVR.Story
                 realLaunchButton.SetStoryInteractionAllowed(allowed);
                 if (allowed) realLaunchButton.UnlockButton();
             }
+        }
+
+        // The objective ring moves to whichever launch button the player should hit next (TG-360): the bedroom
+        // button in ChildLaunch, the mission-control button once the return trip has landed.
+        private void UpdateLaunchHighlight()
+        {
+            if (objectiveHighlight == null) return;
+            ButtonController target =
+                CurrentPhase == StoryPhase.ChildLaunch ? childLaunchButton
+                : CurrentPhase == StoryPhase.RealLaunch && !returningToDesk && !realLaunchPressed ? realLaunchButton
+                : null;
+            if (target != null) objectiveHighlight.Show(target.PressTarget);
+            else objectiveHighlight.Hide();
         }
 
         private void HandleChildLaunchPressed()
@@ -216,7 +230,10 @@ namespace PsycheVR.Story
             if (this == null) return;
             returningToDesk = false;
             if (isActiveAndEnabled && GameModeManager.IsStory && CurrentPhase == StoryPhase.RealLaunch)
+            {
                 UpdateLaunchButtons();
+                UpdateLaunchHighlight();
+            }
         }
 
         private void FinishDeskReturn()
@@ -228,6 +245,7 @@ namespace PsycheVR.Story
                 return;
             if (dateCard != null) dateCard.Show(storyText != null ? storyText.LaunchDateText : string.Empty);
             UpdateLaunchButtons();
+            UpdateLaunchHighlight();
         }
 
         private void HandleRealLaunchPressed()
@@ -237,6 +255,7 @@ namespace PsycheVR.Story
             realLaunchPressed = true;
             if (realLaunchButton != null) realLaunchButton.SetStoryInteractionAllowed(false);
             if (dateCard != null) dateCard.Hide();
+            if (objectiveHighlight != null) objectiveHighlight.Hide();
         }
 
         private void SubscribeLaunchEvents()
