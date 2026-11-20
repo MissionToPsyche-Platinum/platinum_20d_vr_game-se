@@ -18,8 +18,15 @@ namespace PsycheVR.Story
         [SerializeField] private ObjectiveHighlight objectiveHighlight;
         [Tooltip("Assign the model spacecraft when the story target is finalized.")]
         [SerializeField] private Transform introSpacecraft;
+
+        [Header("Phase 5: Real launch")]
+        [Tooltip("Mission-control launch button. Its video target must be the launch video below.")]
+        [SerializeField] private ButtonController realLaunchButton;
+        [Tooltip("Only completion from this player can finish the real-launch phase.")]
+        [SerializeField] private play_video launchVideo;
         private readonly StoryPhaseSequence sequence = new StoryPhaseSequence();
         private bool started;
+        private bool launchEventsSubscribed;
 
         public StoryPhase CurrentPhase => sequence.CurrentPhase;
 
@@ -32,6 +39,7 @@ namespace PsycheVR.Story
             if (storyText == null)
                 storyText = Resources.Load<StoryText>(StoryText.AssetName);
             sequence.PhaseChanged += EnterPhase;
+            SubscribeLaunchEvents();
             // Intro is the initial state, so it does not raise PhaseChanged.
             EnterPhase(sequence.CurrentPhase);
         }
@@ -68,11 +76,41 @@ namespace PsycheVR.Story
                 if (dateCard != null) dateCard.Hide();
                 if (objectiveHighlight != null) objectiveHighlight.Hide();
             }
+
+            if (phase == StoryPhase.RealLaunch && realLaunchButton != null)
+                realLaunchButton.UnlockButton();
+        }
+
+        private void SubscribeLaunchEvents()
+        {
+            if (launchEventsSubscribed || launchVideo == null)
+                return;
+
+            launchVideo.OnVideoCompleted.AddListener(HandleLaunchVideoCompleted);
+            launchEventsSubscribed = true;
+        }
+
+        private void UnsubscribeLaunchEvents()
+        {
+            if (!launchEventsSubscribed)
+                return;
+
+            if (launchVideo != null)
+                launchVideo.OnVideoCompleted.RemoveListener(HandleLaunchVideoCompleted);
+            launchEventsSubscribed = false;
+        }
+
+        private void HandleLaunchVideoCompleted()
+        {
+            // Ignore unrelated/late completion events and repeated notifications.
+            if (sequence.CurrentPhase == StoryPhase.RealLaunch)
+                Advance();
         }
 
         private void OnDisable()
         {
             if (!started) return;
+            UnsubscribeLaunchEvents();
             if (dateCard != null) dateCard.Hide();
             if (objectiveHighlight != null) objectiveHighlight.Hide();
         }
@@ -80,12 +118,16 @@ namespace PsycheVR.Story
         private void OnEnable()
         {
             if (started && GameModeManager.IsStory)
+            {
+                SubscribeLaunchEvents();
                 PresentPhase(sequence.CurrentPhase);
+            }
         }
 
         private void OnDestroy()
         {
             sequence.PhaseChanged -= EnterPhase;
+            UnsubscribeLaunchEvents();
         }
 
 #if UNITY_EDITOR

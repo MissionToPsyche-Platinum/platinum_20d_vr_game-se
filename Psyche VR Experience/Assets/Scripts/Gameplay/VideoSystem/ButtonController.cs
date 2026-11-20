@@ -45,8 +45,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     private const float SlapHapticDuration = 0.06f;
     private float _nextHandRefreshTime = -Mathf.Infinity;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    // Initialize before StoryDirector.Start can unlock the button. Start order
+    // between components is unspecified.
+    void Awake()
     {
         _interactable = GetComponent<XRSimpleInteractable>();
 

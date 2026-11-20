@@ -47,3 +47,45 @@ the presentation's readability in the headset. The scene references and a render
 from the starting view were checked locally; missing unrelated room assets limit
 the completeness of that desktop preview. Fetch the spacecraft FBX through Git
 LFS before opening the scene if it is still a pointer in a fresh checkout.
+
+## TG-232: Real-launch phase integration
+
+`StoryDirector` now unlocks its assigned **Real Launch Button** when entering
+`RealLaunch`. It listens to **Launch Video**'s completion event and advances to
+`FreePlay` only while in that phase. Earlier or repeated completions do not skip
+phases. Disabling the director removes its listener; enabling it restores the
+subscription. Event mode does not subscribe or unlock the story launch button.
+
+`play_video.OnVideoCompleted` exposes the existing serialized UnityEvent, so
+Inspector listeners continue to work. `ButtonController` initializes in `Awake`
+so an unlock issued by another component's `Start` is not later overwritten.
+
+### Scene hookup still required
+
+Before editing Bedroom, coordinate scene ownership as described in
+`CONTRIBUTING.md`. On the scene's StoryDirector, assign the mission-control
+ButtonController to **Real Launch Button** and the big-screen `play_video` to
+**Launch Video**. Assign that same player to the button's **Video To Start**;
+avoid relying on the first-player fallback when the scene has multiple videos.
+No scene or prefab references are changed by this code commit.
+
+For an isolated Phase 5 check, enter Story mode and use F8 to reach `RealLaunch`.
+The mission-control button should unlock. Press it and let the video finish;
+the director should log `FreePlay` exactly once. Repeat in Event mode to confirm
+the puzzle still unlocks the button and video playback behaves as before.
+The automatic Phase 4 bedroom return remains separate work, so F8 is still
+needed to reach this phase until the earlier phases are wired.
+
+### Regression coverage
+
+`StoryLaunchPlayModeTests` covers unlocking on phase entry, completion to
+FreePlay, ignored completions in earlier phases, disable/re-enable lifecycle,
+Event-mode isolation, unlocking before Start, and suppression of a second press
+during animation. The tests use runtime fixture objects and invoke the player's
+completion UnityEvent; they do not decode a video or verify headset visuals.
+
+Validation for this change: the runtime assembly and PlayMode test sources
+compile with Unity 6000.3.8f1's C# compiler. The attempted batch PlayMode run
+could not execute tests: file-read timeouts in `Library` prevented Unity from
+loading cached assemblies, including `UnityEditor.TestRunner`. Rerun the story
+PlayMode suite in a working editor before marking TG-232 verified.
