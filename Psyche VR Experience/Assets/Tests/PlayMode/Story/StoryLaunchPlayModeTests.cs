@@ -17,6 +17,13 @@ namespace PsycheVR.Story.PlayModeTests
         private UnityEvent completed;
         private PropertyInfo activeMode;
         private object previousMode;
+        private Component childButton;
+        private Behaviour childInteractable;
+        private Component card;
+        private Transform rig;
+        private Transform returnAnchor;
+        private Component[] zones;
+        private Material fadeMaterial;
 
         private static Type RuntimeType(string name) => Type.GetType(name + ", Assembly-CSharp", true);
         private static void Assign(Component target, string name, object value) => target.GetType()
@@ -36,6 +43,7 @@ namespace PsycheVR.Story.PlayModeTests
         public void TearDown()
         {
             if (owner != null) UnityEngine.Object.DestroyImmediate(owner);
+            if (fadeMaterial != null) UnityEngine.Object.DestroyImmediate(fadeMaterial);
             activeMode.SetValue(null, previousMode);
         }
 
@@ -132,7 +140,7 @@ namespace PsycheVR.Story.PlayModeTests
         [UnityTest]
         public IEnumerator UnlockBeforeFirstStartIsNotOverwritten()
         {
-            CreateFixture("Story");
+            CreateFixture("Event");
             Call(button, "UnlockButton");
             Assert.That(interactable.enabled, Is.True);
             yield return null;
@@ -152,6 +160,134 @@ namespace PsycheVR.Story.PlayModeTests
             Call(button, "PressButton");
             Assert.That(presses, Is.EqualTo(1));
             Assert.That(interactable.enabled, Is.False);
+        }
+
+        private void CreateReturnFixture()
+        {
+            CreateFixture("Story");
+            owner.SetActive(false);
+            var child = UnityEngine.Object.Instantiate(button.gameObject, owner.transform);
+            child.name = "Bedroom launch button";
+            childButton = child.GetComponent(RuntimeType("ButtonController"));
+            childInteractable = (Behaviour)child.GetComponent(interactable.GetType());
+            Assign(childButton, "startVideoOnPress", false);
+            Assign(director, "childLaunchButton", childButton);
+            card = owner.AddComponent(RuntimeType("PsycheVR.Story.StoryDateCard"));
+            Assign(director, "dateCard", card);
+
+            var rigObject = new GameObject("Rig");
+            rig = rigObject.transform;
+            rig.SetParent(owner.transform);
+            var teleporter = rigObject.AddComponent(RuntimeType("PsycheVR.VR.BlinkTeleporter"));
+            Assign(teleporter, "rigRoot", rig);
+            Assign(teleporter, "holdDuration", 0f);
+            var overlayObject = new GameObject("Fade overlay");
+            overlayObject.transform.SetParent(rig);
+            fadeMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
+            overlayObject.AddComponent<MeshRenderer>().sharedMaterial = fadeMaterial;
+            var overlay = overlayObject.AddComponent(RuntimeType("PsycheVR.VR.BlinkFadeOverlay"));
+            Assign(teleporter, "fadeOverlay", overlay);
+            Assign(director, "teleporter", teleporter);
+            Assign(director, "returnFadeSeconds", 0.05f);
+            var destination = new GameObject("StoryDeskReturn");
+            returnAnchor = destination.transform;
+            returnAnchor.SetParent(owner.transform);
+            returnAnchor.SetPositionAndRotation(new Vector3(10, 0, 4), Quaternion.Euler(0, 90, 0));
+            Assign(director, "storyDeskReturn", destination.AddComponent(RuntimeType("PsycheVR.VR.BlinkTeleportAnchor")));
+
+            var puzzle = new GameObject("Bedroom puzzle");
+            puzzle.transform.SetParent(owner.transform);
+            Assign(director, "bedroomPuzzle", puzzle.transform);
+            zones = new Component[2];
+            for (int i = 0; i < zones.Length; i++)
+            {
+                var zone = new GameObject("Required zone " + i);
+                zone.transform.SetParent(puzzle.transform);
+                zones[i] = zone.AddComponent(RuntimeType("SnapZone"));
+                zones[i].GetType().GetField("requiredTag").SetValue(zones[i], "Untagged");
+            }
+            owner.SetActive(true);
+        }
+
+        private static void CompleteZone(Component zone)
+        {
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            var snapped = (Delegate)zone.GetType().GetField("Snapped", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            snapped?.DynamicInvoke(zone);
+        }
+
+        [UnityTest]
+        public IEnumerator PuzzleAndChildPressReturnRigThenUnlockRealLaunchWithoutF8()
+        {
+            CreateReturnFixture();
+            yield return null;
+            Call(director, "GoTo", StoryPhase.Build); // Earlier phases are a separate integration.
+            CompleteZone(zones[0]);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+            Assert.That(childInteractable.enabled, Is.False);
+            CompleteZone(zones[1]);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            Assert.That(childInteractable.enabled, Is.True);
+            Assert.That(interactable.enabled, Is.False);
+
+            // A VideoPlayer makes an accidental child-button video start observable.
+            var player = owner.AddComponent<UnityEngine.Video.VideoPlayer>();
+            player.playOnAwake = false;
+            var video = owner.GetComponent(RuntimeType("play_video"));
+            int videoStarts = 0;
+            ((UnityEvent)video.GetType().GetField("onVideoStarted", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(video)).AddListener(() => videoStarts++);
+            Call(childButton, "PressButton");
+            Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch));
+            Assert.That(interactable.enabled, Is.False, "Real launch must stay locked during the fade.");
+            completed.Invoke();
+            Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch), "Stale video completion must not skip the return.");
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.That(Vector3.Distance(rig.position, returnAnchor.position), Is.LessThan(0.001f));
+            Assert.That(Quaternion.Angle(rig.rotation, returnAnchor.rotation), Is.LessThan(0.001f));
+            Assert.That(card.GetType().GetProperty("CurrentText").GetValue(card), Is.EqualTo("October 2023"));
+            Assert.That(card.GetType().GetProperty("IsVisible").GetValue(card), Is.True);
+            Assert.That(videoStarts, Is.Zero);
+            Assert.That(interactable.enabled, Is.True);
+            Assert.That(childInteractable.enabled, Is.False);
+            completed.Invoke();
+            Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
+            Assert.That(interactable.enabled, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator CaseUnlockAndDirectPressCannotBypassStoryPhaseGate()
+        {
+            CreateReturnFixture();
+            yield return null;
+            var presses = 0;
+            ((UnityEvent)childButton.GetType().GetField("onPressed").GetValue(childButton)).AddListener(() => presses++);
+            Call(childButton, "UnlockButton");
+            Call(childButton, "PressButton");
+            Call(button, "UnlockButton");
+            Call(button, "PressButton");
+            Assert.That(presses, Is.Zero);
+            Assert.That(childInteractable.enabled, Is.False);
+            Assert.That(interactable.enabled, Is.False);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Intro));
+        }
+
+        [UnityTest]
+        public IEnumerator UnrelatedPuzzleAndDisabledDirectorCannotAdvanceBuild()
+        {
+            CreateReturnFixture();
+            yield return null;
+            Call(director, "GoTo", StoryPhase.Build);
+            var other = new GameObject("Other puzzle");
+            other.transform.SetParent(owner.transform);
+            CompleteZone(other.AddComponent(RuntimeType("SnapZone")));
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+            director.enabled = false;
+            CompleteZone(zones[0]);
+            CompleteZone(zones[1]);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+            director.enabled = true;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch), "Catch up if the puzzle completed while disabled.");
         }
     }
 }

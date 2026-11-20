@@ -48,44 +48,69 @@ from the starting view were checked locally; missing unrelated room assets limit
 the completeness of that desktop preview. Fetch the spacecraft FBX through Git
 LFS before opening the scene if it is still a pointer in a fresh checkout.
 
-## TG-232: Real-launch phase integration
+## TG-231 / TG-232: Child launch and real launch
 
-`StoryDirector` now unlocks its assigned **Real Launch Button** when entering
-`RealLaunch`. It listens to **Launch Video**'s completion event and advances to
-`FreePlay` only while in that phase. Earlier or repeated completions do not skip
-phases. Disabling the director removes its listener; enabling it restores the
-subscription. Event mode does not subscribe or unlock the story launch button.
+Bedroom now wires both launch phases through StoryDirector:
 
-`play_video.OnVideoCompleted` exposes the existing serialized UnityEvent, so
-Inspector listeners continue to work. `ButtonController` initializes in `Awake`
-so an unlock issued by another component's `Start` is not later overwritten.
+- **Bedroom Puzzle** is the bedroom's `Snappable (1)` root. While in Build,
+  completing all tagged SnapZones advances to ChildLaunch. Untagged zones and
+  snaps from other puzzle roots do not count. Re-enabling the director checks
+  for a puzzle completed while it was disabled.
+- **Child Launch Button** is `StoryChildLaunchButton` beside that puzzle on the
+  bedroom desk. It is visible only in Story mode, and `Start Video On Press` is
+  disabled. ChildLaunch unlocks it; pressing it advances to RealLaunch and
+  starts the return teleport.
+- **Story Desk Return** is the existing mission-control teleport anchor, renamed
+  `StoryDeskReturn`. The rig's BlinkTeleporter fades out/in over 1.5 seconds each
+  for this transition. Normal debug teleport durations remain unchanged.
+- The real button stays locked during the return. After the fade finishes, the
+  date card shows **October 2023** at the existing mission-control date anchor,
+  and the real button unlocks.
+- **Real Launch Button** references the button in `Player_Desk_setup (1)`.
+  Both its video target and **Launch Video** reference the big-screen player.
+  Its select event calls only PressButton; the stale direct StartVideo override
+  was removed so playback has one owner for both XR selection and hand slaps.
+- Pressing the real button hides the date. Completion of that video's existing
+  UnityEvent advances RealLaunch to FreePlay. Completion during the return or
+  in another phase is ignored. Listeners are removed while the director is
+  disabled and on destruction.
 
-### Scene hookup still required
+ButtonController's story gate prevents a case opening or direct PressButton
+call from bypassing phase locks. The gate defaults to allowing normal behavior;
+Event mode never enables story control. The Event room's existing kiosk/video
+configuration and shared prefabs are unchanged.
 
-Before editing Bedroom, coordinate scene ownership as described in
-`CONTRIBUTING.md`. On the scene's StoryDirector, assign the mission-control
-ButtonController to **Real Launch Button** and the big-screen `play_video` to
-**Launch Video**. Assign that same player to the button's **Video To Start**;
-avoid relying on the first-player fallback when the scene has multiple videos.
-No scene or prefab references are changed by this code commit.
+### Verification
 
-For an isolated Phase 5 check, enter Story mode and use F8 to reach `RealLaunch`.
-The mission-control button should unlock. Press it and let the video finish;
-the director should log `FreePlay` exactly once. Repeat in Event mode to confirm
-the puzzle still unlocks the button and video playback behaves as before.
-The automatic Phase 4 bedroom return remains separate work, so F8 is still
-needed to reach this phase until the earlier phases are wired.
+Run `PsycheVR.Story.Tests` in EditMode, including `StoryLaunchSceneTests`, which
+loads Bedroom and validates the actual prefab references and persistent button
+bindings. Run `PsycheVR.Story.PlayModeTests` in PlayMode. The launch tests cover
+puzzle completion, slow-fade rig movement and yaw, date text, video suppression
+on the child button, phase gating, stale completion events, lifecycle handling,
+and Event-mode isolation. Fixture tests emit snap/completion notifications;
+they do not replace a real puzzle interaction or video-decoding/headset check.
 
-### Regression coverage
+For a manual check, enter Story mode, reach Build, and complete the bedroom
+puzzle. Verify ChildLaunch logs and the bedroom button works. Press it: the rig
+should fade back to mission control, show October 2023, and unlock the real
+button. Press the real button and let the video end: FreePlay should log once.
+Repeat Event mode's normal puzzle/video flow to check for regressions.
 
-`StoryLaunchPlayModeTests` covers unlocking on phase entry, completion to
-FreePlay, ignored completions in earlier phases, disable/re-enable lifecycle,
-Event-mode isolation, unlocking before Start, and suppression of a second press
-during animation. The tests use runtime fixture objects and invoke the player's
-completion UnityEvent; they do not decode a video or verify headset visuals.
+**Earlier-phase dependency:** Intro/Memory automatic progression is not wired
+on this branch. Phase 4/5 tests enter Build directly; the full story's acceptance
+criterion of running from Intro without F8 still depends on the earlier-phase
+integration. Do not mark that end-to-end criterion complete from these tests.
 
-Validation for this change: the runtime assembly and PlayMode test sources
-compile with Unity 6000.3.8f1's C# compiler. The attempted batch PlayMode run
-could not execute tests: file-read timeouts in `Library` prevented Unity from
-loading cached assemblies, including `UnityEditor.TestRunner`. Rerun the story
-PlayMode suite in a working editor before marking TG-232 verified.
+### Checkpoint status — November 20, 2026
+
+Development is paused for integration of the Phase 2/3 work into develop.
+Scene structural checks found no duplicate object IDs or unresolved local
+references. The PlayMode test sources compiled, and an intermediate runtime
+compilation passed. The Unity test run was stopped during startup while
+offloaded iCloud cache files were being restored; no runtime test pass is
+claimed. The standalone EditMode compile encountered a stale cached response
+file referencing a missing `BedroomStoryIntegrationTests.cs`.
+
+After integrating the earlier phases, recompile the final code and run both
+story test suites, inspect the bedroom button placement, and verify the full
+story and Event-mode flows in the scene/headset before closing the tasks.

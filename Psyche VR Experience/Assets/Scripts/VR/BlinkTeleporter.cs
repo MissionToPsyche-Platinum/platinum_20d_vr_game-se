@@ -53,6 +53,17 @@ namespace PsycheVR.VR
 
         public void TeleportTo(BlinkTeleportAnchor anchor)
         {
+            BeginTeleport(anchor, fadeOutDuration, fadeInDuration, null);
+        }
+
+        /// <summary>Uses a slower story fade without changing normal debug/event teleport timing.</summary>
+        public void TeleportToSlow(BlinkTeleportAnchor anchor, float fadeSeconds, System.Action completed)
+        {
+            BeginTeleport(anchor, Mathf.Max(0f, fadeSeconds), Mathf.Max(0f, fadeSeconds), completed);
+        }
+
+        private void BeginTeleport(BlinkTeleportAnchor anchor, float fadeOut, float fadeIn, System.Action completed)
+        {
             if (anchor == null)
             {
                 Debug.LogWarning("BlinkTeleporter: TeleportTo called with null anchor; ignoring.", this);
@@ -63,23 +74,24 @@ namespace PsycheVR.VR
                 StopCoroutine(_activeRoutine);
 
             SessionEvents.Interaction("teleported", anchor);
-            _activeRoutine = StartCoroutine(TeleportRoutine(anchor));
+            _activeRoutine = StartCoroutine(TeleportRoutine(anchor, fadeOut, fadeIn, completed));
         }
 
-        private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor)
+        private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor, float fadeOut, float fadeIn, System.Action completed)
         {
             ForceReleaseBothHands();
 
             float startAlpha = fadeOverlay != null ? fadeOverlay.CurrentAlpha : 0f;
-            yield return FadeTo(1f, fadeOutDuration, startAlpha);
+            yield return FadeTo(1f, fadeOut, startAlpha);
 
             MoveRig(anchor);
 
             yield return WaitUnscaled(holdDuration);
 
-            yield return FadeTo(0f, fadeInDuration, 1f);
+            yield return FadeTo(0f, fadeIn, 1f);
 
             _activeRoutine = null;
+            completed?.Invoke();
         }
 
         private void ForceReleaseBothHands()

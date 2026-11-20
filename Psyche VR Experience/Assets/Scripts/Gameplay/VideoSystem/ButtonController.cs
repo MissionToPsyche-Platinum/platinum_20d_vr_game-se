@@ -18,6 +18,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
 
     [Tooltip("Video target started when the button is pressed. If unset, the first play_video component in the scene is used.")]
     [SerializeField] private play_video videoToStart;
+    [Tooltip("Disable for the story bedroom button, which ends the memory instead of playing a video.")]
+    [SerializeField] private bool startVideoOnPress = true;
+    private bool storyInteractionAllowed = true;
 
     [Header("Hand Slap")]
     [Tooltip("A hand path within this radius (meters) of the button is considered touching it.")]
@@ -142,6 +145,7 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
 
     public void UnlockButton()
     {
+        if (!storyInteractionAllowed) return;
         if (_interactable != null)
         {
             _interactable.enabled = true;
@@ -150,9 +154,17 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
         FindHands();
     }
 
+    /// <summary>Gates story buttons independently of the case's normal unlock action.</summary>
+    public void SetStoryInteractionAllowed(bool allowed)
+    {
+        storyInteractionAllowed = allowed;
+        if (!allowed && _interactable != null)
+            _interactable.enabled = false;
+    }
+
     public void PressButton()
     {
-        if (_isAnimating)
+        if (_isAnimating || !storyInteractionAllowed || (_interactable != null && !_interactable.enabled))
             return;
 
         if (_interactable != null)
@@ -161,7 +173,7 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
         }
 
         SessionEvents.Interaction("video_button_pressed", this);
-        StartVideo();
+        if (startVideoOnPress) StartVideo();
         StartCoroutine(AnimateButton());
         onPressed.Invoke();
     }
