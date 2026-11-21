@@ -35,6 +35,11 @@ namespace PsycheVR.Story.Tests
                 Assert.That(Field(child, "startVideoOnPress"), Is.False);
                 Assert.That(Field(real, "startVideoOnPress"), Is.True);
                 Assert.That(video, Is.Not.Null);
+                Assert.That(video.GetComponent<UnityEngine.Video.VideoPlayer>(), Is.Not.Null);
+                Assert.That(Field(real, "slapKey"), Is.Not.Null,
+                    "Preserve develop's physical launch key wiring.");
+                Assert.That(Field(director, "dateCard"), Is.Not.Null);
+                Assert.That(Field(director, "objectiveHighlight"), Is.Not.Null);
                 Assert.That(Field(real, "videoToStart"), Is.SameAs(video));
                 Assert.That(anchor, Is.Not.Null);
                 Assert.That(anchor.name, Is.EqualTo("StoryDeskReturn"));
@@ -51,9 +56,8 @@ namespace PsycheVR.Story.Tests
                     var interactable = button.GetComponents<MonoBehaviour>().Single(component =>
                         component != null && component.GetType().Name == "XRSimpleInteractable");
                     var selected = (UnityEventBase)interactable.GetType().GetProperty("selectEntered").GetValue(interactable);
-                    Assert.That(selected.GetPersistentEventCount(), Is.EqualTo(1));
-                    Assert.That(selected.GetPersistentTarget(0), Is.SameAs(button));
-                    Assert.That(selected.GetPersistentMethodName(0), Is.EqualTo("PressButton"));
+                    Assert.That(selected.GetPersistentEventCount(), Is.Zero,
+                        "Launch buttons use slaps, not trigger/grip selection.");
                 }
             }
             finally

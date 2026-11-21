@@ -30,6 +30,7 @@ namespace PsycheVR.Story.PlayModeTests
             .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
         private static void Call(Component target, string name, params object[] args) => target.GetType()
             .GetMethod(name).Invoke(target, args);
+        private static bool IsUnlocked(Component target) => (bool)target.GetType().GetProperty("IsUnlocked").GetValue(target);
         private StoryPhase Phase => (StoryPhase)director.GetType().GetProperty("CurrentPhase").GetValue(director);
 
         [SetUp]
@@ -47,7 +48,7 @@ namespace PsycheVR.Story.PlayModeTests
             activeMode.SetValue(null, previousMode);
         }
 
-        private void CreateFixture(string mode)
+        private void CreateFixture(string mode, bool useSlapKey = false)
         {
             activeMode.SetValue(null, Enum.Parse(activeMode.PropertyType, mode));
             owner = new GameObject("Story launch fixture");
@@ -63,6 +64,8 @@ namespace PsycheVR.Story.PlayModeTests
             var top = new GameObject("Button top");
             top.transform.SetParent(buttonObject.transform);
             button.GetType().GetField("buttonTop").SetValue(button, top.transform);
+            if (useSlapKey)
+                Assign(button, "slapKey", top.AddComponent(RuntimeType("PsycheVR.Gameplay.SlapKey")));
 
             var video = owner.AddComponent(RuntimeType("play_video"));
             completed = (UnityEvent)video.GetType().GetProperty("OnVideoCompleted").GetValue(video);
@@ -77,9 +80,9 @@ namespace PsycheVR.Story.PlayModeTests
         {
             CreateFixture("Story");
             yield return null;
-            Assert.That(interactable.enabled, Is.False);
+            Assert.That(IsUnlocked(button), Is.False);
             Call(director, "GoTo", StoryPhase.RealLaunch);
-            Assert.That(interactable.enabled, Is.True);
+            Assert.That(IsUnlocked(button), Is.True);
 
             completed.Invoke(); // Same notification emitted by VideoPlayer.loopPointReached.
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
@@ -98,7 +101,7 @@ namespace PsycheVR.Story.PlayModeTests
                 Call(director, "GoTo", phase);
                 completed.Invoke();
                 Assert.That(Phase, Is.EqualTo(phase));
-                Assert.That(interactable.enabled, Is.False);
+                Assert.That(IsUnlocked(button), Is.False);
             }
         }
 
@@ -127,11 +130,11 @@ namespace PsycheVR.Story.PlayModeTests
             completed.AddListener(() => existingCompletions++);
             yield return null;
             Call(director, "GoTo", StoryPhase.RealLaunch);
-            Assert.That(interactable.enabled, Is.False);
+            Assert.That(IsUnlocked(button), Is.False);
             Call(button, "UnlockButton");
             director.enabled = false;
             director.enabled = true;
-            Assert.That(interactable.enabled, Is.True);
+            Assert.That(IsUnlocked(button), Is.True);
             completed.Invoke();
             Assert.That(existingCompletions, Is.EqualTo(1));
             Assert.That(Phase, Is.EqualTo(StoryPhase.Intro));
@@ -142,9 +145,9 @@ namespace PsycheVR.Story.PlayModeTests
         {
             CreateFixture("Event");
             Call(button, "UnlockButton");
-            Assert.That(interactable.enabled, Is.True);
+            Assert.That(IsUnlocked(button), Is.True);
             yield return null;
-            Assert.That(interactable.enabled, Is.True);
+            Assert.That(IsUnlocked(button), Is.True);
         }
 
         [UnityTest]
@@ -159,6 +162,36 @@ namespace PsycheVR.Story.PlayModeTests
             Call(button, "PressButton");
             Call(button, "PressButton");
             Assert.That(presses, Is.EqualTo(1));
+            Assert.That(IsUnlocked(button), Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator SlapKeyRespectsStoryGateAndEventUnlockWithoutEnablingRaySelection()
+        {
+            CreateFixture("Event", useSlapKey: true);
+            yield return null;
+            var key = (Component)button.GetType().GetField("slapKey",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(button);
+            var presses = 0;
+            ((UnityEvent)button.GetType().GetField("onPressed").GetValue(button))
+                .AddListener(() => presses++);
+            Assert.That(key.GetType().GetProperty("Blocked").GetValue(key), Is.True);
+            Call(button, "UnlockButton");
+            Assert.That(IsUnlocked(button), Is.True);
+            Assert.That(interactable.enabled, Is.False, "Develop keeps launch buttons slap-only.");
+            Assert.That(key.GetType().GetProperty("Blocked").GetValue(key), Is.False);
+            Call(button, "SetStoryInteractionAllowed", false);
+            Call(button, "UnlockButton");
+            Call(key, "Press");
+            Assert.That(presses, Is.Zero);
+            Assert.That(key.GetType().GetProperty("Blocked").GetValue(key), Is.True);
+            Call(button, "SetStoryInteractionAllowed", true);
+            Call(button, "UnlockButton");
+            Call(key, "Press");
+            Call(key, "Press");
+            Assert.That(presses, Is.EqualTo(1));
+            Assert.That(IsUnlocked(button), Is.False);
+            Assert.That(key.GetType().GetProperty("Blocked").GetValue(key), Is.True);
             Assert.That(interactable.enabled, Is.False);
         }
 
@@ -172,7 +205,9 @@ namespace PsycheVR.Story.PlayModeTests
             childInteractable = (Behaviour)child.GetComponent(interactable.GetType());
             Assign(childButton, "startVideoOnPress", false);
             Assign(director, "childLaunchButton", childButton);
-            card = owner.AddComponent(RuntimeType("PsycheVR.Story.StoryDateCard"));
+            var cardObject = new GameObject("Date card");
+            cardObject.transform.SetParent(owner.transform);
+            card = cardObject.AddComponent(RuntimeType("PsycheVR.Story.StoryDateCard"));
             Assign(director, "dateCard", card);
 
             var rigObject = new GameObject("Rig");
@@ -225,11 +260,11 @@ namespace PsycheVR.Story.PlayModeTests
             yield return null; // Let PuzzleCompletion discover the scoped bedroom zones.
             CompleteZone(zones[0]);
             Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
-            Assert.That(childInteractable.enabled, Is.False);
+            Assert.That(IsUnlocked(childButton), Is.False);
             CompleteZone(zones[1]);
             Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
-            Assert.That(childInteractable.enabled, Is.True);
-            Assert.That(interactable.enabled, Is.False);
+            Assert.That(IsUnlocked(childButton), Is.True);
+            Assert.That(IsUnlocked(button), Is.False);
 
             // A VideoPlayer makes an accidental child-button video start observable.
             var player = owner.AddComponent<UnityEngine.Video.VideoPlayer>();
@@ -240,7 +275,7 @@ namespace PsycheVR.Story.PlayModeTests
                 .GetValue(video)).AddListener(() => videoStarts++);
             Call(childButton, "PressButton");
             Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch));
-            Assert.That(interactable.enabled, Is.False, "Real launch must stay locked during the fade.");
+            Assert.That(IsUnlocked(button), Is.False, "Real launch must stay locked during the fade.");
             completed.Invoke();
             Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch), "Stale video completion must not skip the return.");
             yield return new WaitForSecondsRealtime(0.3f);
@@ -249,11 +284,11 @@ namespace PsycheVR.Story.PlayModeTests
             Assert.That(card.GetType().GetProperty("CurrentText").GetValue(card), Is.EqualTo("October 2023"));
             Assert.That(card.GetType().GetProperty("IsVisible").GetValue(card), Is.True);
             Assert.That(videoStarts, Is.Zero);
-            Assert.That(interactable.enabled, Is.True);
-            Assert.That(childInteractable.enabled, Is.False);
+            Assert.That(IsUnlocked(button), Is.True);
+            Assert.That(IsUnlocked(childButton), Is.False);
             completed.Invoke();
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
-            Assert.That(interactable.enabled, Is.False);
+            Assert.That(IsUnlocked(button), Is.False);
         }
 
         [UnityTest]
@@ -268,8 +303,8 @@ namespace PsycheVR.Story.PlayModeTests
             Call(button, "UnlockButton");
             Call(button, "PressButton");
             Assert.That(presses, Is.Zero);
-            Assert.That(childInteractable.enabled, Is.False);
-            Assert.That(interactable.enabled, Is.False);
+            Assert.That(IsUnlocked(childButton), Is.False);
+            Assert.That(IsUnlocked(button), Is.False);
             Assert.That(Phase, Is.EqualTo(StoryPhase.Intro));
         }
 
