@@ -90,9 +90,15 @@ namespace PsycheVR.Story.Tests
             StartStory();
             Call("GoTo", StoryPhase.Build);
             director.enabled = false;
+            // Like Start above, invoke lifecycle callbacks explicitly in EditMode:
+            // StoryDirector does not execute outside Play mode.
+            Call("OnDisable");
+            Assert.That(puzzle.GetType().GetField("Completed",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(puzzle), Is.Null);
             CompletePuzzle(puzzle);
             Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
             director.enabled = true;
+            Call("OnEnable");
             Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
         }
 

@@ -38,12 +38,15 @@ again. InstructionTextManager continues handling individual piece explanations.
 Regression tests cover completion during Build, completion before Build,
 disable/re-enable catch-up, leaving and re-entering Build, and creating a Story
 watcher without activating the kiosk. PlayMode tests exercise watcher startup
-with an already-solved zone and a snap notification after entering Build.
+with an already-solved zone, a snap notification after entering Build, and
+disable/re-enable catch-up through Unity's real lifecycle.
 
-Verification status (November 17, 2026): diff checks passed. The Unity 6000.3.8f1
-batch EditMode run stalled reading cached shader assets during editor startup
-and was stopped before tests ran. The new EditMode and PlayMode tests still need
-to be run in Unity; no passing result is claimed for Build yet.
+Verified November 21, 2026 in Unity 6000.3.8f1 batch mode: all 23 Story EditMode
+tests and all 6 Story PlayMode tests passed. Diff checks passed. The EditMode
+catch-up test explicitly invokes OnDisable/OnEnable, just as the fixture invokes
+Start, because StoryDirector does not execute in EditMode. The PlayMode catch-up
+test verifies those callbacks through Unity itself. The Bedroom gameplay and
+headset checks below remain outstanding.
 
 Manual acceptance check: open Bedroom in Story mode, press F8 twice to enter
 Build, and finish the spacecraft puzzle. Expect `[StoryDirector] Entering

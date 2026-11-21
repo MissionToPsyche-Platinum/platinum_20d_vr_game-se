@@ -140,6 +140,33 @@ namespace PsycheVR.Story.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator DisabledDirectorCatchesUpWhenReenabledThroughUnityLifecycle()
+        {
+            CreateDirector("Story");
+            var zone = owner.AddComponent(RuntimeType("SnapZone"));
+            zone.GetType().GetField("requiredTag").SetValue(zone, "Untagged");
+            yield return null;
+            director.GetType().GetMethod("GoTo").Invoke(director, new object[] { StoryPhase.Build });
+            yield return null;
+
+            var behaviour = (Behaviour)director;
+            behaviour.enabled = false;
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            var snapped = (Delegate)zone.GetType().GetField("Snapped",
+                BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            snapped.DynamicInvoke(zone);
+            var puzzle = owner.GetComponent(RuntimeType("PsycheVR.Kiosk.PuzzleCompletion"));
+            Assert.That(Read(puzzle, "IsComplete"), Is.True);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+
+            behaviour.enabled = true;
+            yield return null;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro.",
+                "[StoryDirector] Entering Build.", "[StoryDirector] Entering ChildLaunch." }));
+        }
+
+        [UnityTest]
         public IEnumerator EventModeIgnoresF8AndLeavesIntroPresentationInactive()
         {
             CreateDirector("Event");
