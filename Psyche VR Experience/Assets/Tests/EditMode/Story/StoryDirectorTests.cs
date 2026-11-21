@@ -112,6 +112,31 @@ namespace PsycheVR.Story.Tests
         private object Property(Component component, string name) => component.GetType().GetProperty(name).GetValue(component);
 
         [Test]
+        public void ArrivalDateCanUseAnAnchorThenReturnToHeadPlacement()
+        {
+            var card = Presentation("StoryDateCard", "dateCard");
+            var head = new GameObject("Head");
+            head.transform.SetParent(owner.transform);
+            head.transform.position = new Vector3(4, 1.6f, -2);
+            card.GetType().GetField("head", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(card, head.transform);
+            var anchor = new GameObject("Date anchor");
+            anchor.transform.SetParent(owner.transform);
+            anchor.transform.SetPositionAndRotation(new Vector3(25, 2, 2), Quaternion.Euler(0, 90, 0));
+            var show = card.GetType().GetMethod("Show", new[] { typeof(string), typeof(Transform) });
+            show.Invoke(card, new object[] { "2003", anchor.transform });
+            Assert.That(card.transform.position, Is.EqualTo(anchor.transform.position));
+            Assert.That(Quaternion.Angle(card.transform.rotation, anchor.transform.rotation), Is.LessThan(0.001f));
+            var follow = (Behaviour)card.GetComponent(Type.GetType("PsycheVR.Kiosk.HeadFollow, Assembly-CSharp", true));
+            Assert.That(follow.enabled, Is.False);
+            show.Invoke(card, new object[] { "2003", null });
+            Assert.That(follow.enabled, Is.True);
+            Assert.That(Vector3.Distance(card.transform.position, head.transform.position + Vector3.forward * 1.6f), Is.LessThan(0.001f));
+            Assert.That(Property(card, "CurrentText"), Is.EqualTo("2003"));
+            Assert.That(Property(card, "IsVisible"), Is.True);
+        }
+
+        [Test]
         public void HighlightHoversOverTheMeshInsteadOfTheTargetPivot()
         {
             var highlight = Presentation("ObjectiveHighlight", "objectiveHighlight");
