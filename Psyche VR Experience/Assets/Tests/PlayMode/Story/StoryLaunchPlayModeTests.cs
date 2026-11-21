@@ -224,6 +224,7 @@ namespace PsycheVR.Story.PlayModeTests
             Assign(teleporter, "fadeOverlay", overlay);
             Assign(director, "teleporter", teleporter);
             Assign(director, "returnFadeSeconds", 0.05f);
+            Assign(director, "returnHoldSeconds", 0.05f);
             var destination = new GameObject("StoryDeskReturn");
             returnAnchor = destination.transform;
             returnAnchor.SetParent(owner.transform);
@@ -289,6 +290,30 @@ namespace PsycheVR.Story.PlayModeTests
             completed.Invoke();
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
             Assert.That(IsUnlocked(button), Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator ReplacedDeskReturnStillUnlocksRealLaunch()
+        {
+            CreateReturnFixture();
+            yield return null;
+            Call(director, "GoTo", StoryPhase.ChildLaunch);
+            Call(childButton, "PressButton");
+            Assert.That(Phase, Is.EqualTo(StoryPhase.RealLaunch));
+            Assert.That(IsUnlocked(button), Is.False);
+
+            // Another teleport replaces the return trip before it arrives.
+            var teleporter = (Component)director.GetType()
+                .GetField("teleporter", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(director);
+            var anchorType = RuntimeType("PsycheVR.VR.BlinkTeleportAnchor");
+            var other = new GameObject("Other anchor");
+            other.transform.SetParent(owner.transform);
+            var otherAnchor = other.AddComponent(anchorType);
+            teleporter.GetType().GetMethod("TeleportTo", new[] { anchorType }).Invoke(teleporter, new object[] { otherAnchor });
+
+            Assert.That(IsUnlocked(button), Is.True, "A replaced return must not leave the story stuck.");
+            completed.Invoke();
+            Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
         }
 
         [UnityTest]

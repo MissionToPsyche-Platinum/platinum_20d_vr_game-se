@@ -73,10 +73,24 @@ namespace PsycheVR.Story
 
             bool wasHidden = !gameObject.activeSelf || _alpha <= 0f;
             gameObject.SetActive(true);
-            _shownAt = Time.time;
+            _shownAt = Time.unscaledTime;
             _hiding = false;
 
             if (wasHidden) Place();
+        }
+
+        /// <summary>Shows an arrival date at an optional world anchor, or re-centres it on the head.</summary>
+        public void Show(string text, Transform placementAnchor)
+        {
+            Show(text);
+            if (placementAnchor == null)
+            {
+                Place();
+                return;
+            }
+            if (_follow != null) _follow.enabled = false;
+            transform.localScale = _baseScale;
+            transform.SetPositionAndRotation(placementAnchor.position, placementAnchor.rotation);
         }
 
         /// <summary>Fades the card out now. Does nothing when it is already hidden.</summary>
@@ -88,8 +102,8 @@ namespace PsycheVR.Story
 
         private void Update()
         {
-            float step = Time.deltaTime / fadeSeconds;
-            if (!_hiding && holdSeconds > 0f && _alpha >= 1f && Time.time - _shownAt >= fadeSeconds + holdSeconds)
+            float step = Time.unscaledDeltaTime / fadeSeconds;
+            if (!_hiding && holdSeconds > 0f && _alpha >= 1f && Time.unscaledTime - _shownAt >= fadeSeconds + holdSeconds)
                 _hiding = true;
 
             _alpha = Mathf.Clamp01(_alpha + (_hiding ? -step : step));
@@ -105,6 +119,7 @@ namespace PsycheVR.Story
             if (_follow == null) _follow = gameObject.AddComponent<HeadFollow>();
             // HeadFollow keeps the scale it finds as its base, so hand it the prefab's own scale every time.
             transform.localScale = _baseScale;
+            _follow.enabled = true;
             _follow.Init(camera, distance, cardHeight * 0.5f / MillimetresPerMetre);
         }
 

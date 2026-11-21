@@ -21,7 +21,7 @@ namespace PsycheVR.Story
         //////////////////////////////////////
 
         [Header("Memory: arriving in the childhood bedroom")]
-        [SerializeField] private string buildDateText = "October, 2003";
+        [SerializeField] private string buildDateText = "October 2003";
 
         [Header("Build: the bedroom puzzle")]
         //After finishing building model
@@ -34,7 +34,7 @@ namespace PsycheVR.Story
         /////////////////////////////////////
 
         [Header("RealLaunch: back at the mission control desk")]
-        [SerializeField] private string launchDateText = "October, 2023";
+        [SerializeField] private string launchDateText = "October 2023";
 
         /////////////////////////////////////
 

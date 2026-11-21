@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace PsycheVR.VR
         [SerializeField] private float fadeInDuration = 0.35f;
 
         private Coroutine _activeRoutine;
+        private Action _activeCancelled;
         private readonly List<IXRSelectInteractable> _releaseBuffer = new List<IXRSelectInteractable>();
 
         /// <summary>
@@ -53,45 +55,80 @@ namespace PsycheVR.VR
 
         public void TeleportTo(BlinkTeleportAnchor anchor)
         {
-            BeginTeleport(anchor, fadeOutDuration, fadeInDuration, null);
+            TeleportTo(anchor, fadeOutDuration, holdDuration, fadeInDuration);
         }
 
-        /// <summary>Uses a slower story fade without changing normal debug/event teleport timing.</summary>
-        public void TeleportToSlow(BlinkTeleportAnchor anchor, float fadeSeconds, System.Action completed)
+        /// <summary>
+        /// Teleports with per-trip durations in unscaled seconds without changing
+        /// the normal blink settings. Non-positive durations skip that stage.
+        /// </summary>
+        public void TeleportTo(BlinkTeleportAnchor anchor, float fadeOutDuration,
+            float holdDuration, float fadeInDuration)
         {
-            BeginTeleport(anchor, Mathf.Max(0f, fadeSeconds), Mathf.Max(0f, fadeSeconds), completed);
+            TeleportTo(anchor, fadeOutDuration, holdDuration, fadeInDuration, null);
         }
 
-        private void BeginTeleport(BlinkTeleportAnchor anchor, float fadeOut, float fadeIn, System.Action completed)
+        /// <summary>Runs a trip and invokes onArrived after the fade-in completes.
+        /// A cancelled or superseded trip never invokes onArrived; it invokes onCancelled instead.</summary>
+        public Coroutine TeleportTo(BlinkTeleportAnchor anchor, float fadeOutDuration,
+            float holdDuration, float fadeInDuration, Action onArrived, Action onCancelled = null)
         {
             if (anchor == null)
             {
                 Debug.LogWarning("BlinkTeleporter: TeleportTo called with null anchor; ignoring.", this);
-                return;
+                return null;
             }
 
             if (_activeRoutine != null)
+            {
                 StopCoroutine(_activeRoutine);
+                _activeRoutine = null;
+                InvokeCancelled();
+            }
 
             SessionEvents.Interaction("teleported", anchor);
-            _activeRoutine = StartCoroutine(TeleportRoutine(anchor, fadeOut, fadeIn, completed));
+            _activeCancelled = onCancelled;
+            _activeRoutine = StartCoroutine(TeleportRoutine(anchor,
+                fadeOutDuration, holdDuration, fadeInDuration, onArrived));
+            return _activeRoutine;
         }
 
-        private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor, float fadeOut, float fadeIn, System.Action completed)
+        /// <summary>Cancels only the specified active trip and clears its fade.</summary>
+        public void CancelTeleport(Coroutine trip)
+        {
+            if (trip == null || trip != _activeRoutine) return;
+            StopCoroutine(_activeRoutine);
+            _activeRoutine = null;
+            if (fadeOverlay != null) fadeOverlay.SetAlpha(0f);
+            InvokeCancelled();
+        }
+
+        private void InvokeCancelled()
+        {
+            Action cancelled = _activeCancelled;
+            _activeCancelled = null;
+            cancelled?.Invoke();
+        }
+
+        private void OnDisable() => CancelTeleport(_activeRoutine);
+
+        private IEnumerator TeleportRoutine(BlinkTeleportAnchor anchor,
+            float fadeOutDuration, float holdDuration, float fadeInDuration, Action onArrived)
         {
             ForceReleaseBothHands();
 
             float startAlpha = fadeOverlay != null ? fadeOverlay.CurrentAlpha : 0f;
-            yield return FadeTo(1f, fadeOut, startAlpha);
+            yield return FadeTo(1f, fadeOutDuration, startAlpha);
 
             MoveRig(anchor);
 
             yield return WaitUnscaled(holdDuration);
 
-            yield return FadeTo(0f, fadeIn, 1f);
+            yield return FadeTo(0f, fadeInDuration, 1f);
 
             _activeRoutine = null;
-            completed?.Invoke();
+            _activeCancelled = null;
+            onArrived?.Invoke();
         }
 
         private void ForceReleaseBothHands()

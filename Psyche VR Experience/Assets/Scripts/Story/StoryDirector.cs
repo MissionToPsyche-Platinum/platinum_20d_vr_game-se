@@ -1,7 +1,10 @@
+using System.Collections;
 using PsycheVR.Modes;
 using PsycheVR.VR;
 using PsycheVR.Kiosk;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 #if UNITY_EDITOR
 using UnityEngine.InputSystem;
 #endif
@@ -20,14 +23,28 @@ namespace PsycheVR.Story
         [SerializeField] private ObjectiveHighlight objectiveHighlight;
         [Tooltip("Assign the model spacecraft when the story target is finalized.")]
         [SerializeField] private Transform introSpacecraft;
+        [Tooltip("Rig teleporter used for the memory trip and the return to the desk.")]
+        [SerializeField] private BlinkTeleporter teleporter;
+        [Header("Memory transition")]
+        [SerializeField] private BlinkTeleportAnchor bedroomArrival;
+        [Tooltip("Optional date placement in the bedroom. Empty uses the current camera view.")]
+        [SerializeField] private Transform memoryDateAnchor;
+        [SerializeField, Min(0f)] private float memoryFadeOutDuration = 1.5f;
+        [SerializeField, Min(0f)] private float memoryHoldDuration = 0.8f;
+        [SerializeField, Min(0f)] private float memoryFadeInDuration = 1.5f;
+        [SerializeField, Min(0f)] private float memoryDateDuration = 2.5f;
+        private Coroutine pendingMemoryTrip;
+        private Coroutine memoryTrip;
+        private Coroutine dateRoutine;
+        private bool showingMemoryDate;
 
         [Header("Phase 4: End the memory")]
         [Tooltip("Root of the bedroom puzzle; only its tagged snap zones count toward ChildLaunch.")]
         [SerializeField] private Transform bedroomPuzzle;
         [SerializeField] private ButtonController childLaunchButton;
-        [SerializeField] private BlinkTeleporter teleporter;
         [SerializeField] private BlinkTeleportAnchor storyDeskReturn;
         [Min(0f)] [SerializeField] private float returnFadeSeconds = 1.5f;
+        [Min(0f)] [SerializeField] private float returnHoldSeconds = 0.8f;
 
         [Header("Phase 5: Real launch")]
         [Tooltip("Mission-control launch button. Its video target must be the launch video below.")]
@@ -41,6 +58,7 @@ namespace PsycheVR.Story
         private bool realLaunchPressed;
         private bool deskReturnComplete;
         private PuzzleCompletion buildPuzzle;
+        private XRGrabInteractable introGrab;
 
         public StoryPhase CurrentPhase => sequence.CurrentPhase;
 
@@ -78,6 +96,9 @@ namespace PsycheVR.Story
                 deskReturnComplete = false;
             }
             StopWatchingPuzzle();
+            CancelMemoryTrip();
+            if (phase != StoryPhase.Build || !showingMemoryDate)
+                ClearMemoryDate();
             Debug.Log($"[StoryDirector] Entering {phase}.", this);
             PresentPhase(phase);
             if (phase == StoryPhase.Build)
@@ -124,8 +145,13 @@ namespace PsycheVR.Story
 
         private void PresentPhase(StoryPhase phase)
         {
+            UnsubscribeFromGrab();
             if (phase == StoryPhase.Intro)
             {
+                introGrab = introSpacecraft != null
+                    ? introSpacecraft.GetComponent<XRGrabInteractable>() : null;
+                if (introGrab != null)
+                    introGrab.selectEntered.AddListener(OnIntroGrabbed);
                 if (dateCard != null && storyText != null)
                     dateCard.Show(storyText.IntroDateText);
                 if (objectiveHighlight != null)
@@ -133,13 +159,21 @@ namespace PsycheVR.Story
             }
             else
             {
-                if (dateCard != null) dateCard.Hide();
+                if (dateCard != null && !(phase == StoryPhase.Build && showingMemoryDate))
+                    dateCard.Hide();
                 if (objectiveHighlight != null) objectiveHighlight.Hide();
+                if (phase == StoryPhase.Memory && Application.isPlaying)
+                {
+                    if (teleporter != null && bedroomArrival != null)
+                        pendingMemoryTrip = StartCoroutine(StartMemoryTrip());
+                    else
+                        Debug.LogWarning("[StoryDirector] Memory requires a teleporter and bedroom arrival anchor.", this);
+                }
             }
 
             UpdateLaunchButtons();
             if (phase == StoryPhase.RealLaunch && deskReturnComplete && !realLaunchPressed && dateCard != null)
-                dateCard.Show("October 2023");
+                dateCard.Show(storyText != null ? storyText.LaunchDateText : string.Empty);
         }
 
         private void UpdateLaunchButtons()
@@ -171,7 +205,18 @@ namespace PsycheVR.Story
 
             returningToDesk = true;
             Advance();
-            teleporter.TeleportToSlow(storyDeskReturn, returnFadeSeconds, FinishDeskReturn);
+            teleporter.TeleportTo(storyDeskReturn, returnFadeSeconds,
+                returnHoldSeconds, returnFadeSeconds, FinishDeskReturn, AbandonDeskReturn);
+        }
+
+        // A replaced or cancelled return trip never arrives; unlock the real launch
+        // anyway so the story cannot stay stuck in RealLaunch.
+        private void AbandonDeskReturn()
+        {
+            if (this == null) return;
+            returningToDesk = false;
+            if (isActiveAndEnabled && GameModeManager.IsStory && CurrentPhase == StoryPhase.RealLaunch)
+                UpdateLaunchButtons();
         }
 
         private void FinishDeskReturn()
@@ -181,7 +226,7 @@ namespace PsycheVR.Story
             deskReturnComplete = true;
             if (!isActiveAndEnabled || !GameModeManager.IsStory || CurrentPhase != StoryPhase.RealLaunch)
                 return;
-            if (dateCard != null) dateCard.Show("October 2023");
+            if (dateCard != null) dateCard.Show(storyText != null ? storyText.LaunchDateText : string.Empty);
             UpdateLaunchButtons();
         }
 
@@ -224,9 +269,59 @@ namespace PsycheVR.Story
                 Advance();
         }
 
+        private IEnumerator StartMemoryTrip()
+        {
+            // Leave the XRI selectEntered dispatch before force-releasing the hands.
+            yield return null;
+            pendingMemoryTrip = null;
+            if (!GameModeManager.IsStory || teleporter == null || bedroomArrival == null || !teleporter.isActiveAndEnabled)
+                yield break;
+            memoryTrip = teleporter.TeleportTo(bedroomArrival, memoryFadeOutDuration,
+                memoryHoldDuration, memoryFadeInDuration, OnMemoryArrived);
+        }
+
+        private void OnMemoryArrived()
+        {
+            memoryTrip = null;
+            if (!isActiveAndEnabled || !GameModeManager.IsStory || CurrentPhase != StoryPhase.Memory)
+                return;
+
+            showingMemoryDate = true;
+            if (dateCard != null)
+                dateCard.Show(storyText != null ? storyText.BuildDateText : string.Empty, memoryDateAnchor);
+            Advance(); // Memory is only the trip; keep its arrival card visible in Build.
+            dateRoutine = StartCoroutine(HideMemoryDate());
+        }
+
+        private IEnumerator HideMemoryDate()
+        {
+            yield return new WaitForSecondsRealtime(memoryDateDuration);
+            dateRoutine = null;
+            showingMemoryDate = false;
+            if (dateCard != null) dateCard.Hide();
+        }
+
+        private void CancelMemoryTrip()
+        {
+            if (pendingMemoryTrip != null) StopCoroutine(pendingMemoryTrip);
+            pendingMemoryTrip = null;
+            if (teleporter != null) teleporter.CancelTeleport(memoryTrip);
+            memoryTrip = null;
+        }
+
+        private void ClearMemoryDate()
+        {
+            if (dateRoutine != null) StopCoroutine(dateRoutine);
+            dateRoutine = null;
+            showingMemoryDate = false;
+        }
+
         private void OnDisable()
         {
             StopWatchingPuzzle();
+            CancelMemoryTrip();
+            ClearMemoryDate();
+            UnsubscribeFromGrab();
             if (!started) return;
             UnsubscribeLaunchEvents();
             if (childLaunchButton != null) childLaunchButton.SetStoryInteractionAllowed(false);
@@ -249,8 +344,26 @@ namespace PsycheVR.Story
         private void OnDestroy()
         {
             StopWatchingPuzzle();
+            UnsubscribeFromGrab();
             sequence.PhaseChanged -= EnterPhase;
             UnsubscribeLaunchEvents();
+        }
+
+        private void OnIntroGrabbed(SelectEnterEventArgs args)
+        {
+            if (!started || !isActiveAndEnabled || !GameModeManager.IsStory ||
+                CurrentPhase != StoryPhase.Intro)
+                return;
+
+            // Entering Memory hides the objective and removes this listener.
+            Advance();
+        }
+
+        private void UnsubscribeFromGrab()
+        {
+            if (introGrab != null)
+                introGrab.selectEntered.RemoveListener(OnIntroGrabbed);
+            introGrab = null;
         }
 
 #if UNITY_EDITOR
