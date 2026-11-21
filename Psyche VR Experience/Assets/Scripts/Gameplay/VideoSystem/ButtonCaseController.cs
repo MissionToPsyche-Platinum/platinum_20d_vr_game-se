@@ -10,6 +10,7 @@ public class ButtonCaseController : MonoBehaviour, ISessionInteractable
     private bool _isOpen = false;
     private bool _assistActive = false;
     private bool _forceOpening = false;
+    private bool _openAllowed = true;
 
     public HingeJoint Hinge { get => _hinge; set => _hinge = value; }
     [SerializeField] private bool startOpenForTesting = false;
@@ -42,6 +43,40 @@ public class ButtonCaseController : MonoBehaviour, ISessionInteractable
 
     public void SetIsOpen(bool value) => _isOpen = value;
 
+    /// <summary>Whether the player can open the case right now. True unless Story mode holds it shut.</summary>
+    public bool OpenAllowed => _openAllowed;
+
+    /// <summary>
+    /// Story mode holds the case shut until the real launch. While not allowed the case cannot be grabbed and
+    /// its body is kinematic, so a hand cannot push it open either. No effect once the case is open.
+    /// </summary>
+    public void SetOpenAllowed(bool allowed)
+    {
+        _openAllowed = allowed;
+        if (GetIsOpen())
+            return;
+
+        if (_grabInteractable == null)
+            _grabInteractable = GetComponent<XRGrabInteractable>();
+        if (_grabInteractable != null)
+        {
+            if (!allowed && _grabInteractable.isSelected && _grabInteractable.interactionManager != null)
+                _grabInteractable.interactionManager.CancelInteractableSelection(
+                    (IXRSelectInteractable)_grabInteractable);
+            _grabInteractable.enabled = allowed;
+        }
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+            rb.isKinematic = !allowed;
+
+        if (!allowed)
+        {
+            _forceOpening = false;
+            if (_assistActive) RemoveOpenAssist();
+        }
+    }
+
     // Wired to this object's own XRGrabInteractable Select Entered event, so
     // selecting the case (the "Open The Case" prompt) opens it immediately
     // instead of requiring the player to physically swing it open. Reuses
@@ -49,7 +84,7 @@ public class ButtonCaseController : MonoBehaviour, ISessionInteractable
     // the end state is identical either way.
     public void OpenOnInteract()
     {
-        if (GetIsOpen())
+        if (GetIsOpen() || !_openAllowed)
             return;
 
         SessionEvents.Interaction("button_case_opened", this);
@@ -94,7 +129,7 @@ public class ButtonCaseController : MonoBehaviour, ISessionInteractable
 
     void Update()
     {
-        if (GetIsOpen() || Hinge == null || Mathf.Approximately(Time.timeScale, 0f))
+        if (GetIsOpen() || !_openAllowed || Hinge == null || Mathf.Approximately(Time.timeScale, 0f))
             return;
 
         float angle = Hinge.angle;

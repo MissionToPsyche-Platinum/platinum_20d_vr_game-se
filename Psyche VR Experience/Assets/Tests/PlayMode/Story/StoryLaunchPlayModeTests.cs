@@ -340,6 +340,44 @@ namespace PsycheVR.Story.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator GlassCaseStaysShutUntilReturnAndOpeningItUnlocksRealLaunch()
+        {
+            CreateReturnFixture();
+            owner.SetActive(false);
+            var caseObject = new GameObject("Glass case");
+            caseObject.transform.SetParent(owner.transform);
+            var body = caseObject.AddComponent<Rigidbody>();
+            body.useGravity = false;
+            caseObject.AddComponent<BoxCollider>();
+            caseObject.AddComponent<HingeJoint>();
+            var grab = (Behaviour)caseObject.AddComponent(Type.GetType(
+                "UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable, Unity.XR.Interaction.Toolkit", true));
+            var glassCase = caseObject.AddComponent(RuntimeType("ButtonCaseController"));
+            Assign(glassCase, "launchButton", button);
+            Assign(director, "realLaunchCase", glassCase);
+            owner.SetActive(true);
+            yield return null;
+            Func<bool> openAllowed = () => (bool)glassCase.GetType().GetProperty("OpenAllowed").GetValue(glassCase);
+
+            Assert.That(openAllowed(), Is.False, "Intro holds the case shut.");
+            Assert.That(grab.enabled, Is.False);
+            Assert.That(body.isKinematic, Is.True, "A shut case cannot be pushed open by a hand.");
+            Call(director, "GoTo", StoryPhase.ChildLaunch);
+            Call(childButton, "PressButton");
+            Assert.That(openAllowed(), Is.False, "Still shut during the return trip.");
+            yield return new WaitForSecondsRealtime(0.3f);
+
+            Assert.That(openAllowed(), Is.True, "Back at the desk the case can be opened.");
+            Assert.That(grab.enabled, Is.True);
+            Assert.That(body.isKinematic, Is.False);
+            Assert.That(IsUnlocked(button), Is.False, "The button is not slappable through the closed case.");
+            glassCase.GetType().GetMethod("LockCaseOpen", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(glassCase, null);
+            Assert.That(IsUnlocked(button), Is.True, "Opening the case makes the button slappable.");
+            completed.Invoke();
+            Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
+        }
+
+        [UnityTest]
         public IEnumerator CaseUnlockAndDirectPressCannotBypassStoryPhaseGate()
         {
             CreateReturnFixture();
