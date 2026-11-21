@@ -150,7 +150,7 @@ namespace PsycheVR.Story.Tests
         public void ArrivalDateHasTextPresentationAndBedroomPlacement()
         {
             var text = Reference<ScriptableObject>(director, "storyText");
-            Assert.That(text.GetType().GetProperty("MemoryDateText").GetValue(text), Is.EqualTo("2003"));
+            Assert.That(text.GetType().GetProperty("BuildDateText").GetValue(text), Is.EqualTo("October 2003"));
             var card = Reference<Component>(director, "dateCard");
             Assert.That(card.GetType(), Is.EqualTo(RuntimeType("PsycheVR.Story.StoryDateCard")));
             Assert.That(card.gameObject.scene, Is.EqualTo(bedroom));

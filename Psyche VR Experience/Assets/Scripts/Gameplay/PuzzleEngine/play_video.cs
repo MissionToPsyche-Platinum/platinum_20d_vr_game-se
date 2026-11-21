@@ -8,6 +8,9 @@ public class play_video : MonoBehaviour
     [SerializeField] private UnityEvent onVideoStarted = new UnityEvent();
     [SerializeField] private UnityEvent onVideoCompleted = new UnityEvent();
 
+    /// <summary>Completion of this player's video, also available to runtime subscribers.</summary>
+    public UnityEvent OnVideoCompleted => onVideoCompleted;
+
     void Start()
     {
         EnsurePlayer();

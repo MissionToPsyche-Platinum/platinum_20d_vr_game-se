@@ -27,6 +27,18 @@ namespace PsycheVR.Kiosk
         [SerializeField] private UnityEvent onCompleted = new UnityEvent();
 
         private SnapZone[][] _puzzles = Array.Empty<SnapZone[]>();
+        private bool initialized;
+
+        /// <summary>Optional story puzzle scope. Null preserves scene-wide kiosk discovery.</summary>
+        public Transform PuzzleRoot { get; private set; }
+
+        /// <summary>Configure a newly created watcher before its first Start.</summary>
+        public void SetPuzzleRoot(Transform root)
+        {
+            if (initialized)
+                throw new InvalidOperationException("Puzzle scope must be set before Start.");
+            PuzzleRoot = root;
+        }
 
         /// <summary>Raised once when every zone of one puzzle has snapped.</summary>
         public event Action Completed;
@@ -53,6 +65,7 @@ namespace PsycheVR.Kiosk
 
         private void Start()
         {
+            initialized = true;
             // Include inactive so the four zones that start with their component disabled
             // are still found, then drop zones whose GameObject is deactivated: a zone
             // under a ModeGate that is off for this mode can never snap, and counting it
@@ -63,6 +76,10 @@ namespace PsycheVR.Kiosk
             int untagged = 0;
             foreach (var zone in found)
             {
+                if (zone != null && zone.gameObject.scene != gameObject.scene)
+                    continue;
+                if (zone != null && PuzzleRoot != null && !zone.transform.IsChildOf(PuzzleRoot))
+                    continue;
                 if (zone == null || !zone.gameObject.activeInHierarchy)
                 {
                     inactive++;
@@ -74,7 +91,8 @@ namespace PsycheVR.Kiosk
                     continue;
                 }
 
-                UnityEngine.Object key = zone.textManager != null ? zone.textManager : zone.transform.root;
+                UnityEngine.Object key = PuzzleRoot != null ? PuzzleRoot
+                    : zone.textManager != null ? zone.textManager : zone.transform.root;
                 if (!groups.TryGetValue(key, out var zones))
                     groups.Add(key, zones = new List<SnapZone>());
                 zones.Add(zone);

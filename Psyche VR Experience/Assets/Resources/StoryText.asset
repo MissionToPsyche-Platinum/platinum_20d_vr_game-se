@@ -13,4 +13,3 @@ MonoBehaviour:
   m_Name: StoryText
   m_EditorClassIdentifier: Assembly-CSharp::PsycheVR.Story.StoryText
   introDateText: October 13, 2023
-  memoryDateText: 2003

@@ -149,7 +149,7 @@ namespace PsycheVR.Story.PlayModeTests
             Assert.That(rig.position, Is.EqualTo(anchor.position));
             Assert.That(Quaternion.Angle(rig.rotation, anchor.rotation), Is.LessThan(0.01f));
             Assert.That(Read(card, "IsVisible"), Is.True);
-            Assert.That(Read(card, "CurrentText"), Is.EqualTo("2003"));
+            Assert.That(Read(card, "CurrentText"), Is.EqualTo("October 2003"));
             var forward = Vector3.ProjectOnPlane(camera.transform.forward, Vector3.up).normalized;
             Assert.That(Vector3.Distance(card.transform.position, camera.transform.position + forward * 1.6f), Is.LessThan(0.001f));
             yield return new WaitForSecondsRealtime(0.1f);
@@ -210,6 +210,68 @@ namespace PsycheVR.Story.PlayModeTests
             yield return null;
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
             Assert.That(phaseLogs, Is.EqualTo(expected));
+        }
+
+        [UnityTest]
+        public IEnumerator BuildDetectsPuzzleSolvedBeforeWatcherStarts()
+        {
+            CreateDirector("Story");
+            var zone = owner.AddComponent(RuntimeType("SnapZone"));
+            zone.GetType().GetField("requiredTag").SetValue(zone, "Untagged");
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            yield return null;
+            director.GetType().GetMethod("GoTo").Invoke(director, new object[] { StoryPhase.Build });
+            yield return null; // The new watcher discovers already-snapped zones in Start.
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro.",
+                "[StoryDirector] Entering Build.", "[StoryDirector] Entering ChildLaunch." }));
+        }
+
+        [UnityTest]
+        public IEnumerator BuildAdvancesWhenTrackedZoneSnaps()
+        {
+            CreateDirector("Story");
+            var zone = owner.AddComponent(RuntimeType("SnapZone"));
+            zone.GetType().GetField("requiredTag").SetValue(zone, "Untagged");
+            yield return null;
+            director.GetType().GetMethod("GoTo").Invoke(director, new object[] { StoryPhase.Build });
+            yield return null;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            // Feed the same notification used by SnapNextFrame after a successful snap.
+            var snapped = (Delegate)zone.GetType().GetField("Snapped",
+                BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            snapped.DynamicInvoke(zone);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            yield return null;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+        }
+
+        [UnityTest]
+        public IEnumerator DisabledDirectorCatchesUpWhenReenabledThroughUnityLifecycle()
+        {
+            CreateDirector("Story");
+            var zone = owner.AddComponent(RuntimeType("SnapZone"));
+            zone.GetType().GetField("requiredTag").SetValue(zone, "Untagged");
+            yield return null;
+            director.GetType().GetMethod("GoTo").Invoke(director, new object[] { StoryPhase.Build });
+            yield return null;
+
+            var behaviour = (Behaviour)director;
+            behaviour.enabled = false;
+            zone.GetType().GetField("hasSnapped").SetValue(zone, true);
+            var snapped = (Delegate)zone.GetType().GetField("Snapped",
+                BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            snapped.DynamicInvoke(zone);
+            var puzzle = owner.GetComponent(RuntimeType("PsycheVR.Kiosk.PuzzleCompletion"));
+            Assert.That(Read(puzzle, "IsComplete"), Is.True);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+
+            behaviour.enabled = true;
+            yield return null;
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro.",
+                "[StoryDirector] Entering Build.", "[StoryDirector] Entering ChildLaunch." }));
         }
 
         [UnityTest]

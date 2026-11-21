@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -13,8 +14,14 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     public float pressSpeed = 5f;
 
     [Header("Press Action")]
+    [Tooltip("Invoked when a press is accepted, after the existing video and animation actions start.")]
+    public UnityEvent onPressed = new UnityEvent();
+
     [Tooltip("Video target started when the button is pressed. If unset, the first play_video component in the scene is used.")]
     [SerializeField] private play_video videoToStart;
+    [Tooltip("Disable for the story bedroom button, which ends the memory instead of playing a video.")]
+    [SerializeField] private bool startVideoOnPress = true;
+    private bool storyInteractionAllowed = true;
 
     [Header("Hand Slap")]
     [Tooltip("The dome key the hand slaps (same as the puzzle board's buttons). When set, it does the slap detection, sink, sound and haptics, and the older hand-path check below is not used.")]
@@ -40,6 +47,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     // the XRSimpleInteractable stays disabled so pointing and pulling the trigger or grip does nothing.
     private bool _unlocked;
 
+    /// <summary>Whether a slap can currently activate this button.</summary>
+    public bool IsUnlocked => _unlocked && storyInteractionAllowed;
+
     private readonly List<Transform> _hands = new List<Transform>();
     private readonly Dictionary<Transform, Vector3> _lastHandPositions = new Dictionary<Transform, Vector3>();
     private float _lastSlapTime = -Mathf.Infinity;
@@ -48,8 +58,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     private const float SlapHapticDuration = 0.06f;
     private float _nextHandRefreshTime = -Mathf.Infinity;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    // Initialize before StoryDirector.Start can unlock the button. Start order
+    // between components is unspecified.
+    void Awake()
     {
         _interactable = GetComponent<XRSimpleInteractable>();
 
@@ -156,22 +167,35 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     /// <summary>Called by the glass case once it is fully open: from then on a slap presses the button.</summary>
     public void UnlockButton()
     {
+        if (!storyInteractionAllowed) return;
         _unlocked = true;
         if (slapKey != null) slapKey.Blocked = false;
         FindHands();
     }
 
+    /// <summary>Gates story buttons independently of the case's normal unlock action.</summary>
+    public void SetStoryInteractionAllowed(bool allowed)
+    {
+        storyInteractionAllowed = allowed;
+        if (!allowed)
+        {
+            _unlocked = false;
+            if (slapKey != null) slapKey.Blocked = true;
+        }
+    }
+
     public void PressButton()
     {
-        if (_isAnimating)
+        if (_isAnimating || !IsUnlocked)
             return;
 
         _unlocked = false; // one press per session
         if (slapKey != null) slapKey.Blocked = true;   // the key still finishes its sink and spring-back
 
         SessionEvents.Interaction("video_button_pressed", this);
-        StartVideo();
+        if (startVideoOnPress) StartVideo();
         if (slapKey == null && buttonTop != null) StartCoroutine(AnimateButton());
+        onPressed.Invoke();
     }
 
     private void StartVideo()

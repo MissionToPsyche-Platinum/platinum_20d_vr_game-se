@@ -38,6 +38,7 @@ namespace PsycheVR.VR
         [SerializeField] private float fadeInDuration = 0.35f;
 
         private Coroutine _activeRoutine;
+        private Action _activeCancelled;
         private readonly List<IXRSelectInteractable> _releaseBuffer = new List<IXRSelectInteractable>();
 
         /// <summary>
@@ -68,9 +69,9 @@ namespace PsycheVR.VR
         }
 
         /// <summary>Runs a trip and invokes onArrived after the fade-in completes.
-        /// A cancelled or superseded trip never invokes its callback.</summary>
+        /// A cancelled or superseded trip never invokes onArrived; it invokes onCancelled instead.</summary>
         public Coroutine TeleportTo(BlinkTeleportAnchor anchor, float fadeOutDuration,
-            float holdDuration, float fadeInDuration, Action onArrived)
+            float holdDuration, float fadeInDuration, Action onArrived, Action onCancelled = null)
         {
             if (anchor == null)
             {
@@ -79,9 +80,14 @@ namespace PsycheVR.VR
             }
 
             if (_activeRoutine != null)
+            {
                 StopCoroutine(_activeRoutine);
+                _activeRoutine = null;
+                InvokeCancelled();
+            }
 
             SessionEvents.Interaction("teleported", anchor);
+            _activeCancelled = onCancelled;
             _activeRoutine = StartCoroutine(TeleportRoutine(anchor,
                 fadeOutDuration, holdDuration, fadeInDuration, onArrived));
             return _activeRoutine;
@@ -94,6 +100,14 @@ namespace PsycheVR.VR
             StopCoroutine(_activeRoutine);
             _activeRoutine = null;
             if (fadeOverlay != null) fadeOverlay.SetAlpha(0f);
+            InvokeCancelled();
+        }
+
+        private void InvokeCancelled()
+        {
+            Action cancelled = _activeCancelled;
+            _activeCancelled = null;
+            cancelled?.Invoke();
         }
 
         private void OnDisable() => CancelTeleport(_activeRoutine);
@@ -113,6 +127,7 @@ namespace PsycheVR.VR
             yield return FadeTo(0f, fadeInDuration, 1f);
 
             _activeRoutine = null;
+            _activeCancelled = null;
             onArrived?.Invoke();
         }
 
