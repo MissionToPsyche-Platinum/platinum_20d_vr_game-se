@@ -1,4 +1,5 @@
 using PsycheVR.Modes;
+using PsycheVR.Kiosk;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEngine.InputSystem;
@@ -20,6 +21,7 @@ namespace PsycheVR.Story
         [SerializeField] private Transform introSpacecraft;
         private readonly StoryPhaseSequence sequence = new StoryPhaseSequence();
         private bool started;
+        private PuzzleCompletion buildPuzzle;
 
         public StoryPhase CurrentPhase => sequence.CurrentPhase;
 
@@ -50,8 +52,45 @@ namespace PsycheVR.Story
 
         private void EnterPhase(StoryPhase phase)
         {
+            StopWatchingPuzzle();
             Debug.Log($"[StoryDirector] Entering {phase}.", this);
             PresentPhase(phase);
+            if (phase == StoryPhase.Build)
+                WatchBuildPuzzle();
+        }
+
+        private void WatchBuildPuzzle()
+        {
+            // The Kiosk watcher is gated off in Story mode. Reuse an active
+            // scene-local watcher, or create one here without enabling the kiosk.
+            foreach (var puzzle in FindObjectsByType<PuzzleCompletion>(FindObjectsSortMode.None))
+            {
+                if (puzzle.isActiveAndEnabled && puzzle.gameObject.scene == gameObject.scene)
+                {
+                    buildPuzzle = puzzle;
+                    break;
+                }
+            }
+            if (buildPuzzle == null)
+                buildPuzzle = gameObject.AddComponent<PuzzleCompletion>();
+
+            if (buildPuzzle.IsComplete)
+                OnBuildCompleted();
+            else
+                buildPuzzle.Completed += OnBuildCompleted;
+        }
+
+        private void OnBuildCompleted()
+        {
+            if (CurrentPhase == StoryPhase.Build)
+                Advance();
+        }
+
+        private void StopWatchingPuzzle()
+        {
+            if (buildPuzzle != null)
+                buildPuzzle.Completed -= OnBuildCompleted;
+            buildPuzzle = null;
         }
 
         private void PresentPhase(StoryPhase phase)
@@ -72,6 +111,7 @@ namespace PsycheVR.Story
 
         private void OnDisable()
         {
+            StopWatchingPuzzle();
             if (!started) return;
             if (dateCard != null) dateCard.Hide();
             if (objectiveHighlight != null) objectiveHighlight.Hide();
@@ -80,11 +120,16 @@ namespace PsycheVR.Story
         private void OnEnable()
         {
             if (started && GameModeManager.IsStory)
+            {
                 PresentPhase(sequence.CurrentPhase);
+                if (CurrentPhase == StoryPhase.Build)
+                    WatchBuildPuzzle();
+            }
         }
 
         private void OnDestroy()
         {
+            StopWatchingPuzzle();
             sequence.PhaseChanged -= EnterPhase;
         }
 

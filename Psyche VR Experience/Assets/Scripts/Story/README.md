@@ -1,4 +1,4 @@
-# US 218: Intro integration
+# Story integration: Intro (US 218) and Build (US 220)
 
 Bedroom contains StoryDirector at the scene root and a Story-only group "Story"
 (ModeGate Story) holding StoryDeskStart, the StoryDateCard prefab and the
@@ -25,6 +25,38 @@ starts in Story mode.
   and Hide().
 
 ## Automated verification
+
+### Build / task 228
+
+Entering Build finds an active PuzzleCompletion in the director's scene. The
+existing Kiosk watcher is disabled in Story mode, so the director adds a watcher
+to its own object if needed. That watcher discovers the active puzzle zones in
+Start, including pieces already snapped before Build. Watchers ignore zones in
+other loaded scenes.
+
+The director checks IsComplete before subscribing to Completed, then calls
+Advance on completion to enter ChildLaunch. Leaving Build or disabling the
+director removes the subscription; re-enabling during Build checks completion
+again. InstructionTextManager continues handling individual piece explanations.
+
+Regression tests cover completion during Build, completion before Build,
+disable/re-enable catch-up, leaving and re-entering Build, and creating a Story
+watcher without activating the kiosk. PlayMode tests exercise watcher startup
+with an already-solved zone and a snap notification after entering Build.
+
+Verification status (November 17, 2026): diff checks passed. The Unity 6000.3.8f1
+batch EditMode run stalled reading cached shader assets during editor startup
+and was stopped before tests ran. The new EditMode and PlayMode tests still need
+to be run in Unity; no passing result is claimed for Build yet.
+
+Manual acceptance check: open Bedroom in Story mode, press F8 twice to enter
+Build, and finish the spacecraft puzzle. Expect `[StoryDirector] Entering
+ChildLaunch.` once. Repeat with the puzzle finished before entering Build;
+ChildLaunch should follow immediately (or when the new watcher starts). Check
+that snapped pieces still show their explanations. Event mode should retain its
+existing kiosk behavior.
+
+### Intro
 
 In Unity's Test Runner, run `PsycheVR.Story.Tests` under EditMode and
 `PsycheVR.Story.PlayModeTests` under PlayMode. The PlayMode assembly is editor-only
