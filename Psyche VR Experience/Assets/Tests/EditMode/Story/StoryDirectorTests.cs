@@ -46,6 +46,92 @@ namespace PsycheVR.Story.Tests
             Call("Start");
         }
 
+        private Component CreatePuzzle() => owner.AddComponent(
+            Type.GetType("PsycheVR.Kiosk.PuzzleCompletion, Assembly-CSharp", true));
+
+        private void CompletePuzzle(Component puzzle)
+        {
+            // Model the one-shot completion contract, including its persisted state.
+            puzzle.GetType().GetProperty("IsComplete").SetValue(puzzle, true);
+            var completed = (Action)puzzle.GetType().GetField("Completed",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(puzzle);
+            completed?.Invoke();
+        }
+
+        [Test]
+        public void BuildCompletionAdvancesOnceAndUnsubscribes()
+        {
+            var puzzle = CreatePuzzle();
+            StartStory();
+            Call("GoTo", StoryPhase.Build);
+            CompletePuzzle(puzzle);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+            Assert.That(puzzle.GetType().GetField("Completed",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(puzzle), Is.Null);
+            CompletePuzzle(puzzle);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+        }
+
+        [Test]
+        public void PuzzleCompletedBeforeBuildIsNotMissed()
+        {
+            var puzzle = CreatePuzzle();
+            CompletePuzzle(puzzle);
+            StartStory();
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Intro));
+            Call("GoTo", StoryPhase.Build);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+        }
+
+        [Test]
+        public void DisabledDirectorCatchesUpOnCompletionWhenReenabled()
+        {
+            var puzzle = CreatePuzzle();
+            StartStory();
+            Call("GoTo", StoryPhase.Build);
+            director.enabled = false;
+            // Like Start above, invoke lifecycle callbacks explicitly in EditMode:
+            // StoryDirector does not execute outside Play mode.
+            Call("OnDisable");
+            Assert.That(puzzle.GetType().GetField("Completed",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(puzzle), Is.Null);
+            CompletePuzzle(puzzle);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
+            director.enabled = true;
+            Call("OnEnable");
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+        }
+
+        [Test]
+        public void LeavingBuildIgnoresLaterPuzzleCompletion()
+        {
+            var puzzle = CreatePuzzle();
+            StartStory();
+            Call("GoTo", StoryPhase.Build);
+            Call("GoTo", StoryPhase.Memory);
+            CompletePuzzle(puzzle);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.Memory));
+            Call("GoTo", StoryPhase.Build);
+            Assert.That(Phase, Is.EqualTo(StoryPhase.ChildLaunch));
+        }
+
+        [Test]
+        public void BuildCreatesWatcherWhenOnlyInactiveKioskExists()
+        {
+            var kiosk = new GameObject("Inactive kiosk");
+            kiosk.transform.SetParent(owner.transform);
+            kiosk.SetActive(false);
+            var puzzleType = Type.GetType("PsycheVR.Kiosk.PuzzleCompletion, Assembly-CSharp", true);
+            kiosk.AddComponent(puzzleType);
+            StartStory();
+            Call("GoTo", StoryPhase.Build);
+            Assert.That(owner.GetComponent(puzzleType), Is.Not.Null);
+            Assert.That(kiosk.activeSelf, Is.False);
+            Call("GoTo", StoryPhase.Memory);
+            Call("GoTo", StoryPhase.Build);
+            Assert.That(owner.GetComponents(puzzleType), Has.Length.EqualTo(1));
+        }
+
         [Test]
         public void EventModeDoesNotStartAdvanceOrJump()
         {

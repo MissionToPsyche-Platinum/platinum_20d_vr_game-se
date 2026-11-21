@@ -1,5 +1,6 @@
 using PsycheVR.Modes;
 using PsycheVR.VR;
+using PsycheVR.Kiosk;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEngine.InputSystem;
@@ -39,6 +40,7 @@ namespace PsycheVR.Story
         private bool returningToDesk;
         private bool realLaunchPressed;
         private bool deskReturnComplete;
+        private PuzzleCompletion buildPuzzle;
 
         public StoryPhase CurrentPhase => sequence.CurrentPhase;
 
@@ -75,8 +77,49 @@ namespace PsycheVR.Story
                 realLaunchPressed = false;
                 deskReturnComplete = false;
             }
+            StopWatchingPuzzle();
             Debug.Log($"[StoryDirector] Entering {phase}.", this);
             PresentPhase(phase);
+            if (phase == StoryPhase.Build)
+                WatchBuildPuzzle();
+        }
+
+        private void WatchBuildPuzzle()
+        {
+            // The Kiosk watcher is gated off in Story mode. Reuse an active
+            // scene-local watcher, or create one here without enabling the kiosk.
+            foreach (var puzzle in FindObjectsByType<PuzzleCompletion>(FindObjectsSortMode.None))
+            {
+                if (puzzle.isActiveAndEnabled && puzzle.gameObject.scene == gameObject.scene
+                    && puzzle.PuzzleRoot == bedroomPuzzle)
+                {
+                    buildPuzzle = puzzle;
+                    break;
+                }
+            }
+            if (buildPuzzle == null)
+            {
+                buildPuzzle = gameObject.AddComponent<PuzzleCompletion>();
+                buildPuzzle.SetPuzzleRoot(bedroomPuzzle);
+            }
+
+            if (buildPuzzle.IsComplete)
+                OnBuildCompleted();
+            else
+                buildPuzzle.Completed += OnBuildCompleted;
+        }
+
+        private void OnBuildCompleted()
+        {
+            if (CurrentPhase == StoryPhase.Build)
+                Advance();
+        }
+
+        private void StopWatchingPuzzle()
+        {
+            if (buildPuzzle != null)
+                buildPuzzle.Completed -= OnBuildCompleted;
+            buildPuzzle = null;
         }
 
         private void PresentPhase(StoryPhase phase)
@@ -97,7 +140,6 @@ namespace PsycheVR.Story
             UpdateLaunchButtons();
             if (phase == StoryPhase.RealLaunch && deskReturnComplete && !realLaunchPressed && dateCard != null)
                 dateCard.Show("October 2023");
-            if (phase == StoryPhase.Build) CheckPuzzleCompleted();
         }
 
         private void UpdateLaunchButtons()
@@ -114,25 +156,6 @@ namespace PsycheVR.Story
                 realLaunchButton.SetStoryInteractionAllowed(allowed);
                 if (allowed) realLaunchButton.UnlockButton();
             }
-        }
-
-        private void HandlePuzzleSnapped(SnapZone zone)
-        {
-            if (bedroomPuzzle != null && zone != null && zone.transform.IsChildOf(bedroomPuzzle))
-                CheckPuzzleCompleted();
-        }
-
-        private void CheckPuzzleCompleted()
-        {
-            if (CurrentPhase != StoryPhase.Build || bedroomPuzzle == null) return;
-            int required = 0;
-            foreach (var zone in bedroomPuzzle.GetComponentsInChildren<SnapZone>(true))
-            {
-                if (string.IsNullOrEmpty(zone.requiredTag)) continue;
-                required++;
-                if (!zone.hasSnapped) return;
-            }
-            if (required > 0) Advance();
         }
 
         private void HandleChildLaunchPressed()
@@ -177,7 +200,6 @@ namespace PsycheVR.Story
                 return;
 
             if (launchVideo != null) launchVideo.OnVideoCompleted.AddListener(HandleLaunchVideoCompleted);
-            SnapZone.Snapped += HandlePuzzleSnapped;
             if (childLaunchButton != null) childLaunchButton.onPressed.AddListener(HandleChildLaunchPressed);
             if (realLaunchButton != null) realLaunchButton.onPressed.AddListener(HandleRealLaunchPressed);
             launchEventsSubscribed = true;
@@ -190,7 +212,6 @@ namespace PsycheVR.Story
 
             if (launchVideo != null)
                 launchVideo.OnVideoCompleted.RemoveListener(HandleLaunchVideoCompleted);
-            SnapZone.Snapped -= HandlePuzzleSnapped;
             if (childLaunchButton != null) childLaunchButton.onPressed.RemoveListener(HandleChildLaunchPressed);
             if (realLaunchButton != null) realLaunchButton.onPressed.RemoveListener(HandleRealLaunchPressed);
             launchEventsSubscribed = false;
@@ -205,6 +226,7 @@ namespace PsycheVR.Story
 
         private void OnDisable()
         {
+            StopWatchingPuzzle();
             if (!started) return;
             UnsubscribeLaunchEvents();
             if (childLaunchButton != null) childLaunchButton.SetStoryInteractionAllowed(false);
@@ -219,11 +241,14 @@ namespace PsycheVR.Story
             {
                 SubscribeLaunchEvents();
                 PresentPhase(sequence.CurrentPhase);
+                if (CurrentPhase == StoryPhase.Build)
+                    WatchBuildPuzzle();
             }
         }
 
         private void OnDestroy()
         {
+            StopWatchingPuzzle();
             sequence.PhaseChanged -= EnterPhase;
             UnsubscribeLaunchEvents();
         }

@@ -1,4 +1,4 @@
-# US 218: Intro integration
+# Story integration: Intro (US 218), Build (US 220), and Launch (US 230)
 
 Bedroom contains StoryDirector, StoryDateCard, and ObjectiveHighlight on the
 StoryDirector object. The director only starts in Story mode.
@@ -21,6 +21,44 @@ StoryDirector object. The director only starts in Story mode.
   visuals while preserving Show(string)/Show(Transform) and Hide().
 
 ## Automated verification
+
+### Build / task 228
+
+Entering Build finds an active PuzzleCompletion in the director's scene with
+the same puzzle scope. The
+existing Kiosk watcher is disabled in Story mode, so the director adds a watcher
+to its own object if needed. That watcher discovers the active puzzle zones in
+Start, including pieces already snapped before Build. Watchers ignore zones in
+other loaded scenes. When Bedroom Puzzle is assigned, the watcher only counts
+active tagged zones under that root; other puzzles cannot advance the story.
+Unscoped kiosk watchers retain their existing scene-wide behavior.
+
+The director checks IsComplete before subscribing to Completed, then calls
+Advance on completion to enter ChildLaunch. Leaving Build or disabling the
+director removes the subscription; re-enabling during Build checks completion
+again. InstructionTextManager continues handling individual piece explanations.
+
+Regression tests cover completion during Build, completion before Build,
+disable/re-enable catch-up, leaving and re-entering Build, and creating a Story
+watcher without activating the kiosk. PlayMode tests exercise watcher startup
+with an already-solved zone, a snap notification after entering Build, and
+disable/re-enable catch-up through Unity's real lifecycle.
+
+Verified November 21, 2026 in Unity 6000.3.8f1 batch mode: all 24 Story EditMode
+tests and all 15 Story PlayMode tests passed on the combined Phase 3/4/5 branch. Diff checks passed. The EditMode
+catch-up test explicitly invokes OnDisable/OnEnable, just as the fixture invokes
+Start, because StoryDirector does not execute in EditMode. The PlayMode catch-up
+test verifies those callbacks through Unity itself. The Bedroom gameplay and
+headset checks below remain outstanding.
+
+Manual acceptance check: open Bedroom in Story mode, press F8 twice to enter
+Build, and finish the spacecraft puzzle. Expect `[StoryDirector] Entering
+ChildLaunch.` once. Repeat with the puzzle finished before entering Build;
+ChildLaunch should follow immediately (or when the new watcher starts). Check
+that snapped pieces still show their explanations. Event mode should retain its
+existing kiosk behavior.
+
+### Intro
 
 In Unity's Test Runner, run `PsycheVR.Story.Tests` under EditMode and
 `PsycheVR.Story.PlayModeTests` under PlayMode. The PlayMode assembly is editor-only
@@ -53,7 +91,8 @@ LFS before opening the scene if it is still a pointer in a fresh checkout.
 Bedroom now wires both launch phases through StoryDirector:
 
 - **Bedroom Puzzle** is the bedroom's `Snappable (1)` root. While in Build,
-  completing all tagged SnapZones advances to ChildLaunch. Untagged zones and
+  the Phase 3 PuzzleCompletion watcher advances to ChildLaunch when all active
+  tagged SnapZones are complete. Untagged zones and
   snaps from other puzzle roots do not count. Re-enabling the director checks
   for a puzzle completed while it was disabled.
 - **Child Launch Button** is `StoryChildLaunchButton` beside that puzzle on the
@@ -101,16 +140,21 @@ on this branch. Phase 4/5 tests enter Build directly; the full story's acceptanc
 criterion of running from Intro without F8 still depends on the earlier-phase
 integration. Do not mark that end-to-end criterion complete from these tests.
 
-### Checkpoint status — November 20, 2026
+### Combined Phase 3/4/5 status — November 21, 2026
 
-Development is paused for integration of the Phase 2/3 work into develop.
-Scene structural checks found no duplicate object IDs or unresolved local
-references. The PlayMode test sources compiled, and an intermediate runtime
-compilation passed. The Unity test run was stopped during startup while
-offloaded iCloud cache files were being restored; no runtime test pass is
-claimed. The standalone EditMode compile encountered a stale cached response
-file referencing a missing `BedroomStoryIntegrationTests.cs`.
+Phase 3, including its EditMode lifecycle fix, is merged into this branch.
+StoryDirector uses PuzzleCompletion's IsComplete/Completed contract for Build
+instead of maintaining a second snap-completion implementation. The Bedroom
+Puzzle reference scopes the watcher to the intended puzzle. Launch integration
+tests wait for watcher startup and verify that a tagged unrelated puzzle cannot
+advance Build.
 
-After integrating the earlier phases, recompile the final code and run both
-story test suites, inspect the bedroom button placement, and verify the full
-story and Event-mode flows in the scene/headset before closing the tasks.
+Unity 6000.3.8f1 batch results: 24/24 Story EditMode tests and 15/15 Story PlayMode
+tests passed. This includes the Bedroom scene-reference test and the combined
+Build, child-launch return, and video-completion fixtures.
+
+The merge preview against cached origin/develop still reports conflicts in
+Bedroom.unity and ButtonController.cs. Refresh develop and reconcile those
+changes before merging the combined PR. Full Intro/Memory progression and
+manual Bedroom/video/headset checks remain outstanding. These fixture results
+do not establish end-to-end acceptance without F8.

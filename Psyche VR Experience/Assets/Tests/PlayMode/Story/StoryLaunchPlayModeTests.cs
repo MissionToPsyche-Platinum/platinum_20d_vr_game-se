@@ -222,6 +222,7 @@ namespace PsycheVR.Story.PlayModeTests
             CreateReturnFixture();
             yield return null;
             Call(director, "GoTo", StoryPhase.Build); // Earlier phases are a separate integration.
+            yield return null; // Let PuzzleCompletion discover the scoped bedroom zones.
             CompleteZone(zones[0]);
             Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
             Assert.That(childInteractable.enabled, Is.False);
@@ -277,10 +278,13 @@ namespace PsycheVR.Story.PlayModeTests
         {
             CreateReturnFixture();
             yield return null;
-            Call(director, "GoTo", StoryPhase.Build);
             var other = new GameObject("Other puzzle");
             other.transform.SetParent(owner.transform);
-            CompleteZone(other.AddComponent(RuntimeType("SnapZone")));
+            var otherZone = other.AddComponent(RuntimeType("SnapZone"));
+            otherZone.GetType().GetField("requiredTag").SetValue(otherZone, "Untagged");
+            Call(director, "GoTo", StoryPhase.Build);
+            yield return null;
+            CompleteZone(otherZone);
             Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
             director.enabled = false;
             CompleteZone(zones[0]);
