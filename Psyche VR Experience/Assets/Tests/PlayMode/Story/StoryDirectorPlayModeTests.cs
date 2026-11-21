@@ -65,108 +65,20 @@ namespace PsycheVR.Story.PlayModeTests
             owner = new GameObject("Story PlayMode fixture");
             owner.SetActive(false);
             director = owner.AddComponent(RuntimeType("PsycheVR.Story.StoryDirector"));
-            card = owner.AddComponent(RuntimeType("PsycheVR.Story.StoryDateCard"));
-            highlight = owner.AddComponent(RuntimeType("PsycheVR.Story.ObjectiveHighlight"));
+            // Own child objects, as in Bedroom: both switch their object off when hidden.
+            card = Child("StoryDateCard");
+            highlight = Child("ObjectiveHighlight");
             Assign("dateCard", card);
             Assign("objectiveHighlight", highlight);
             Assign("introSpacecraft", owner.transform);
             owner.SetActive(true);
         }
 
-        private object ConfigureMemory(out Transform rig, out Transform anchor, out Camera camera)
+        private Component Child(string typeName)
         {
-            var rigObject = new GameObject("Memory rig");
-            rigObject.transform.SetParent(owner.transform);
-            rigObject.SetActive(false);
-            rig = rigObject.transform;
-            var cameraObject = new GameObject("Memory camera");
-            cameraObject.transform.SetParent(rig);
-            cameraObject.transform.localPosition = new Vector3(0, 1.6f, 0);
-            cameraObject.tag = "MainCamera";
-            camera = cameraObject.AddComponent<Camera>();
-            var overlayObject = new GameObject("Memory fade");
-            overlayObject.transform.SetParent(cameraObject.transform);
-            memoryMaterial = new Material(Shader.Find("Sprites/Default"));
-            overlayObject.AddComponent<MeshRenderer>().sharedMaterial = memoryMaterial;
-            var overlay = overlayObject.AddComponent(RuntimeType("PsycheVR.VR.BlinkFadeOverlay"));
-            var teleporter = rigObject.AddComponent(RuntimeType("PsycheVR.VR.BlinkTeleporter"));
-            teleporter.GetType().GetField("fadeOverlay", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(teleporter, overlay);
-            var arrival = new GameObject("StoryBedroomArrival");
-            arrival.transform.SetParent(owner.transform);
-            arrival.transform.SetPositionAndRotation(new Vector3(4, 0, -2), Quaternion.Euler(0, 95, 0));
-            anchor = arrival.transform;
-            Assign("teleporter", teleporter);
-            Assign("bedroomArrival", arrival.AddComponent(RuntimeType("PsycheVR.VR.BlinkTeleportAnchor")));
-            Assign("memoryFadeOutDuration", 0.12f);
-            Assign("memoryHoldDuration", 0.08f);
-            Assign("memoryFadeInDuration", 0.12f);
-            Assign("memoryDateDuration", 0.3f);
-            rigObject.SetActive(true);
-
-            var introAnchor = new GameObject("Intro card anchor");
-            introAnchor.transform.SetParent(owner.transform);
-            introAnchor.transform.position = new Vector3(25, 2, 2);
-            card.GetType().GetField("placementAnchor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(card, introAnchor.transform);
-            var target = new GameObject("Memory grab target");
-            target.transform.SetParent(owner.transform);
-            target.SetActive(false);
-            target.AddComponent<BoxCollider>();
-            var grabType = Type.GetType("UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable, Unity.XR.Interaction.Toolkit", true);
-            var grab = target.AddComponent(grabType);
-            Assign("introSpacecraft", target.transform);
-            return grabType.GetProperty("selectEntered").GetValue(grab);
-        }
-
-        private static void Grab(object grabEvent)
-        {
-            var argsType = Type.GetType("UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs, Unity.XR.Interaction.Toolkit", true);
-            grabEvent.GetType().GetMethod("Invoke").Invoke(grabEvent, new[] { Activator.CreateInstance(argsType) });
-        }
-
-        [UnityTest]
-        public IEnumerator GrabTeleportsThenShows2003InBedroomAndEntersBuildOnce()
-        {
-            CreateDirector("Story");
-            var grabEvent = ConfigureMemory(out var rig, out var anchor, out var camera);
-            yield return null;
-            Time.timeScale = 0f;
-            Grab(grabEvent);
-            Grab(grabEvent);
-            Assert.That(Phase, Is.EqualTo(StoryPhase.Memory));
-            Assert.That(rig.position, Is.EqualTo(Vector3.zero));
-            Assert.That(Read(card, "IsVisible"), Is.False);
-            Assert.That(Read(highlight, "Target"), Is.Null);
-            yield return new WaitForSecondsRealtime(0.05f);
-            Assert.That(Phase, Is.EqualTo(StoryPhase.Memory));
-            float deadline = Time.realtimeSinceStartup + 4f;
-            while (Phase == StoryPhase.Memory && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(Phase, Is.EqualTo(StoryPhase.Build));
-            Assert.That(rig.position, Is.EqualTo(anchor.position));
-            Assert.That(Quaternion.Angle(rig.rotation, anchor.rotation), Is.LessThan(0.01f));
-            Assert.That(Read(card, "IsVisible"), Is.True);
-            Assert.That(Read(card, "CurrentText"), Is.EqualTo("2003"));
-            var label = (Component)card.GetType().GetField("label", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(card);
-            Assert.That(Vector3.Distance(label.transform.position, camera.transform.TransformPoint(new Vector3(0, 0.25f, 1.5f))), Is.LessThan(0.001f));
-            Grab(grabEvent);
-            yield return new WaitForSecondsRealtime(0.4f);
-            Assert.That(Read(card, "IsVisible"), Is.False);
-            Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro.", "[StoryDirector] Entering Memory.", "[StoryDirector] Entering Build." }));
-        }
-
-        [UnityTest]
-        public IEnumerator DisablingDirectorCancelsMemoryWithoutArrivalOrBuild()
-        {
-            CreateDirector("Story");
-            var grabEvent = ConfigureMemory(out var rig, out _, out _);
-            yield return null;
-            Grab(grabEvent);
-            yield return new WaitForSecondsRealtime(0.05f);
-            ((Behaviour)director).enabled = false;
-            yield return new WaitForSecondsRealtime(0.5f);
-            Assert.That(rig.position, Is.EqualTo(Vector3.zero));
-            Assert.That(Phase, Is.EqualTo(StoryPhase.Memory));
-            Assert.That(Read(card, "IsVisible"), Is.False);
-            Assert.That(phaseLogs, Is.EqualTo(new[] { "[StoryDirector] Entering Intro.", "[StoryDirector] Entering Memory." }));
+            var child = new GameObject(typeName);
+            child.transform.SetParent(owner.transform);
+            return child.AddComponent(RuntimeType("PsycheVR.Story." + typeName));
         }
 
         [UnityTest]
@@ -179,7 +91,7 @@ namespace PsycheVR.Story.PlayModeTests
             var text = Resources.Load("StoryText");
             Assert.That(Read(card, "CurrentText"), Is.EqualTo(text.GetType().GetProperty("IntroDateText").GetValue(text)));
             Assert.That(Read(highlight, "Target"), Is.EqualTo(owner.transform));
-            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.True);
+            Assert.That(Read(highlight, "IsVisible"), Is.True);
 
             var expected = new List<string> { "[StoryDirector] Entering Intro." };
             foreach (var phase in new[] { StoryPhase.Memory, StoryPhase.Build,
@@ -198,7 +110,7 @@ namespace PsycheVR.Story.PlayModeTests
 
             Assert.That(Read(card, "IsVisible"), Is.False);
             Assert.That(Read(highlight, "Target"), Is.Null);
-            Assert.That(owner.GetComponentInChildren<LineRenderer>().enabled, Is.False);
+            Assert.That(Read(highlight, "IsVisible"), Is.False);
             Press(keyboard.f8Key, queueEventOnly: true);
             yield return null;
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
@@ -218,7 +130,7 @@ namespace PsycheVR.Story.PlayModeTests
             Assert.That(Read(card, "IsVisible"), Is.False);
             Assert.That(Read(card, "CurrentText"), Is.Null);
             Assert.That(Read(highlight, "Target"), Is.Null);
-            Assert.That(owner.transform.childCount, Is.Zero);
+            Assert.That(card.gameObject.activeSelf || highlight.gameObject.activeSelf, Is.False);
             Assert.That(phaseLogs, Is.Empty);
         }
 

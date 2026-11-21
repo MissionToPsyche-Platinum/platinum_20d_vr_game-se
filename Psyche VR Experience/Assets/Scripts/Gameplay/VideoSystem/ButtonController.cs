@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using PsycheVR.Data;
+using PsycheVR.Gameplay;
 
 public class ButtonController : MonoBehaviour, ISessionInteractable
 {
@@ -16,6 +17,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     [SerializeField] private play_video videoToStart;
 
     [Header("Hand Slap")]
+    [Tooltip("The dome key the hand slaps (same as the puzzle board's buttons). When set, it does the slap detection, sink, sound and haptics, and the older hand-path check below is not used.")]
+    [SerializeField] private SlapKey slapKey;
+
     [Tooltip("A hand path within this radius (meters) of the button is considered touching it.")]
     [SerializeField] private float slapRadius = 0.12f;
 
@@ -32,6 +36,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     private Vector3 _pressedPosition;
     private bool _isAnimating = false;
     private XRSimpleInteractable _interactable;
+    // Set when the glass case is fully open; cleared by the press. Slapping is the only way to press:
+    // the XRSimpleInteractable stays disabled so pointing and pulling the trigger or grip does nothing.
+    private bool _unlocked;
 
     private readonly List<Transform> _hands = new List<Transform>();
     private readonly Dictionary<Transform, Vector3> _lastHandPositions = new Dictionary<Transform, Vector3>();
@@ -59,7 +66,18 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
             _pressedPosition = _originalPosition - new Vector3(0, pressDistance, 0);
         }
 
+        if (slapKey != null)
+        {
+            slapKey.Blocked = !_unlocked;
+            slapKey.OnPressed.AddListener(OnKeySlapped);
+        }
+
         FindHands();
+    }
+
+    private void OnKeySlapped()
+    {
+        if (_unlocked) PressButton();
     }
 
     // Locates the player's hand controllers so we can detect a physical
@@ -82,14 +100,14 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
 
     void Update()
     {
-        CheckForSlap();
+        if (slapKey == null) CheckForSlap();
     }
 
     // Presses the button when a hand passes through it quickly, instead of
     // requiring the player to point at it and hold the select input.
     private void CheckForSlap()
     {
-        if (_interactable == null || !_interactable.enabled)
+        if (!_unlocked)
             return;
 
         if (_isAnimating)
@@ -135,13 +153,11 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
         }
     }
 
+    /// <summary>Called by the glass case once it is fully open: from then on a slap presses the button.</summary>
     public void UnlockButton()
     {
-        if (_interactable != null)
-        {
-            _interactable.enabled = true;
-        }
-
+        _unlocked = true;
+        if (slapKey != null) slapKey.Blocked = false;
         FindHands();
     }
 
@@ -150,14 +166,12 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
         if (_isAnimating)
             return;
 
-        if (_interactable != null)
-        {
-            _interactable.enabled = false; //Prevent double pressing
-        }
+        _unlocked = false; // one press per session
+        if (slapKey != null) slapKey.Blocked = true;   // the key still finishes its sink and spring-back
 
         SessionEvents.Interaction("video_button_pressed", this);
         StartVideo();
-        StartCoroutine(AnimateButton());
+        if (slapKey == null && buttonTop != null) StartCoroutine(AnimateButton());
     }
 
     private void StartVideo()
