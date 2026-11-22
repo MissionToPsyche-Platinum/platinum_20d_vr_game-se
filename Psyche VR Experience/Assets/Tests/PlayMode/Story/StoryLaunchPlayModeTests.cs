@@ -293,6 +293,29 @@ namespace PsycheVR.Story.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator HighlightMovesToEachLaunchButtonInTurn()
+        {
+            CreateReturnFixture();
+            owner.SetActive(false);
+            var marker = new GameObject("Objective highlight", typeof(CanvasGroup));
+            marker.transform.SetParent(owner.transform);
+            var highlight = marker.AddComponent(RuntimeType("PsycheVR.Story.ObjectiveHighlight"));
+            Assign(director, "objectiveHighlight", highlight);
+            owner.SetActive(true);
+            yield return null;
+            Func<Transform> target = () => (Transform)highlight.GetType().GetProperty("Target").GetValue(highlight);
+
+            Call(director, "GoTo", StoryPhase.ChildLaunch);
+            Assert.That(target(), Is.SameAs(childButton.transform), "ChildLaunch marks the bedroom button.");
+            Call(childButton, "PressButton");
+            Assert.That(target(), Is.Null, "No marker during the return trip.");
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.That(target(), Is.SameAs(button.transform), "After the return the real button is marked.");
+            ((UnityEvent)button.GetType().GetField("onPressed").GetValue(button)).Invoke();
+            Assert.That(target(), Is.Null, "Pressing the real button clears the marker.");
+        }
+
+        [UnityTest]
         public IEnumerator ReplacedDeskReturnStillUnlocksRealLaunch()
         {
             CreateReturnFixture();
@@ -312,6 +335,44 @@ namespace PsycheVR.Story.PlayModeTests
             teleporter.GetType().GetMethod("TeleportTo", new[] { anchorType }).Invoke(teleporter, new object[] { otherAnchor });
 
             Assert.That(IsUnlocked(button), Is.True, "A replaced return must not leave the story stuck.");
+            completed.Invoke();
+            Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
+        }
+
+        [UnityTest]
+        public IEnumerator GlassCaseStaysShutUntilReturnAndOpeningItUnlocksRealLaunch()
+        {
+            CreateReturnFixture();
+            owner.SetActive(false);
+            var caseObject = new GameObject("Glass case");
+            caseObject.transform.SetParent(owner.transform);
+            var body = caseObject.AddComponent<Rigidbody>();
+            body.useGravity = false;
+            caseObject.AddComponent<BoxCollider>();
+            caseObject.AddComponent<HingeJoint>();
+            var grab = (Behaviour)caseObject.AddComponent(Type.GetType(
+                "UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable, Unity.XR.Interaction.Toolkit", true));
+            var glassCase = caseObject.AddComponent(RuntimeType("ButtonCaseController"));
+            Assign(glassCase, "launchButton", button);
+            Assign(director, "realLaunchCase", glassCase);
+            owner.SetActive(true);
+            yield return null;
+            Func<bool> openAllowed = () => (bool)glassCase.GetType().GetProperty("OpenAllowed").GetValue(glassCase);
+
+            Assert.That(openAllowed(), Is.False, "Intro holds the case shut.");
+            Assert.That(grab.enabled, Is.False);
+            Assert.That(body.isKinematic, Is.True, "A shut case cannot be pushed open by a hand.");
+            Call(director, "GoTo", StoryPhase.ChildLaunch);
+            Call(childButton, "PressButton");
+            Assert.That(openAllowed(), Is.False, "Still shut during the return trip.");
+            yield return new WaitForSecondsRealtime(0.3f);
+
+            Assert.That(openAllowed(), Is.True, "Back at the desk the case can be opened.");
+            Assert.That(grab.enabled, Is.True);
+            Assert.That(body.isKinematic, Is.False);
+            Assert.That(IsUnlocked(button), Is.False, "The button is not slappable through the closed case.");
+            glassCase.GetType().GetMethod("LockCaseOpen", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(glassCase, null);
+            Assert.That(IsUnlocked(button), Is.True, "Opening the case makes the button slappable.");
             completed.Invoke();
             Assert.That(Phase, Is.EqualTo(StoryPhase.FreePlay));
         }

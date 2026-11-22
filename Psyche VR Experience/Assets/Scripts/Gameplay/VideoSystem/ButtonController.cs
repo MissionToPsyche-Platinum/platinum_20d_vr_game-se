@@ -50,6 +50,9 @@ public class ButtonController : MonoBehaviour, ISessionInteractable
     /// <summary>Whether a slap can currently activate this button.</summary>
     public bool IsUnlocked => _unlocked && storyInteractionAllowed;
 
+    /// <summary>The part the player hits: the slap key when there is one, else this button. Story highlights point at it.</summary>
+    public Transform PressTarget => slapKey != null ? slapKey.transform : transform;
+
     private readonly List<Transform> _hands = new List<Transform>();
     private readonly Dictionary<Transform, Vector3> _lastHandPositions = new Dictionary<Transform, Vector3>();
     private float _lastSlapTime = -Mathf.Infinity;

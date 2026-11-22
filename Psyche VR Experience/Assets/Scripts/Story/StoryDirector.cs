@@ -49,6 +49,8 @@ namespace PsycheVR.Story
         [Header("Phase 5: Real launch")]
         [Tooltip("Mission-control launch button. Its video target must be the launch video below.")]
         [SerializeField] private ButtonController realLaunchButton;
+        [Tooltip("Glass case over the mission-control button. Held shut until the player is back at the desk; opening it is what makes the button slappable. Empty = the button unlocks on arrival.")]
+        [SerializeField] private ButtonCaseController realLaunchCase;
         [Tooltip("Only completion from this player can finish the real-launch phase.")]
         [SerializeField] private play_video launchVideo;
         private readonly StoryPhaseSequence sequence = new StoryPhaseSequence();
@@ -172,6 +174,7 @@ namespace PsycheVR.Story
             }
 
             UpdateLaunchButtons();
+            if (phase != StoryPhase.Intro) UpdateLaunchHighlight();
             if (phase == StoryPhase.RealLaunch && deskReturnComplete && !realLaunchPressed && dateCard != null)
                 dateCard.Show(storyText != null ? storyText.LaunchDateText : string.Empty);
         }
@@ -188,8 +191,24 @@ namespace PsycheVR.Story
             {
                 bool allowed = CurrentPhase == StoryPhase.RealLaunch && !returningToDesk && !realLaunchPressed;
                 realLaunchButton.SetStoryInteractionAllowed(allowed);
-                if (allowed) realLaunchButton.UnlockButton();
+                if (allowed && (realLaunchCase == null || realLaunchCase.GetIsOpen())) realLaunchButton.UnlockButton();
             }
+            if (realLaunchCase != null)
+                realLaunchCase.SetOpenAllowed(
+                    (CurrentPhase == StoryPhase.RealLaunch && !returningToDesk) || CurrentPhase == StoryPhase.FreePlay);
+        }
+
+        // The objective ring moves to whichever launch button the player should hit next (TG-360): the bedroom
+        // button in ChildLaunch, the mission-control button once the return trip has landed.
+        private void UpdateLaunchHighlight()
+        {
+            if (objectiveHighlight == null) return;
+            ButtonController target =
+                CurrentPhase == StoryPhase.ChildLaunch ? childLaunchButton
+                : CurrentPhase == StoryPhase.RealLaunch && !returningToDesk && !realLaunchPressed ? realLaunchButton
+                : null;
+            if (target != null) objectiveHighlight.Show(target.PressTarget);
+            else objectiveHighlight.Hide();
         }
 
         private void HandleChildLaunchPressed()
@@ -216,7 +235,10 @@ namespace PsycheVR.Story
             if (this == null) return;
             returningToDesk = false;
             if (isActiveAndEnabled && GameModeManager.IsStory && CurrentPhase == StoryPhase.RealLaunch)
+            {
                 UpdateLaunchButtons();
+                UpdateLaunchHighlight();
+            }
         }
 
         private void FinishDeskReturn()
@@ -228,6 +250,7 @@ namespace PsycheVR.Story
                 return;
             if (dateCard != null) dateCard.Show(storyText != null ? storyText.LaunchDateText : string.Empty);
             UpdateLaunchButtons();
+            UpdateLaunchHighlight();
         }
 
         private void HandleRealLaunchPressed()
@@ -237,6 +260,7 @@ namespace PsycheVR.Story
             realLaunchPressed = true;
             if (realLaunchButton != null) realLaunchButton.SetStoryInteractionAllowed(false);
             if (dateCard != null) dateCard.Hide();
+            if (objectiveHighlight != null) objectiveHighlight.Hide();
         }
 
         private void SubscribeLaunchEvents()
@@ -326,6 +350,7 @@ namespace PsycheVR.Story
             UnsubscribeLaunchEvents();
             if (childLaunchButton != null) childLaunchButton.SetStoryInteractionAllowed(false);
             if (realLaunchButton != null) realLaunchButton.SetStoryInteractionAllowed(false);
+            if (realLaunchCase != null) realLaunchCase.SetOpenAllowed(false);
             if (dateCard != null) dateCard.Hide();
             if (objectiveHighlight != null) objectiveHighlight.Hide();
         }
